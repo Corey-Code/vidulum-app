@@ -1,0 +1,315 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  VStack,
+  HStack,
+  Text,
+  Button,
+  IconButton,
+  Select,
+  Spinner,
+  useToast,
+  Badge,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel,
+  Link,
+} from '@chakra-ui/react';
+import { ArrowBackIcon, ExternalLinkIcon, CopyIcon } from '@chakra-ui/icons';
+import { useWalletStore } from '@/store/walletStore';
+import { networkRegistry } from '@/lib/networks';
+import MoonPayWidget from '../components/MoonPayWidget';
+
+// MoonPay supported cryptocurrencies mapping
+const MOONPAY_CRYPTO_CODES: Record<string, string> = {
+  // EVM chains - Base USDC is the primary option
+  'base-mainnet': 'usdc_base',
+  'ethereum-mainnet': 'eth',
+  'bnb-mainnet': 'bnb_bsc',
+  'polygon-mainnet': 'matic_polygon',
+  'arbitrum-mainnet': 'eth_arbitrum',
+  'optimism-mainnet': 'eth_optimism',
+  'avalanche-mainnet': 'avax_cchain',
+  // Cosmos chains
+  'cosmoshub-4': 'atom',
+  'osmosis-1': 'osmo',
+  'beezee-1': '', // Not supported
+  'atomone-1': '', // Not supported
+  // UTXO chains
+  'bitcoin-mainnet': 'btc',
+  'litecoin-mainnet': 'ltc',
+  'dogecoin-mainnet': 'doge',
+  'zcash-mainnet': 'zec',
+  'flux-mainnet': '', // Not supported
+  'ravencoin-mainnet': '', // Not supported
+  'bitcoinz-mainnet': '', // Not supported
+};
+
+// Default network for deposits
+const DEFAULT_DEPOSIT_NETWORK = 'base-mainnet';
+
+// MoonPay API Key
+const MOONPAY_API_KEY =
+  import.meta.env.VITE_MOONPAY_API_KEY || 'pk_test_pKULLlqQbOAEd7usXz7yUiVCc8yNBNGY';
+
+interface DepositProps {
+  onBack: () => void;
+}
+
+const Deposit: React.FC<DepositProps> = ({ onBack }) => {
+  const { selectedAccount, getAddressForChain, getBitcoinAddress, getEvmAddress } =
+    useWalletStore();
+  const toast = useToast();
+
+  const [selectedNetwork, setSelectedNetwork] = useState(DEFAULT_DEPOSIT_NETWORK);
+  const [walletAddress, setWalletAddress] = useState<string>('');
+  const [loadingAddress, setLoadingAddress] = useState(false);
+  const [tabIndex, setTabIndex] = useState(0);
+
+  // Get supported networks for MoonPay
+  const supportedNetworks = networkRegistry
+    .getEnabled()
+    .filter((n) => MOONPAY_CRYPTO_CODES[n.id] && MOONPAY_CRYPTO_CODES[n.id] !== '');
+
+  // Get current network config
+  const networkConfig = networkRegistry.get(selectedNetwork);
+  const cryptoCode = MOONPAY_CRYPTO_CODES[selectedNetwork] || '';
+  const isSupported = cryptoCode !== '';
+
+  // Fetch wallet address when network changes
+  useEffect(() => {
+    const fetchAddress = async () => {
+      if (!networkConfig || !selectedAccount) {
+        setWalletAddress('');
+        return;
+      }
+
+      setLoadingAddress(true);
+      try {
+        let address = '';
+        if (networkConfig.type === 'cosmos') {
+          address = getAddressForChain(networkConfig.bech32Prefix) || '';
+        } else if (networkConfig.type === 'bitcoin') {
+          address = (await getBitcoinAddress(selectedNetwork)) || '';
+        } else if (networkConfig.type === 'evm') {
+          address = (await getEvmAddress(selectedNetwork)) || '';
+        }
+        setWalletAddress(address);
+      } catch (error) {
+        console.error('Failed to get wallet address:', error);
+        setWalletAddress('');
+      } finally {
+        setLoadingAddress(false);
+      }
+    };
+
+    fetchAddress();
+  }, [
+    selectedNetwork,
+    selectedAccount,
+    networkConfig,
+    getAddressForChain,
+    getBitcoinAddress,
+    getEvmAddress,
+  ]);
+
+  // Build MoonPay URL for external link fallback
+  const buildMoonPayUrl = () => {
+    const baseUrl = 'https://buy.moonpay.com';
+    const params = new URLSearchParams({
+      apiKey: MOONPAY_API_KEY,
+      currencyCode: cryptoCode,
+      walletAddress: walletAddress,
+      colorCode: '14B8A6',
+      theme: 'dark',
+      language: 'en',
+    });
+    return `${baseUrl}?${params.toString()}`;
+  };
+
+  const handleCopyAddress = () => {
+    if (walletAddress) {
+      navigator.clipboard.writeText(walletAddress);
+      toast({
+        title: 'Address copied',
+        status: 'success',
+        duration: 2000,
+      });
+    }
+  };
+
+  const handleOpenExternal = () => {
+    window.open(buildMoonPayUrl(), '_blank');
+  };
+
+  return (
+    <Box minH="100vh" bg="#0a0a0a" color="white" p={4}>
+      {/* Header */}
+      <HStack mb={4}>
+        <IconButton
+          aria-label="Back"
+          icon={<ArrowBackIcon />}
+          variant="ghost"
+          color="gray.400"
+          _hover={{ color: 'white', bg: 'whiteAlpha.100' }}
+          onClick={onBack}
+          size="sm"
+        />
+        <Text fontSize="lg" fontWeight="bold">
+          Deposit
+        </Text>
+        <Badge colorScheme="teal" ml={2}>
+          Buy Crypto
+        </Badge>
+      </HStack>
+
+      <VStack spacing={4} align="stretch">
+        {/* Network Selection */}
+        <Box>
+          <Text fontSize="sm" color="gray.400" mb={2}>
+            Select Network
+          </Text>
+          <Select
+            value={selectedNetwork}
+            onChange={(e) => setSelectedNetwork(e.target.value)}
+            bg="#141414"
+            borderColor="#2a2a2a"
+            size="sm"
+            _hover={{ borderColor: '#3a3a3a' }}
+          >
+            {supportedNetworks.map((network) => (
+              <option key={network.id} value={network.id} style={{ background: '#141414' }}>
+                {network.name} ({network.symbol})
+              </option>
+            ))}
+          </Select>
+        </Box>
+
+        {/* Wallet Address Display */}
+        <Box>
+          <HStack justify="space-between" mb={2}>
+            <Text fontSize="sm" color="gray.400">
+              Receiving Address
+            </Text>
+            {walletAddress && (
+              <IconButton
+                aria-label="Copy address"
+                icon={<CopyIcon />}
+                size="xs"
+                variant="ghost"
+                color="gray.500"
+                _hover={{ color: 'teal.400' }}
+                onClick={handleCopyAddress}
+              />
+            )}
+          </HStack>
+          <Box
+            bg="#141414"
+            borderRadius="lg"
+            p={2}
+            borderWidth="1px"
+            borderColor="#2a2a2a"
+            fontFamily="mono"
+            fontSize="xs"
+            wordBreak="break-all"
+          >
+            {loadingAddress ? <Spinner size="sm" /> : walletAddress || 'No address available'}
+          </Box>
+        </Box>
+
+        {/* Tabs for Widget vs External */}
+        <Tabs
+          index={tabIndex}
+          onChange={setTabIndex}
+          variant="soft-rounded"
+          colorScheme="teal"
+          size="sm"
+        >
+          <TabList bg="#141414" borderRadius="full" p={1}>
+            <Tab flex={1} fontSize="xs" _selected={{ bg: 'teal.600', color: 'white' }}>
+              Embedded Widget
+            </Tab>
+            <Tab flex={1} fontSize="xs" _selected={{ bg: 'teal.600', color: 'white' }}>
+              External Link
+            </Tab>
+          </TabList>
+
+          <TabPanels mt={4}>
+            {/* Embedded Widget Tab */}
+            <TabPanel p={0}>
+              {!isSupported ? (
+                <Box
+                  bg="orange.900"
+                  borderRadius="lg"
+                  p={4}
+                  borderWidth="1px"
+                  borderColor="orange.700"
+                >
+                  <Text fontSize="sm" color="orange.200">
+                    {networkConfig?.name || 'This network'} is not currently supported by MoonPay.
+                  </Text>
+                  <Text fontSize="xs" color="orange.300" mt={2}>
+                    Please select a different network.
+                  </Text>
+                </Box>
+              ) : !walletAddress ? (
+                <Box textAlign="center" py={8}>
+                  <Spinner size="lg" color="teal.400" />
+                  <Text color="gray.400" fontSize="sm" mt={3}>
+                    Preparing wallet address...
+                  </Text>
+                </Box>
+              ) : (
+                <MoonPayWidget
+                  flow="buy"
+                  cryptoCode={cryptoCode}
+                  walletAddress={walletAddress}
+                  colorCode="#14B8A6"
+                />
+              )}
+            </TabPanel>
+
+            {/* External Link Tab */}
+            <TabPanel p={0}>
+              <VStack spacing={4} align="stretch">
+                <Box bg="#141414" borderRadius="xl" p={4} borderWidth="1px" borderColor="#2a2a2a">
+                  <Text fontSize="sm" color="gray.400" mb={2}>
+                    Buy {networkConfig?.symbol || 'crypto'} with credit card, debit card, or bank
+                    transfer.
+                  </Text>
+                  <Text fontSize="xs" color="gray.500">
+                    Opens MoonPay in a new browser tab. Funds will be sent directly to your wallet.
+                  </Text>
+                </Box>
+
+                <Button
+                  colorScheme="teal"
+                  size="lg"
+                  onClick={handleOpenExternal}
+                  isDisabled={!isSupported || !walletAddress}
+                  leftIcon={<ExternalLinkIcon />}
+                >
+                  Open MoonPay
+                </Button>
+              </VStack>
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
+
+        {/* Footer */}
+        <Box textAlign="center" pt={2}>
+          <Text fontSize="xs" color="gray.500">
+            Powered by{' '}
+            <Link href="https://www.moonpay.com" isExternal color="teal.400">
+              MoonPay
+            </Link>
+          </Text>
+        </Box>
+      </VStack>
+    </Box>
+  );
+};
+
+export default Deposit;
