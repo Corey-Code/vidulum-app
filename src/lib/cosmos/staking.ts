@@ -1,5 +1,5 @@
 // Staking API utilities for Cosmos SDK chains
-import { fetchWithFailover, getHealthyEndpoint } from '@/lib/networks';
+import { fetchWithFailover } from '@/lib/networks';
 
 /**
  * Normalize endpoints to array format
