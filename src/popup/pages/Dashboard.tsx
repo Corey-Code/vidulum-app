@@ -33,10 +33,10 @@ import {
 } from '@chakra-ui/icons';
 import { useWalletStore } from '@/store/walletStore';
 import { useChainStore } from '@/store/chainStore';
-import { UI_CHAINS, SUPPORTED_CHAINS, isCosmosChain, getNetworkType } from '@/lib/cosmos/chains';
+import { UI_CHAINS, SUPPORTED_CHAINS, getNetworkType } from '@/lib/cosmos/chains';
 import { Keyring } from '@/lib/crypto/keyring';
 import { fetchChainAssets, RegistryAsset, getTokenColor } from '@/lib/assets/chainRegistry';
-import { networkRegistry, getExplorerAccountUrl } from '@/lib/networks';
+import { getExplorerAccountUrl } from '@/lib/networks';
 import SendModal from '../components/SendModal';
 import SwapModal from '../components/SwapModal';
 

@@ -4,7 +4,7 @@ import { SUPPORTED_CHAINS, getNetworkType } from '@/lib/cosmos/chains';
 import { cosmosClient } from '@/lib/cosmos/client';
 import { getChainWebSocket, disconnectAllWebSockets } from '@/lib/cosmos/websocket';
 import { getBitcoinClient } from '@/lib/bitcoin/client';
-import { getEvmClient, formatEther } from '@/lib/evm/client';
+import { getEvmClient } from '@/lib/evm/client';
 
 interface ChainState {
   chains: Map<string, ChainInfo>;
@@ -50,18 +50,20 @@ export const useChainStore = create<ChainState>((set, get) => ({
 
   fetchBalance: async (networkId: string, address: string) => {
     const networkType = getNetworkType(networkId);
-    
+
     let balances: Balance[];
-    
+
     if (networkType === 'bitcoin') {
       // Fetch Bitcoin balance
       try {
         const client = getBitcoinClient(networkId);
         const satoshis = await client.getBalance(address);
-        balances = [{
-          denom: 'sat',
-          amount: satoshis.toString(),
-        }];
+        balances = [
+          {
+            denom: 'sat',
+            amount: satoshis.toString(),
+          },
+        ];
       } catch (error) {
         console.error(`Failed to fetch Bitcoin balance:`, error);
         balances = [];
@@ -71,10 +73,12 @@ export const useChainStore = create<ChainState>((set, get) => ({
       try {
         const client = getEvmClient(networkId);
         const wei = await client.getBalance(address);
-        balances = [{
-          denom: 'wei',
-          amount: wei.toString(),
-        }];
+        balances = [
+          {
+            denom: 'wei',
+            amount: wei.toString(),
+          },
+        ];
       } catch (error) {
         console.error(`Failed to fetch EVM balance:`, error);
         balances = [];

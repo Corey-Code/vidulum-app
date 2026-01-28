@@ -27,14 +27,13 @@ import { ChevronDownIcon, RepeatIcon } from '@chakra-ui/icons';
 import { useWalletStore } from '@/store/walletStore';
 import { useChainStore } from '@/store/chainStore';
 import { ChainInfo } from '@/types/wallet';
-import { fetchChainAssets, RegistryAsset } from '@/lib/assets/chainRegistry';
+import { fetchChainAssets } from '@/lib/assets/chainRegistry';
 import { estimateSwapFee, FeeEstimate } from '@/lib/cosmos/fees';
 import { toBase64, fromBase64 } from '@cosmjs/encoding';
 import { TxRaw, AuthInfo, TxBody, SignerInfo, Fee } from 'cosmjs-types/cosmos/tx/v1beta1/tx';
 import { SignMode } from 'cosmjs-types/cosmos/tx/signing/v1beta1/signing';
 import { Any } from 'cosmjs-types/google/protobuf/any';
 import { PubKey } from 'cosmjs-types/cosmos/crypto/secp256k1/keys';
-import { Coin } from 'cosmjs-types/cosmos/base/v1beta1/coin';
 
 // Helper to encode a string as protobuf bytes (wire type 2)
 function encodeString(fieldNum: number, value: string): Uint8Array {

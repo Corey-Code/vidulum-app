@@ -80,7 +80,7 @@ export async function fetchValidators(
   status: string = 'BOND_STATUS_BONDED'
 ): Promise<Validator[]> {
   const endpoints = normalizeEndpoints(restEndpoints);
-  
+
   try {
     const data = await fetchWithFailover<{ validators?: any[] }>(
       endpoints,
@@ -128,7 +128,7 @@ export async function fetchDelegations(
   delegatorAddress: string
 ): Promise<Delegation[]> {
   const endpoints = normalizeEndpoints(restEndpoints);
-  
+
   try {
     const data = await fetchWithFailover<{ delegation_responses?: any[] }>(
       endpoints,
@@ -163,7 +163,7 @@ export async function fetchRewards(
   delegatorAddress: string
 ): Promise<{ rewards: Reward[]; total: Array<{ denom: string; amount: string }> }> {
   const endpoints = normalizeEndpoints(restEndpoints);
-  
+
   try {
     const data = await fetchWithFailover<{ rewards?: any[]; total?: any[] }>(
       endpoints,
@@ -194,7 +194,7 @@ export async function fetchUnbondingDelegations(
   delegatorAddress: string
 ): Promise<UnbondingDelegation[]> {
   const endpoints = normalizeEndpoints(restEndpoints);
-  
+
   try {
     const data = await fetchWithFailover<{ unbonding_responses?: any[] }>(
       endpoints,
@@ -223,9 +223,11 @@ export async function fetchUnbondingDelegations(
 
 // Fetch staking params
 // Supports both single endpoint (legacy) and array of endpoints (failover)
-export async function fetchStakingParams(restEndpoints: string | string[]): Promise<StakingParams | null> {
+export async function fetchStakingParams(
+  restEndpoints: string | string[]
+): Promise<StakingParams | null> {
   const endpoints = normalizeEndpoints(restEndpoints);
-  
+
   try {
     const data = await fetchWithFailover<{ params?: any }>(
       endpoints,
@@ -256,7 +258,7 @@ export async function fetchValidator(
   validatorAddress: string
 ): Promise<Validator | null> {
   const endpoints = normalizeEndpoints(restEndpoints);
-  
+
   try {
     const data = await fetchWithFailover<{ validator?: any }>(
       endpoints,

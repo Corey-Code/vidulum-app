@@ -7,7 +7,7 @@
  * - EVM chains: static native asset definitions
  */
 
-import { networkRegistry, isCosmosNetwork, isBitcoinNetwork, isEvmNetwork } from '@/lib/networks';
+import { networkRegistry, isBitcoinNetwork, isEvmNetwork } from '@/lib/networks';
 
 export interface RegistryAsset {
   symbol: string;

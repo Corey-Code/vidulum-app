@@ -1,9 +1,14 @@
 import { create } from 'zustand';
-import { Keyring, KeyringAccount, BitcoinKeyringAccount, EvmKeyringAccount } from '@/lib/crypto/keyring';
+import {
+  Keyring,
+  KeyringAccount,
+  BitcoinKeyringAccount,
+  EvmKeyringAccount,
+} from '@/lib/crypto/keyring';
 import { EncryptedStorage } from '@/lib/storage/encrypted-storage';
 import { MnemonicManager } from '@/lib/crypto/mnemonic';
 import { cosmosClient } from '@/lib/cosmos/client';
-import { SUPPORTED_CHAINS, getNetworkType } from '@/lib/cosmos/chains';
+import { SUPPORTED_CHAINS } from '@/lib/cosmos/chains';
 import { coin } from '@cosmjs/stargate';
 import { simulateSendFee } from '@/lib/cosmos/fees';
 import { networkRegistry } from '@/lib/networks';
@@ -25,7 +30,7 @@ async function preDeriveAllAccounts(keyring: Keyring): Promise<void> {
     for (const network of bitcoinNetworks) {
       // Skip if already derived
       if (keyring.getBitcoinAddress(network.id, accountIndex)) continue;
-      
+
       try {
         await keyring.deriveBitcoinAccount(
           network.id,
@@ -42,13 +47,9 @@ async function preDeriveAllAccounts(keyring: Keyring): Promise<void> {
     for (const network of evmNetworks) {
       // Skip if already derived
       if (keyring.getEvmAddress(network.id, accountIndex)) continue;
-      
+
       try {
-        await keyring.deriveEvmAccount(
-          network.id,
-          network.chainId,
-          accountIndex
-        );
+        await keyring.deriveEvmAccount(network.id, network.chainId, accountIndex);
       } catch (error) {
         console.warn(`Could not derive ${network.id} address for account ${accountIndex}:`, error);
       }
@@ -122,7 +123,10 @@ interface WalletState {
 
   // Bitcoin-specific methods
   getBitcoinAddress: (networkId: string, accountIndex?: number) => Promise<string | null>;
-  deriveBitcoinAccount: (networkId: string, accountIndex?: number) => Promise<BitcoinKeyringAccount | null>;
+  deriveBitcoinAccount: (
+    networkId: string,
+    accountIndex?: number
+  ) => Promise<BitcoinKeyringAccount | null>;
 
   // EVM-specific methods
   getEvmAddress: (networkId: string, accountIndex?: number) => Promise<string | null>;
@@ -318,7 +322,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     // Restore keyring with all account indices from stored accounts
     const accountIndices = wallet.accounts.map((acc) => acc.accountIndex ?? 0);
     await keyring.createFromMnemonic(wallet.mnemonic, 'bze', accountIndices);
-    
+
     // Set mnemonic for Bitcoin derivation
     keyring.setMnemonic(wallet.mnemonic);
 
@@ -735,12 +739,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     const signingClient = await cosmosClient.getSigningClient(chainInfo.rpc, wallet);
 
     // Sign and broadcast the transaction
-    const result = await signingClient.signAndBroadcast(
-      signerAddress,
-      messages,
-      txFee,
-      memo
-    );
+    const result = await signingClient.signAndBroadcast(signerAddress, messages, txFee, memo);
 
     if (result.code !== 0) {
       throw new Error(`Transaction failed: ${result.rawLog}`);
@@ -770,7 +769,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   updateSession: async () => {
     const { keyring } = get();
     if (!keyring) return;
-    
+
     try {
       const serializedWallet = await keyring.serialize();
       await EncryptedStorage.updateSerializedWallet(serializedWallet);
@@ -789,12 +788,12 @@ export const useWalletStore = create<WalletState>((set, get) => ({
 
     // Try to get existing Bitcoin account (may have address from session restore)
     let btcAccount = keyring.getBitcoinAccount(networkId, idx);
-    
+
     // Return cached address if available
     if (btcAccount?.address) {
       return btcAccount.address;
     }
-    
+
     // Try to derive if mnemonic is available
     if (keyring.hasMnemonic()) {
       const network = networkRegistry.getBitcoin(networkId);
@@ -854,23 +853,19 @@ export const useWalletStore = create<WalletState>((set, get) => ({
 
     // Try to get existing EVM account (may have address from session restore)
     let evmAccount = keyring.getEvmAccount(networkId, idx);
-    
+
     // Return cached address if available
     if (evmAccount?.address) {
       return evmAccount.address;
     }
-    
+
     // Try to derive if mnemonic is available
     if (keyring.hasMnemonic()) {
       const network = networkRegistry.getEvm(networkId);
       if (!network) return null;
 
       try {
-        evmAccount = await keyring.deriveEvmAccount(
-          networkId,
-          network.chainId,
-          idx
-        );
+        evmAccount = await keyring.deriveEvmAccount(networkId, network.chainId, idx);
         // Update session with newly derived address
         await updateSession();
       } catch (error) {
@@ -893,11 +888,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     const idx = accountIndex ?? selectedAccount?.accountIndex ?? 0;
 
     try {
-      const account = await keyring.deriveEvmAccount(
-        networkId,
-        network.chainId,
-        idx
-      );
+      const account = await keyring.deriveEvmAccount(networkId, network.chainId, idx);
       // Update session with newly derived address
       await updateSession();
       return account;

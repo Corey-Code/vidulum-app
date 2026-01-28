@@ -6,7 +6,6 @@ import {
   Text,
   Button,
   IconButton,
-  Progress,
   Badge,
   Spinner,
   useToast,
@@ -73,10 +72,10 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
   // Get the available balance for the selected pool's stake token
   const getStakeTokenBalance = (): string => {
     if (!selectedPool || !address) return '0';
-    
+
     // Get all balances for the address
     const chainBalances = balances[`beezee-1:${address}`] || [];
-    const tokenBalance = chainBalances.find(b => b.denom === selectedPool.stakeDenom);
+    const tokenBalance = chainBalances.find((b) => b.denom === selectedPool.stakeDenom);
     return tokenBalance?.amount || '0';
   };
 
@@ -99,7 +98,7 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
       // Fetch all staking rewards (pools)
       const response = await fetch('https://rest.getbze.com/bze/rewards/all_staking_rewards');
       const data = await response.json();
-      
+
       // Fetch user's participations if address available
       let userParticipations: Record<string, { amount: string; joined_at: string }> = {};
       if (address) {
@@ -120,37 +119,37 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
           // User has no stakes
         }
       }
-      
+
       if (data.list) {
         const poolsData: StakingPool[] = data.list.map((pool: any) => {
           // Parse pool data
           const stakeDenom = pool.staking_denom || 'ubze';
           const rewardDenom = pool.prize_denom || 'ubze';
-          
+
           // Get symbols from denoms
           const stakeSymbol = getSymbolFromDenom(stakeDenom);
           const rewardSymbol = getSymbolFromDenom(rewardDenom);
-          
+
           // Calculate days from payouts and duration
           const totalDays = parseInt(pool.duration || '0');
           const daysElapsed = parseInt(pool.payouts || '0');
           const daysRemaining = Math.max(0, totalDays - daysElapsed);
-          
+
           // Determine status
           let status: 'running' | 'ended' | 'paused' = 'running';
           if (daysRemaining <= 0) status = 'ended';
-          
+
           // Calculate APR
           // APR = (daily_reward * 365 / total_staked) * 100
           const dailyReward = parseInt(pool.prize_amount || '0');
           const totalStaked = parseInt(pool.staked_amount || '1');
-          const apr = totalStaked > 0 ? (dailyReward * 365 / totalStaked) * 100 : 0;
+          const apr = totalStaked > 0 ? ((dailyReward * 365) / totalStaked) * 100 : 0;
 
           // Get user's stake from participations
           const rewardId = pool.reward_id;
           const userParticipation = userParticipations[rewardId];
           const userStake = userParticipation?.amount || '0';
-          
+
           // Calculate pending rewards based on user's share
           // This is an estimate - actual rewards depend on when user joined
           let pendingRewards = '0';
@@ -185,10 +184,10 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
             totalDays,
           };
         });
-        
+
         // Filter out ended pools
-        const activePools = poolsData.filter(pool => pool.status !== 'ended');
-        
+        const activePools = poolsData.filter((pool) => pool.status !== 'ended');
+
         // Sort by APR descending, then by user stake
         activePools.sort((a, b) => {
           const aUserStake = parseInt(a.userStake || '0');
@@ -197,7 +196,7 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
           if (bUserStake > 0 && aUserStake === 0) return 1;
           return (b.apr || 0) - (a.apr || 0);
         });
-        
+
         setPools(activePools);
       }
     } catch (error) {
@@ -219,7 +218,7 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
 
   // Known denom mappings for BZE ecosystem
   const denomSymbolMap: Record<string, string> = {
-    'ubze': 'BZE',
+    ubze: 'BZE',
     'factory/bze13gzq40che93tgfm9kzmkpjamah5nj0j73pyhqk/uvdl': 'VDL',
     // USDC on BZE (via IBC)
     'ibc/6490A7EAB61059BFC1CDDEB05917DD70BDF3A611654162A1A47DB930D40D8AF4': 'USDC',
@@ -232,16 +231,16 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
     if (denomSymbolMap[denom]) {
       return denomSymbolMap[denom];
     }
-    
+
     if (denom === 'ubze') return 'BZE';
     if (denom.includes('uvdl') || denom.includes('VDL')) return 'VDL';
     if (denom.includes('usdc') || denom.includes('USDC')) return 'USDC';
-    
+
     // Handle IBC denoms - show shortened hash
     if (denom.startsWith('ibc/')) {
       return `IBC/${denom.slice(4, 8)}`;
     }
-    
+
     // Handle factory denoms
     if (denom.startsWith('factory/')) {
       const parts = denom.split('/');
@@ -249,7 +248,7 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
         return parts[2].replace('u', '').toUpperCase();
       }
     }
-    
+
     return denom.slice(0, 6).toUpperCase();
   };
 
@@ -262,7 +261,7 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
 
   const handleStake = async () => {
     if (!selectedPool || !stakeAmount || !address) return;
-    
+
     setActionLoading(true);
     try {
       // Validate amount
@@ -291,7 +290,10 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
 
       toast({
         title: 'Stake Successful!',
-        description: `Staked ${stakeAmount} ${selectedPool.stakeSymbol}. TX: ${txHash.slice(0, 10)}...`,
+        description: `Staked ${stakeAmount} ${selectedPool.stakeSymbol}. TX: ${txHash.slice(
+          0,
+          10
+        )}...`,
         status: 'success',
         duration: 5000,
         isClosable: true,
@@ -318,7 +320,7 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
 
   const handleClaim = async (pool: StakingPool) => {
     if (!address) return;
-    
+
     setActionLoading(true);
     try {
       // Create the claim staking rewards message
@@ -408,7 +410,9 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
                 key={pool.index}
                 pool={pool}
                 isExpanded={expandedPoolId === pool.index}
-                onToggle={() => setExpandedPoolId(expandedPoolId === pool.index ? null : pool.index)}
+                onToggle={() =>
+                  setExpandedPoolId(expandedPoolId === pool.index ? null : pool.index)
+                }
                 onStake={() => openStakeModal(pool)}
                 onClaim={() => handleClaim(pool)}
                 formatAmount={formatAmount}
@@ -456,27 +460,38 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
                 />
                 <HStack justify="space-between" mt={1}>
                   <Text fontSize="xs" color="gray.500">
-                    Minimum: {formatAmount(selectedPool?.minStake || '0')} {selectedPool?.stakeSymbol}
+                    Minimum: {formatAmount(selectedPool?.minStake || '0')}{' '}
+                    {selectedPool?.stakeSymbol}
                   </Text>
                   <Text fontSize="xs" color="cyan.400">
                     Available: {formatAmount(getStakeTokenBalance())} {selectedPool?.stakeSymbol}
                   </Text>
                 </HStack>
               </Box>
-              
+
               <Divider borderColor="#2a2a2a" />
-              
+
               <HStack justify="space-between">
-                <Text fontSize="sm" color="gray.400">Lock Period</Text>
+                <Text fontSize="sm" color="gray.400">
+                  Lock Period
+                </Text>
                 <Text fontSize="sm">{selectedPool?.lockDays} days</Text>
               </HStack>
               <HStack justify="space-between">
-                <Text fontSize="sm" color="gray.400">Daily Rewards</Text>
-                <Text fontSize="sm">{formatAmount(selectedPool?.dailyReward || '0')} {selectedPool?.rewardSymbol}</Text>
+                <Text fontSize="sm" color="gray.400">
+                  Daily Rewards
+                </Text>
+                <Text fontSize="sm">
+                  {formatAmount(selectedPool?.dailyReward || '0')} {selectedPool?.rewardSymbol}
+                </Text>
               </HStack>
               <HStack justify="space-between">
-                <Text fontSize="sm" color="gray.400">APR</Text>
-                <Text fontSize="sm" color="green.400">≈{selectedPool?.apr}%</Text>
+                <Text fontSize="sm" color="gray.400">
+                  APR
+                </Text>
+                <Text fontSize="sm" color="green.400">
+                  ≈{selectedPool?.apr}%
+                </Text>
               </HStack>
             </VStack>
           </ModalBody>
@@ -509,7 +524,14 @@ interface PoolCardProps {
   formatAmount: (amount: string, decimals?: number) => string;
 }
 
-const PoolCard: React.FC<PoolCardProps> = ({ pool, isExpanded, onToggle, onStake, onClaim, formatAmount }) => {
+const PoolCard: React.FC<PoolCardProps> = ({
+  pool,
+  isExpanded,
+  onToggle,
+  onStake,
+  onClaim,
+  formatAmount,
+}) => {
   const userStakeAmount = parseInt(pool.userStake || '0');
   const hasStake = userStakeAmount > 0;
   const pendingRewards = parseInt(pool.pendingRewards || '0');
@@ -531,15 +553,27 @@ const PoolCard: React.FC<PoolCardProps> = ({ pool, isExpanded, onToggle, onStake
       <HStack px={3} py={2} justify="space-between" bg="#1a1a1a">
         <VStack align="start" spacing={0}>
           <HStack spacing={2}>
-            <Text fontSize="sm" fontWeight="semibold">{pool.stakeSymbol}</Text>
-            <Text fontSize="xs" color="gray.500">→</Text>
-            <Text fontSize="sm" fontWeight="semibold" color="cyan.400">{pool.rewardSymbol}</Text>
+            <Text fontSize="sm" fontWeight="semibold">
+              {pool.stakeSymbol}
+            </Text>
+            <Text fontSize="xs" color="gray.500">
+              →
+            </Text>
+            <Text fontSize="sm" fontWeight="semibold" color="cyan.400">
+              {pool.rewardSymbol}
+            </Text>
           </HStack>
-          <Text fontSize="xs" color="gray.500">{pool.daysRemaining} days left</Text>
+          <Text fontSize="xs" color="gray.500">
+            {pool.daysRemaining} days left
+          </Text>
         </VStack>
         <VStack align="end" spacing={0}>
-          <Text fontSize="xs" color="gray.500">APR</Text>
-          <Text color="green.400" fontWeight="bold" fontSize="sm">≈{pool.apr}%</Text>
+          <Text fontSize="xs" color="gray.500">
+            APR
+          </Text>
+          <Text color="green.400" fontWeight="bold" fontSize="sm">
+            ≈{pool.apr}%
+          </Text>
         </VStack>
       </HStack>
 
@@ -547,12 +581,20 @@ const PoolCard: React.FC<PoolCardProps> = ({ pool, isExpanded, onToggle, onStake
       {hasStake && (
         <HStack px={3} py={2} spacing={2} bg="#0d0d0d">
           <Box flex={1} bg="#1a1a1a" p={2} borderRadius="md">
-            <Text fontSize="9px" color="cyan.400">YOUR STAKE</Text>
-            <Text fontSize="sm" fontWeight="bold">{formatAmount(pool.userStake || '0')} {pool.stakeSymbol}</Text>
+            <Text fontSize="9px" color="cyan.400">
+              YOUR STAKE
+            </Text>
+            <Text fontSize="sm" fontWeight="bold">
+              {formatAmount(pool.userStake || '0')} {pool.stakeSymbol}
+            </Text>
           </Box>
           <Box flex={1} bg="#1a1a1a" p={2} borderRadius="md">
-            <Text fontSize="9px" color="purple.400">REWARDS</Text>
-            <Text fontSize="sm" fontWeight="bold">{formatAmount(pool.pendingRewards || '0')} {pool.rewardSymbol}</Text>
+            <Text fontSize="9px" color="purple.400">
+              REWARDS
+            </Text>
+            <Text fontSize="sm" fontWeight="bold">
+              {formatAmount(pool.pendingRewards || '0')} {pool.rewardSymbol}
+            </Text>
           </Box>
         </HStack>
       )}
@@ -575,7 +617,10 @@ const PoolCard: React.FC<PoolCardProps> = ({ pool, isExpanded, onToggle, onStake
             borderColor="cyan.500"
             color="cyan.400"
             _hover={{ bg: 'cyan.900', borderColor: 'cyan.400' }}
-            onClick={(e) => { e.stopPropagation(); onStake(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onStake();
+            }}
             isDisabled={pool.status !== 'running'}
           >
             {hasStake ? 'Stake More' : 'Stake'}
@@ -588,7 +633,10 @@ const PoolCard: React.FC<PoolCardProps> = ({ pool, isExpanded, onToggle, onStake
               borderColor="purple.500"
               color="purple.400"
               _hover={{ bg: 'purple.900', borderColor: 'purple.400' }}
-              onClick={(e) => { e.stopPropagation(); onClaim(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onClaim();
+              }}
             >
               Claim
             </Button>
@@ -602,8 +650,12 @@ const PoolCard: React.FC<PoolCardProps> = ({ pool, isExpanded, onToggle, onStake
 // Stat Box Component
 const StatBox: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <Box flex="1" minW="60px" bg="#1a1a1a" px={2} py={1} borderRadius="md">
-    <Text fontSize="8px" color="gray.500">{label}</Text>
-    <Text fontSize="xs" fontWeight="medium" isTruncated>{value}</Text>
+    <Text fontSize="8px" color="gray.500">
+      {label}
+    </Text>
+    <Text fontSize="xs" fontWeight="medium" isTruncated>
+      {value}
+    </Text>
   </Box>
 );
 
