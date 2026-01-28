@@ -31,7 +31,7 @@ import { ChevronDownIcon } from '@chakra-ui/icons';
 import { useWalletStore } from '@/store/walletStore';
 import { useChainStore } from '@/store/chainStore';
 import { ChainInfo } from '@/types/wallet';
-import { fetchChainAssets, RegistryAsset } from '@/lib/cosmos/chainRegistry';
+import { fetchChainAssets, RegistryAsset } from '@/lib/assets/chainRegistry';
 import { simulateSendFee, FeeEstimate } from '@/lib/cosmos/fees';
 import { isValidBitcoinAddress } from '@/lib/crypto/bitcoin';
 import { getBitcoinClient } from '@/lib/bitcoin/client';

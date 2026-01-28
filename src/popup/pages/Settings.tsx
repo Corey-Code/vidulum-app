@@ -297,6 +297,13 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
           >
             Lock Wallet Now
           </Button>
+
+          {/* Version Info */}
+          <Box pt={4} textAlign="center">
+            <Text fontSize="xs" color="gray.600">
+              State v{EncryptedStorage.WALLET_VERSION}
+            </Text>
+          </Box>
         </VStack>
       </Box>
     </Box>

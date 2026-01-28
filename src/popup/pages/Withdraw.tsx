@@ -10,17 +10,11 @@ import {
   Spinner,
   useToast,
   Badge,
-  Tabs,
-  TabList,
-  Tab,
-  TabPanels,
-  TabPanel,
   Link,
 } from '@chakra-ui/react';
 import { ArrowBackIcon, ExternalLinkIcon, CopyIcon } from '@chakra-ui/icons';
 import { useWalletStore } from '@/store/walletStore';
 import { networkRegistry } from '@/lib/networks';
-import MoonPayWidget from '../components/MoonPayWidget';
 
 // MoonPay supported cryptocurrencies for selling (off-ramp)
 const MOONPAY_SELL_CODES: Record<string, string> = {
@@ -42,20 +36,21 @@ const MOONPAY_SELL_CODES: Record<string, string> = {
 const DEFAULT_WITHDRAW_NETWORK = 'base-mainnet';
 
 // MoonPay API Key
-const MOONPAY_API_KEY = import.meta.env.VITE_MOONPAY_API_KEY || 'pk_test_pKULLlqQbOAEd7usXz7yUiVCc8yNBNGY';
+const MOONPAY_API_KEY =
+  import.meta.env.VITE_MOONPAY_API_KEY || 'pk_test_pKULLlqQbOAEd7usXz7yUiVCc8yNBNGY';
 
 interface WithdrawProps {
   onBack: () => void;
 }
 
 const Withdraw: React.FC<WithdrawProps> = ({ onBack }) => {
-  const { selectedAccount, getAddressForChain, getBitcoinAddress, getEvmAddress } = useWalletStore();
+  const { selectedAccount, getAddressForChain, getBitcoinAddress, getEvmAddress } =
+    useWalletStore();
   const toast = useToast();
 
   const [selectedNetwork, setSelectedNetwork] = useState(DEFAULT_WITHDRAW_NETWORK);
   const [walletAddress, setWalletAddress] = useState<string>('');
   const [loadingAddress, setLoadingAddress] = useState(false);
-  const [tabIndex, setTabIndex] = useState(0);
 
   // Get supported networks for MoonPay sell
   const supportedNetworks = networkRegistry
@@ -95,7 +90,14 @@ const Withdraw: React.FC<WithdrawProps> = ({ onBack }) => {
     };
 
     fetchAddress();
-  }, [selectedNetwork, selectedAccount, networkConfig, getAddressForChain, getBitcoinAddress, getEvmAddress]);
+  }, [
+    selectedNetwork,
+    selectedAccount,
+    networkConfig,
+    getAddressForChain,
+    getBitcoinAddress,
+    getEvmAddress,
+  ]);
 
   // Build MoonPay Sell URL for external link fallback
   const buildMoonPaySellUrl = () => {
@@ -122,8 +124,8 @@ const Withdraw: React.FC<WithdrawProps> = ({ onBack }) => {
     }
   };
 
-  const handleOpenExternal = () => {
-    window.open(buildMoonPaySellUrl(), '_blank');
+  const handleOpenMoonPay = () => {
+    chrome.tabs.create({ url: buildMoonPaySellUrl() });
   };
 
   return (
@@ -222,85 +224,38 @@ const Withdraw: React.FC<WithdrawProps> = ({ onBack }) => {
           </VStack>
         </Box>
 
-        {/* Tabs for Widget vs External */}
-        <Tabs
-          index={tabIndex}
-          onChange={setTabIndex}
-          variant="soft-rounded"
-          colorScheme="orange"
-          size="sm"
-        >
-          <TabList bg="#141414" borderRadius="full" p={1}>
-            <Tab
-              flex={1}
-              fontSize="xs"
-              _selected={{ bg: 'orange.600', color: 'white' }}
+        {/* MoonPay Action */}
+        {!isSupported ? (
+          <Box bg="orange.900" borderRadius="lg" p={4} borderWidth="1px" borderColor="orange.700">
+            <Text fontSize="sm" color="orange.200">
+              {networkConfig?.name || 'This network'} is not supported for selling via MoonPay.
+            </Text>
+            <Text fontSize="xs" color="orange.300" mt={2}>
+              Sell support is limited to major cryptocurrencies.
+            </Text>
+          </Box>
+        ) : (
+          <VStack spacing={4} align="stretch">
+            <Box bg="#141414" borderRadius="xl" p={4} borderWidth="1px" borderColor="#2a2a2a">
+              <Text fontSize="sm" color="gray.400" mb={2}>
+                Sell {networkConfig?.symbol || 'crypto'} and receive funds to your bank account.
+              </Text>
+              <Text fontSize="xs" color="gray.500">
+                Opens MoonPay in a new tab to complete the sale.
+              </Text>
+            </Box>
+
+            <Button
+              colorScheme="orange"
+              size="lg"
+              onClick={handleOpenMoonPay}
+              isDisabled={!walletAddress || loadingAddress}
+              leftIcon={<ExternalLinkIcon />}
             >
-              Embedded Widget
-            </Tab>
-            <Tab
-              flex={1}
-              fontSize="xs"
-              _selected={{ bg: 'orange.600', color: 'white' }}
-            >
-              External Link
-            </Tab>
-          </TabList>
-
-          <TabPanels mt={4}>
-            {/* Embedded Widget Tab */}
-            <TabPanel p={0}>
-              {!isSupported ? (
-                <Box bg="orange.900" borderRadius="lg" p={4} borderWidth="1px" borderColor="orange.700">
-                  <Text fontSize="sm" color="orange.200">
-                    {networkConfig?.name || 'This network'} is not supported for selling via MoonPay.
-                  </Text>
-                  <Text fontSize="xs" color="orange.300" mt={2}>
-                    Sell support is limited to major cryptocurrencies.
-                  </Text>
-                </Box>
-              ) : !walletAddress ? (
-                <Box textAlign="center" py={8}>
-                  <Spinner size="lg" color="orange.400" />
-                  <Text color="gray.400" fontSize="sm" mt={3}>
-                    Preparing wallet address...
-                  </Text>
-                </Box>
-              ) : (
-                <MoonPayWidget
-                  flow="sell"
-                  cryptoCode={cryptoCode}
-                  walletAddress={walletAddress}
-                  colorCode="#F97316"
-                />
-              )}
-            </TabPanel>
-
-            {/* External Link Tab */}
-            <TabPanel p={0}>
-              <VStack spacing={4} align="stretch">
-                <Box bg="#141414" borderRadius="xl" p={4} borderWidth="1px" borderColor="#2a2a2a">
-                  <Text fontSize="sm" color="gray.400" mb={2}>
-                    Sell {networkConfig?.symbol || 'crypto'} and receive funds to your bank account.
-                  </Text>
-                  <Text fontSize="xs" color="gray.500">
-                    Opens MoonPay in a new browser tab to complete the sale.
-                  </Text>
-                </Box>
-
-                <Button
-                  colorScheme="orange"
-                  size="lg"
-                  onClick={handleOpenExternal}
-                  isDisabled={!isSupported || !walletAddress}
-                  leftIcon={<ExternalLinkIcon />}
-                >
-                  Open MoonPay
-                </Button>
-              </VStack>
-            </TabPanel>
-          </TabPanels>
-        </Tabs>
+              {loadingAddress ? 'Loading...' : 'Sell with MoonPay'}
+            </Button>
+          </VStack>
+        )}
 
         {/* Footer */}
         <Box textAlign="center" pt={2}>

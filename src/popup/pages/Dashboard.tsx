@@ -35,7 +35,7 @@ import { useWalletStore } from '@/store/walletStore';
 import { useChainStore } from '@/store/chainStore';
 import { UI_CHAINS, SUPPORTED_CHAINS, isCosmosChain, getNetworkType } from '@/lib/cosmos/chains';
 import { Keyring } from '@/lib/crypto/keyring';
-import { fetchChainAssets, RegistryAsset, getTokenColor } from '@/lib/cosmos/chainRegistry';
+import { fetchChainAssets, RegistryAsset, getTokenColor } from '@/lib/assets/chainRegistry';
 import { networkRegistry, getExplorerAccountUrl } from '@/lib/networks';
 import SendModal from '../components/SendModal';
 import SwapModal from '../components/SwapModal';

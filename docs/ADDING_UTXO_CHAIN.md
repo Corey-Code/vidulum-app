@@ -115,7 +115,7 @@ For Zcash-style chains:
 
 ## Step 4: Add Asset Definition
 
-In `src/lib/cosmos/chainRegistry.ts`, add to `bitcoinAssets`:
+In `src/lib/assets/chainRegistry.ts`, add to `bitcoinAssets`:
 
 ```typescript
 const bitcoinAssets: Record<string, RegistryAsset[]> = {

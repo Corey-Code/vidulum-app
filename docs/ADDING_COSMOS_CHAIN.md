@@ -78,7 +78,7 @@ export const COSMOS_NETWORKS: CosmosNetworkConfig[] = [
 
 ## Step 3: Add Chain Registry Mapping
 
-In `src/lib/cosmos/chainRegistry.ts`, add the chain name mapping:
+In `src/lib/assets/chainRegistry.ts`, add the chain name mapping:
 
 ```typescript
 const chainNameMap: Record<string, string> = {

@@ -1,7 +1,10 @@
 /**
- * Fetches asset information from chain registries
- * - Cosmos Chain Registry: https://github.com/cosmos/chain-registry
- * - Bitcoin: Uses native BTC asset
+ * Chain Asset Registry
+ *
+ * Fetches and manages asset information for all chain types:
+ * - Cosmos chains: from https://github.com/cosmos/chain-registry
+ * - Bitcoin/UTXO chains: static native asset definitions
+ * - EVM chains: static native asset definitions
  */
 
 import { networkRegistry, isCosmosNetwork, isBitcoinNetwork, isEvmNetwork } from '@/lib/networks';
@@ -118,6 +121,24 @@ const bitcoinAssets: Record<string, RegistryAsset[]> = {
       denom: 'koinu', // 1 DOGE = 100,000,000 koinu (smallest unit)
       decimals: 8,
       coingeckoId: 'dogecoin',
+    },
+  ],
+  'ritocoin-mainnet': [
+    {
+      symbol: 'RITO',
+      name: 'Ritocoin',
+      denom: 'satoshi', // 1 RITO = 100,000,000 satoshis
+      decimals: 8,
+      coingeckoId: 'ritocoin',
+    },
+  ],
+  'noso-mainnet': [
+    {
+      symbol: 'NOSO',
+      name: 'NOSO',
+      denom: 'duff', // Dash uses duffs (1 DASH = 100,000,000 duffs)
+      decimals: 8,
+      coingeckoId: 'noso',
     },
   ],
 };
@@ -384,8 +405,10 @@ const tokenColors: Record<string, string> = {
   ZEC: '#F4B728', // Zcash gold
   FLUX: '#2B61D1', // Flux blue
   RVN: '#384182', // Ravencoin purple-blue
+  RITO: '#4A90D9', // Ritocoin blue
   BTCZ: '#F7931A', // BitcoinZ orange
   DOGE: '#C2A633', // Dogecoin gold
+  NOSO: '#1E88E5', // NOSO blue (Dash-derived)
   // EVM
   ETH: '#627EEA',
   BNB: '#F0B90B',

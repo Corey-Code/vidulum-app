@@ -232,6 +232,60 @@ export const DOGECOIN_MAINNET: BitcoinNetworkConfig = {
 };
 
 // ============================================================================
+// Ritocoin (Ravencoin fork)
+// ============================================================================
+
+// Ritocoin Mainnet
+export const RITOCOIN_MAINNET: BitcoinNetworkConfig = {
+  id: 'ritocoin-mainnet',
+  name: 'Ritocoin',
+  type: 'bitcoin',
+  enabled: true,
+  symbol: 'RITO',
+  decimals: 8,
+  coinType: 175, // Uses Ravencoin's coin type (fork)
+  network: 'mainnet',
+  apiUrls: [
+    'https://explorer.ritocoin.org/api',
+  ],
+  addressType: 'p2pkh', // R... addresses (like Ravencoin)
+  addressPrefix: {
+    pubKeyHash: 0x19, // R addresses (25 in decimal)
+    scriptHash: 0x69, // r addresses (105 in decimal)
+  },
+  explorerUrl: 'https://explorer.ritocoin.org',
+  explorerAccountPath: '/address/{address}',
+  explorerTxPath: '/tx/{txHash}',
+};
+
+// ============================================================================
+// NOSO (Dash fork)
+// ============================================================================
+
+// NOSO Mainnet
+export const NOSO_MAINNET: BitcoinNetworkConfig = {
+  id: 'noso-mainnet',
+  name: 'NOSO',
+  type: 'bitcoin',
+  enabled: true,
+  symbol: 'NOSO',
+  decimals: 8,
+  coinType: 5, // Uses Dash's coin type (fork)
+  network: 'mainnet',
+  apiUrls: [
+    'https://explorer.nosocoin.com/api',
+  ],
+  addressType: 'p2pkh', // X... addresses (like Dash)
+  addressPrefix: {
+    pubKeyHash: 0x4c, // X addresses (76 in decimal, like Dash)
+    scriptHash: 0x10, // 7 addresses (16 in decimal, like Dash)
+  },
+  explorerUrl: 'https://explorer.nosocoin.com',
+  explorerAccountPath: '/address/{address}',
+  explorerTxPath: '/tx/{txHash}',
+};
+
+// ============================================================================
 // All UTXO networks for registration
 // ============================================================================
 
@@ -242,6 +296,8 @@ export const BITCOIN_NETWORKS: BitcoinNetworkConfig[] = [
   ZCASH_MAINNET,
   FLUX_MAINNET,
   RAVENCOIN_MAINNET,
+  RITOCOIN_MAINNET,
   BITCOINZ_MAINNET,
   DOGECOIN_MAINNET,
+  NOSO_MAINNET,
 ];

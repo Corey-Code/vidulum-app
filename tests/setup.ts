@@ -84,28 +84,23 @@ global.chrome = mockBrowser;
 // Mock fetch globally
 global.fetch = jest.fn();
 
-// Mock crypto.subtle for tests that don't need real crypto
-const mockCrypto = {
+// Use Node.js crypto for tests (provides real Web Crypto API)
+// This is needed for CosmJS and other crypto libraries
+import { webcrypto } from 'crypto';
+
+const nodeCrypto = {
   getRandomValues: <T extends ArrayBufferView | null>(array: T): T => {
     if (array) {
-      const bytes = new Uint8Array(array.buffer);
-      for (let i = 0; i < bytes.length; i++) {
-        bytes[i] = Math.floor(Math.random() * 256);
-      }
+      webcrypto.getRandomValues(array as any);
     }
     return array;
   },
-  randomUUID: () => 'test-uuid-' + Math.random().toString(36).slice(2),
-  subtle: {
-    importKey: jest.fn(),
-    deriveKey: jest.fn(),
-    encrypt: jest.fn(),
-    decrypt: jest.fn(),
-  },
+  randomUUID: () => webcrypto.randomUUID(),
+  subtle: webcrypto.subtle,
 };
 
 Object.defineProperty(global, 'crypto', {
-  value: mockCrypto,
+  value: nodeCrypto,
   writable: true,
 });
 

@@ -10,17 +10,11 @@ import {
   Spinner,
   useToast,
   Badge,
-  Tabs,
-  TabList,
-  Tab,
-  TabPanels,
-  TabPanel,
   Link,
 } from '@chakra-ui/react';
 import { ArrowBackIcon, ExternalLinkIcon, CopyIcon } from '@chakra-ui/icons';
 import { useWalletStore } from '@/store/walletStore';
 import { networkRegistry } from '@/lib/networks';
-import MoonPayWidget from '../components/MoonPayWidget';
 
 // MoonPay supported cryptocurrencies mapping
 const MOONPAY_CRYPTO_CODES: Record<string, string> = {
@@ -66,7 +60,6 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
   const [selectedNetwork, setSelectedNetwork] = useState(DEFAULT_DEPOSIT_NETWORK);
   const [walletAddress, setWalletAddress] = useState<string>('');
   const [loadingAddress, setLoadingAddress] = useState(false);
-  const [tabIndex, setTabIndex] = useState(0);
 
   // Get supported networks for MoonPay
   const supportedNetworks = networkRegistry
@@ -140,8 +133,8 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
     }
   };
 
-  const handleOpenExternal = () => {
-    window.open(buildMoonPayUrl(), '_blank');
+  const handleOpenMoonPay = () => {
+    chrome.tabs.create({ url: buildMoonPayUrl() });
   };
 
   return (
@@ -219,84 +212,39 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
           </Box>
         </Box>
 
-        {/* Tabs for Widget vs External */}
-        <Tabs
-          index={tabIndex}
-          onChange={setTabIndex}
-          variant="soft-rounded"
-          colorScheme="teal"
-          size="sm"
-        >
-          <TabList bg="#141414" borderRadius="full" p={1}>
-            <Tab flex={1} fontSize="xs" _selected={{ bg: 'teal.600', color: 'white' }}>
-              Embedded Widget
-            </Tab>
-            <Tab flex={1} fontSize="xs" _selected={{ bg: 'teal.600', color: 'white' }}>
-              External Link
-            </Tab>
-          </TabList>
+        {/* MoonPay Action */}
+        {!isSupported ? (
+          <Box bg="orange.900" borderRadius="lg" p={4} borderWidth="1px" borderColor="orange.700">
+            <Text fontSize="sm" color="orange.200">
+              {networkConfig?.name || 'This network'} is not currently supported by MoonPay.
+            </Text>
+            <Text fontSize="xs" color="orange.300" mt={2}>
+              Please select a different network.
+            </Text>
+          </Box>
+        ) : (
+          <VStack spacing={4} align="stretch">
+            <Box bg="#141414" borderRadius="xl" p={4} borderWidth="1px" borderColor="#2a2a2a">
+              <Text fontSize="sm" color="gray.400" mb={2}>
+                Buy {networkConfig?.symbol || 'crypto'} with credit card, debit card, or bank
+                transfer.
+              </Text>
+              <Text fontSize="xs" color="gray.500">
+                Opens MoonPay in a new tab. Funds will be sent directly to your wallet.
+              </Text>
+            </Box>
 
-          <TabPanels mt={4}>
-            {/* Embedded Widget Tab */}
-            <TabPanel p={0}>
-              {!isSupported ? (
-                <Box
-                  bg="orange.900"
-                  borderRadius="lg"
-                  p={4}
-                  borderWidth="1px"
-                  borderColor="orange.700"
-                >
-                  <Text fontSize="sm" color="orange.200">
-                    {networkConfig?.name || 'This network'} is not currently supported by MoonPay.
-                  </Text>
-                  <Text fontSize="xs" color="orange.300" mt={2}>
-                    Please select a different network.
-                  </Text>
-                </Box>
-              ) : !walletAddress ? (
-                <Box textAlign="center" py={8}>
-                  <Spinner size="lg" color="teal.400" />
-                  <Text color="gray.400" fontSize="sm" mt={3}>
-                    Preparing wallet address...
-                  </Text>
-                </Box>
-              ) : (
-                <MoonPayWidget
-                  flow="buy"
-                  cryptoCode={cryptoCode}
-                  walletAddress={walletAddress}
-                  colorCode="#14B8A6"
-                />
-              )}
-            </TabPanel>
-
-            {/* External Link Tab */}
-            <TabPanel p={0}>
-              <VStack spacing={4} align="stretch">
-                <Box bg="#141414" borderRadius="xl" p={4} borderWidth="1px" borderColor="#2a2a2a">
-                  <Text fontSize="sm" color="gray.400" mb={2}>
-                    Buy {networkConfig?.symbol || 'crypto'} with credit card, debit card, or bank
-                    transfer.
-                  </Text>
-                  <Text fontSize="xs" color="gray.500">
-                    Opens MoonPay in a new browser tab. Funds will be sent directly to your wallet.
-                  </Text>
-                </Box>
-
-                <Button
-                  colorScheme="teal"
-                  size="lg"
-                  onClick={handleOpenExternal}
-                  isDisabled={!isSupported || !walletAddress}
-                  leftIcon={<ExternalLinkIcon />}
-                >
-                  Open MoonPay
-                </Button>
-              </VStack>
-            </TabPanel>
-          </TabPanels>
-        </Tabs>
+            <Button
+              colorScheme="teal"
+              size="lg"
+              onClick={handleOpenMoonPay}
+              isDisabled={!walletAddress || loadingAddress}
+              leftIcon={<ExternalLinkIcon />}
+            >
+              {loadingAddress ? 'Loading...' : 'Buy with MoonPay'}
+            </Button>
+          </VStack>
+        )}
 
         {/* Footer */}
         <Box textAlign="center" pt={2}>

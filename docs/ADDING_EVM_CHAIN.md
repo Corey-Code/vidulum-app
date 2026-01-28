@@ -2,12 +2,26 @@
 
 This guide explains how to add a new EVM-compatible blockchain to The Extension Wallet.
 
+## Current EVM Support
+
+The wallet currently supports **native EVM tokens only** (ETH, BNB, etc.):
+
+| Feature | Status |
+|---------|--------|
+| Native token balance | ✅ Supported |
+| Native token transfers | ✅ Supported |
+| EIP-1559 gas estimation | ✅ Supported |
+| Key derivation (BIP44) | ✅ Supported |
+| ERC-20 tokens | ❌ Not implemented |
+| ERC-721/1155 NFTs | ❌ Not implemented |
+| Contract interactions | ❌ Not implemented |
+
 ## Prerequisites
 
 Before adding a chain, gather the following information:
 
 - EVM Chain ID (unique numeric identifier)
-- RPC endpoint URL
+- RPC endpoint URLs (multiple for failover)
 - Native currency details (name, symbol, decimals)
 - Block explorer URL
 
@@ -25,7 +39,11 @@ export const NEWCHAIN_MAINNET: EvmNetworkConfig = {
   decimals: 18,               // Usually 18 for EVM chains
   coinType: 60,               // Always 60 for EVM (Ethereum derivation)
   chainId: 12345,             // EVM chain ID
-  rpcUrl: 'https://rpc.newchain.io',
+  rpcUrls: [                  // Multiple URLs for failover (in order of preference)
+    'https://rpc.newchain.io',
+    'https://rpc2.newchain.io',
+    'https://rpc.ankr.com/newchain',
+  ],
   nativeCurrency: {
     name: 'New Token',
     symbol: 'NEW',
@@ -44,7 +62,7 @@ export const NEWCHAIN_MAINNET: EvmNetworkConfig = {
 | `id` | Unique internal identifier | `ethereum-mainnet` |
 | `name` | Human-readable name | `Ethereum` |
 | `chainId` | EVM chain ID | `1` |
-| `rpcUrl` | JSON-RPC endpoint | `https://eth.llamarpc.com` |
+| `rpcUrls` | JSON-RPC endpoints (array for failover) | `['https://eth.llamarpc.com', ...]` |
 | `symbol` | Native token ticker | `ETH` |
 | `decimals` | Token decimal places | `18` |
 | `coinType` | BIP44 coin type | `60` (always for EVM) |
@@ -74,7 +92,7 @@ export const EVM_NETWORKS: EvmNetworkConfig[] = [
 
 ## Step 3: Add Asset Definition
 
-In `src/lib/cosmos/chainRegistry.ts`, add to `evmAssets`:
+In `src/lib/assets/chainRegistry.ts`, add to `evmAssets`:
 
 ```typescript
 const evmAssets: Record<string, RegistryAsset[]> = {
@@ -174,15 +192,95 @@ Check that:
 
 All EVM chains use the same address format (0x...). If addresses look wrong, check the BIP44 derivation.
 
-## Adding ERC-20 Tokens
+## ERC-20 Token Support (Future)
 
-To add ERC-20 token support for a chain, you would need to:
+ERC-20 tokens are **not currently supported**. The wallet only displays and transfers native EVM tokens (ETH, BNB, etc.).
 
-1. Add token contract addresses to the asset definitions
-2. Implement ERC-20 balance fetching
-3. Implement ERC-20 transfer transactions
+### What Would Be Needed
 
-This is not currently implemented in the base wallet but can be added as a feature.
+To implement ERC-20 support, the following would be required:
+
+#### 1. Token Registry
+
+Add token contract addresses to `src/lib/assets/chainRegistry.ts`:
+
+```typescript
+const evmAssets: Record<string, RegistryAsset[]> = {
+  'ethereum-mainnet': [
+    {
+      symbol: 'ETH',
+      name: 'Ethereum',
+      denom: 'wei',
+      decimals: 18,
+      coingeckoId: 'ethereum',
+    },
+    // ERC-20 tokens would need contract address
+    {
+      symbol: 'USDC',
+      name: 'USD Coin',
+      denom: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // Contract address as denom
+      decimals: 6,
+      coingeckoId: 'usd-coin',
+      contractAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+    },
+  ],
+};
+```
+
+#### 2. Balance Fetching
+
+Add to `src/lib/evm/client.ts`:
+
+```typescript
+// ERC-20 ABI for balanceOf
+const ERC20_BALANCE_OF = '0x70a08231';
+
+async getERC20Balance(tokenAddress: string, walletAddress: string): Promise<bigint> {
+  // Encode: balanceOf(address)
+  const data = ERC20_BALANCE_OF + walletAddress.slice(2).padStart(64, '0');
+  
+  const result = await this.rpcCall<string>('eth_call', [
+    { to: tokenAddress, data },
+    'latest'
+  ]);
+  
+  return BigInt(result);
+}
+```
+
+#### 3. Token Transfers
+
+```typescript
+// ERC-20 ABI for transfer
+const ERC20_TRANSFER = '0xa9059cbb';
+
+buildERC20TransferData(recipient: string, amount: bigint): string {
+  return ERC20_TRANSFER +
+    recipient.slice(2).padStart(64, '0') +
+    amount.toString(16).padStart(64, '0');
+}
+```
+
+#### 4. Transaction Signing
+
+The wallet would need to build and sign transactions with contract call data instead of simple value transfers.
+
+### Implementation Complexity
+
+| Component | Effort | Notes |
+|-----------|--------|-------|
+| Balance fetching | Low | Simple `eth_call` |
+| Token registry | Medium | Need curated token lists |
+| Transfer UI | Medium | Token selection, approval flows |
+| Transaction signing | High | ABI encoding, gas estimation for contracts |
+| Token approvals | High | ERC-20 approve/allowance pattern |
+
+### Recommended Approach
+
+1. Start with a curated list of popular tokens per chain
+2. Implement read-only balance display first
+3. Add transfer functionality after balance display works
+4. Consider using a token list standard (e.g., Uniswap token lists)
 
 ## Testnet Configuration
 
@@ -193,12 +291,15 @@ export const NEWCHAIN_TESTNET: EvmNetworkConfig = {
   id: 'newchain-testnet',
   name: 'New Chain Testnet',
   type: 'evm',
-  enabled: false,             // Disabled by default
+  enabled: false,             // Testnets disabled by default
   symbol: 'tNEW',
   decimals: 18,
   coinType: 60,
   chainId: 12346,             // Testnet chain ID
-  rpcUrl: 'https://testnet-rpc.newchain.io',
+  rpcUrls: [
+    'https://testnet-rpc.newchain.io',
+    'https://testnet.publicnode.com/newchain',
+  ],
   nativeCurrency: {
     name: 'Test New Token',
     symbol: 'tNEW',
@@ -209,3 +310,25 @@ export const NEWCHAIN_TESTNET: EvmNetworkConfig = {
   explorerTxPath: '/tx/{txHash}',
 };
 ```
+
+## Architecture Overview
+
+The EVM implementation consists of:
+
+| File | Purpose |
+|------|---------|
+| `src/lib/networks/evm.ts` | Network configurations |
+| `src/lib/evm/client.ts` | JSON-RPC client with failover |
+| `src/lib/crypto/evm.ts` | Key derivation and address generation |
+| `src/lib/assets/chainRegistry.ts` | Asset definitions (native tokens only) |
+
+### Key Derivation
+
+All EVM chains use the same derivation path: `m/44'/60'/0'/0/index`
+
+This means the same private key/address works across all EVM chains. The wallet derives keys using:
+
+1. BIP39 mnemonic → seed
+2. BIP32 derivation with coin type 60
+3. Keccak256 hash of public key → address
+4. EIP-55 checksum formatting

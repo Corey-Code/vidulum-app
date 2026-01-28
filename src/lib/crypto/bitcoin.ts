@@ -87,6 +87,22 @@ export const UTXO_NETWORKS = {
     wif: 0x9e,
     coinType: 3,
   },
+  // Ritocoin - R addresses (Ravencoin fork)
+  'ritocoin-mainnet': {
+    name: 'Ritocoin',
+    pubKeyHash: 0x19, // R addresses (25)
+    scriptHash: 0x69, // r addresses (105)
+    wif: 0x80,
+    coinType: 175, // Uses Ravencoin's coin type
+  },
+  // NOSO - X addresses (Dash fork)
+  'noso-mainnet': {
+    name: 'NOSO',
+    pubKeyHash: 0x4c, // X addresses (76, like Dash)
+    scriptHash: 0x10, // 7 addresses (16, like Dash)
+    wif: 0xcc,
+    coinType: 5, // Uses Dash's coin type
+  },
 } as const;
 
 export type UtxoNetworkId = keyof typeof UTXO_NETWORKS;

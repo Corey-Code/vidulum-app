@@ -1,6 +1,9 @@
 import browser from 'webextension-polyfill';
 import { KeyringAccount } from '@/lib/crypto/keyring';
 
+// Current storage version - increment when schema changes
+const CURRENT_STORAGE_VERSION = 1;
+
 // Serializable version of KeyringAccount (Uint8Array -> base64 string)
 interface SerializedAccount {
   id: string;
@@ -12,7 +15,14 @@ interface SerializedAccount {
   accountIndex: number;
 }
 
+interface ImportedAccount {
+  account: SerializedAccount;
+  encryptedMnemonic: string;
+  salt: string;
+}
+
 interface StoredWallet {
+  version: number;
   encryptedMnemonic: string;
   salt: string;
   accounts: SerializedAccount[];
@@ -20,16 +30,98 @@ interface StoredWallet {
   importedAccounts?: ImportedAccount[];
 }
 
-interface ImportedAccount {
-  account: SerializedAccount;
+// Legacy wallet format (before versioning)
+interface LegacyStoredWallet {
   encryptedMnemonic: string;
   salt: string;
+  accounts: SerializedAccount[];
+  importedAccounts?: ImportedAccount[];
+}
+
+/**
+ * Migration functions to upgrade storage from version N to N+1
+ * Each migration receives the data at version N and returns data at version N+1
+ */
+type MigrationFn = (data: any) => any;
+
+const MIGRATIONS: Record<number, MigrationFn> = {
+  // Migration from unversioned (legacy) to version 1
+  // This is a no-op since the schema is the same, just adds version field
+  0: (data: LegacyStoredWallet): StoredWallet => ({
+    ...data,
+    version: 1,
+  }),
+
+  // Future migrations go here:
+  // 1: (data: StoredWalletV1): StoredWalletV2 => { ... },
+  // 2: (data: StoredWalletV2): StoredWalletV3 => { ... },
+};
+
+/**
+ * Migrate stored wallet data to the current version
+ */
+function migrateWalletData(data: any): StoredWallet {
+  // Determine current version (unversioned data is version 0)
+  let currentVersion = data.version ?? 0;
+
+  // Run migrations sequentially until we reach the current version
+  while (currentVersion < CURRENT_STORAGE_VERSION) {
+    const migration = MIGRATIONS[currentVersion];
+    if (!migration) {
+      throw new Error(`No migration found for version ${currentVersion}`);
+    }
+
+    console.log(`Migrating wallet data from version ${currentVersion} to ${currentVersion + 1}`);
+    data = migration(data);
+    currentVersion = data.version;
+  }
+
+  return data as StoredWallet;
+}
+
+// Preferences also get versioning for future-proofing
+interface StoredPreferences {
+  version: number;
+  selectedAccountId?: string;
+  selectedChainId?: string;
+  autoLockMinutes?: number;
+}
+
+const CURRENT_PREFERENCES_VERSION = 1;
+
+const PREFERENCES_MIGRATIONS: Record<number, MigrationFn> = {
+  // Migration from unversioned to version 1
+  0: (data: any): StoredPreferences => ({
+    ...data,
+    version: 1,
+  }),
+};
+
+function migratePreferencesData(data: any): StoredPreferences {
+  let currentVersion = data.version ?? 0;
+
+  while (currentVersion < CURRENT_PREFERENCES_VERSION) {
+    const migration = PREFERENCES_MIGRATIONS[currentVersion];
+    if (!migration) {
+      throw new Error(`No preferences migration found for version ${currentVersion}`);
+    }
+
+    console.log(`Migrating preferences from version ${currentVersion} to ${currentVersion + 1}`);
+    data = migration(data);
+    currentVersion = data.version;
+  }
+
+  return data as StoredPreferences;
 }
 
 export class EncryptedStorage {
   private static readonly WALLET_KEY = 'vidulum_app';
   private static readonly SESSION_KEY = 'vidulum_session';
   private static readonly PREFERENCES_KEY = 'vidulum_preferences';
+
+  // Expose current versions for debugging/diagnostics
+  static readonly WALLET_VERSION = CURRENT_STORAGE_VERSION;
+  static readonly PREFERENCES_VERSION = CURRENT_PREFERENCES_VERSION;
 
   // Convert Uint8Array to base64 string
   private static uint8ArrayToBase64(arr: Uint8Array): string {
@@ -77,6 +169,7 @@ export class EncryptedStorage {
     const encryptedMnemonic = await this.encrypt(mnemonic, key);
 
     const wallet: StoredWallet = {
+      version: CURRENT_STORAGE_VERSION,
       encryptedMnemonic,
       salt,
       accounts: accounts.map((acc) => this.serializeAccount(acc)),
@@ -90,11 +183,22 @@ export class EncryptedStorage {
     accounts: KeyringAccount[];
   } | null> {
     const result = await browser.storage.local.get(this.WALLET_KEY);
-    const wallet = result[this.WALLET_KEY] as StoredWallet | undefined;
+    let wallet = result[this.WALLET_KEY] as StoredWallet | LegacyStoredWallet | undefined;
 
     if (!wallet) {
       return null;
     }
+
+    // Run migrations if needed
+    const migratedWallet = migrateWalletData(wallet);
+
+    // Save migrated data if version changed
+    if (migratedWallet.version !== (wallet as any).version) {
+      await browser.storage.local.set({ [this.WALLET_KEY]: migratedWallet });
+      console.log(`Wallet data migrated to version ${migratedWallet.version}`);
+    }
+
+    wallet = migratedWallet;
 
     const key = await this.deriveKey(password, wallet.salt);
     const mnemonic = await this.decrypt(wallet.encryptedMnemonic, key);
@@ -113,28 +217,33 @@ export class EncryptedStorage {
   // Load just the account metadata (no password required - no mnemonic returned)
   static async loadWalletMetadata(): Promise<{ accounts: KeyringAccount[] } | null> {
     const result = await browser.storage.local.get(this.WALLET_KEY);
-    const wallet = result[this.WALLET_KEY] as StoredWallet | undefined;
+    let wallet = result[this.WALLET_KEY] as StoredWallet | LegacyStoredWallet | undefined;
 
     if (!wallet) {
       return null;
     }
 
+    // Run migrations if needed (note: full migration saved on next unlock)
+    const migratedWallet = migrateWalletData(wallet);
+
     return {
-      accounts: wallet.accounts.map((acc) => this.deserializeAccount(acc)),
+      accounts: migratedWallet.accounts.map((acc) => this.deserializeAccount(acc)),
     };
   }
 
   // Update only the accounts list without re-encrypting the mnemonic
   static async updateAccounts(accounts: KeyringAccount[]): Promise<void> {
     const result = await browser.storage.local.get(this.WALLET_KEY);
-    const wallet = result[this.WALLET_KEY] as StoredWallet | undefined;
+    let wallet = result[this.WALLET_KEY] as StoredWallet | LegacyStoredWallet | undefined;
 
     if (!wallet) {
       throw new Error('No wallet found');
     }
 
-    wallet.accounts = accounts.map((acc) => this.serializeAccount(acc));
-    await browser.storage.local.set({ [this.WALLET_KEY]: wallet });
+    // Ensure wallet is migrated
+    const migratedWallet = migrateWalletData(wallet);
+    migratedWallet.accounts = accounts.map((acc) => this.serializeAccount(acc));
+    await browser.storage.local.set({ [this.WALLET_KEY]: migratedWallet });
   }
 
   static async deleteWallet(): Promise<void> {
@@ -149,11 +258,14 @@ export class EncryptedStorage {
     account: KeyringAccount
   ): Promise<void> {
     const result = await browser.storage.local.get(this.WALLET_KEY);
-    const wallet = result[this.WALLET_KEY] as StoredWallet | undefined;
+    let wallet = result[this.WALLET_KEY] as StoredWallet | LegacyStoredWallet | undefined;
 
     if (!wallet) {
       throw new Error('No wallet found');
     }
+
+    // Ensure wallet is migrated
+    const migratedWallet = migrateWalletData(wallet);
 
     const salt = this.generateSalt();
     const key = await this.deriveKey(password, salt);
@@ -165,22 +277,29 @@ export class EncryptedStorage {
       salt,
     };
 
-    wallet.importedAccounts = wallet.importedAccounts || [];
-    wallet.importedAccounts.push(importedAccount);
+    migratedWallet.importedAccounts = migratedWallet.importedAccounts || [];
+    migratedWallet.importedAccounts.push(importedAccount);
 
-    await browser.storage.local.set({ [this.WALLET_KEY]: wallet });
+    await browser.storage.local.set({ [this.WALLET_KEY]: migratedWallet });
   }
 
   // Load all imported accounts (returns accounts without decrypting mnemonics)
   static async getImportedAccounts(): Promise<KeyringAccount[]> {
     const result = await browser.storage.local.get(this.WALLET_KEY);
-    const wallet = result[this.WALLET_KEY] as StoredWallet | undefined;
+    const wallet = result[this.WALLET_KEY] as StoredWallet | LegacyStoredWallet | undefined;
 
-    if (!wallet || !wallet.importedAccounts) {
+    if (!wallet) {
       return [];
     }
 
-    return wallet.importedAccounts.map((imp) => this.deserializeAccount(imp.account));
+    // Run migrations if needed
+    const migratedWallet = migrateWalletData(wallet);
+
+    if (!migratedWallet.importedAccounts) {
+      return [];
+    }
+
+    return migratedWallet.importedAccounts.map((imp) => this.deserializeAccount(imp.account));
   }
 
   // Get the mnemonic for an imported account (for signing)
@@ -189,13 +308,22 @@ export class EncryptedStorage {
     password: string
   ): Promise<string | null> {
     const result = await browser.storage.local.get(this.WALLET_KEY);
-    const wallet = result[this.WALLET_KEY] as StoredWallet | undefined;
+    const wallet = result[this.WALLET_KEY] as StoredWallet | LegacyStoredWallet | undefined;
 
-    if (!wallet || !wallet.importedAccounts) {
+    if (!wallet) {
       return null;
     }
 
-    const imported = wallet.importedAccounts.find((imp) => imp.account.address === address);
+    // Run migrations if needed
+    const migratedWallet = migrateWalletData(wallet);
+
+    if (!migratedWallet.importedAccounts) {
+      return null;
+    }
+
+    const imported = migratedWallet.importedAccounts.find(
+      (imp) => imp.account.address === address
+    );
 
     if (!imported) {
       return null;
@@ -238,8 +366,13 @@ export class EncryptedStorage {
     autoLockMinutes?: number;
   }): Promise<void> {
     const current = await this.getPreferences();
+    const updated: StoredPreferences = {
+      ...current,
+      ...preferences,
+      version: CURRENT_PREFERENCES_VERSION,
+    };
     await browser.storage.local.set({
-      [this.PREFERENCES_KEY]: { ...current, ...preferences },
+      [this.PREFERENCES_KEY]: updated,
     });
   }
 
@@ -249,7 +382,22 @@ export class EncryptedStorage {
     autoLockMinutes?: number;
   }> {
     const result = await browser.storage.local.get(this.PREFERENCES_KEY);
-    return result[this.PREFERENCES_KEY] || {};
+    const prefs = result[this.PREFERENCES_KEY];
+
+    if (!prefs) {
+      return {};
+    }
+
+    // Run migrations if needed
+    const migratedPrefs = migratePreferencesData(prefs);
+
+    // Save migrated data if version changed
+    if (migratedPrefs.version !== prefs.version) {
+      await browser.storage.local.set({ [this.PREFERENCES_KEY]: migratedPrefs });
+      console.log(`Preferences migrated to version ${migratedPrefs.version}`);
+    }
+
+    return migratedPrefs;
   }
 
   // Last activity tracking for auto-lock

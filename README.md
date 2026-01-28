@@ -27,7 +27,9 @@ Free Open-Source browser extension wallet built by the people, for the people.
 | Zcash     | zcash-mainnet     | ZEC    | t1... (Transparent) | Enabled |
 | Flux      | flux-mainnet      | FLUX   | t1... (Transparent) | Enabled |
 | Ravencoin | ravencoin-mainnet | RVN    | R... (P2PKH)        | Enabled |
+| Ritocoin  | ritocoin-mainnet  | RITO   | R... (P2PKH)        | Enabled |
 | BitcoinZ  | bitcoinz-mainnet  | BTCZ   | t1... (Transparent) | Enabled |
+| NOSO      | noso-mainnet      | NOSO   | X... (P2PKH)        | Enabled |
 
 ### EVM Chains
 
