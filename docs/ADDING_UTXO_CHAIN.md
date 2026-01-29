@@ -10,7 +10,7 @@ Before adding a chain, gather the following information:
 - Address version bytes (pubKeyHash, scriptHash)
 - Bech32 prefix (if SegWit supported)
 - WIF version byte
-- Block explorer API URL
+- Block explorer API URLs (multiple for failover)
 - Address format type
 
 ## Step 1: Define Network Configuration
@@ -24,15 +24,19 @@ export const NEWCOIN_MAINNET: BitcoinNetworkConfig = {
   type: 'bitcoin',
   enabled: true,
   symbol: 'NEW',
-  decimals: 8,                    // Usually 8 for UTXO chains
-  coinType: 123,                  // BIP44 coin type (unique per chain)
+  decimals: 8, // Usually 8 for UTXO chains
+  coinType: 123, // BIP44 coin type (unique per chain)
   network: 'mainnet',
-  apiUrl: 'https://api.newcoin.io/api',
-  addressType: 'p2pkh',           // See address types below
+  apiUrls: [
+    // Array of API endpoints (in failover order)
+    'https://api.newcoin.io/api',
+    'https://backup-api.newcoin.io/api',
+  ],
+  addressType: 'p2pkh', // See address types below
   addressPrefix: {
-    pubKeyHash: 0x00,             // Version byte for P2PKH addresses
-    scriptHash: 0x05,             // Version byte for P2SH addresses
-    bech32: 'nc',                 // Bech32 HRP (optional, for SegWit)
+    pubKeyHash: 0x00, // Version byte for P2PKH addresses
+    scriptHash: 0x05, // Version byte for P2SH addresses
+    bech32: 'nc', // Bech32 HRP (optional, for SegWit)
   },
   explorerUrl: 'https://explorer.newcoin.io',
   explorerAccountPath: '/address/{address}',
@@ -40,14 +44,28 @@ export const NEWCOIN_MAINNET: BitcoinNetworkConfig = {
 };
 ```
 
+### Configuration Fields
+
+| Field           | Description                        | Example                                 |
+| --------------- | ---------------------------------- | --------------------------------------- |
+| `id`            | Unique network identifier          | `bitcoin-mainnet`                       |
+| `name`          | Human-readable name                | `Bitcoin`                               |
+| `symbol`        | Native token ticker                | `BTC`                                   |
+| `decimals`      | Token decimal places               | `8`                                     |
+| `coinType`      | BIP44 coin type                    | `0`                                     |
+| `network`       | Network type                       | `mainnet` or `testnet`                  |
+| `apiUrls`       | API endpoints (array for failover) | `['https://blockstream.info/api', ...]` |
+| `addressType`   | Default address format             | `p2wpkh`, `p2pkh`, `transparent`        |
+| `addressPrefix` | Address version bytes              | See below                               |
+
 ### Address Types
 
-| Type | Description | Example Addresses |
-|------|-------------|-------------------|
-| `p2wpkh` | Native SegWit | bc1q..., ltc1... |
-| `p2sh-p2wpkh` | Nested SegWit | 3..., M... |
-| `p2pkh` | Legacy | 1..., L..., D..., R... |
-| `transparent` | Zcash-style transparent | t1... |
+| Type          | Description             | Example Addresses      |
+| ------------- | ----------------------- | ---------------------- |
+| `p2wpkh`      | Native SegWit           | bc1q..., ltc1...       |
+| `p2sh-p2wpkh` | Nested SegWit           | 3..., M...             |
+| `p2pkh`       | Legacy                  | 1..., L..., D..., R... |
+| `transparent` | Zcash-style transparent | t1...                  |
 
 ### Address Prefix Formats
 
@@ -92,11 +110,11 @@ export const UTXO_CHAIN_PARAMS = {
   // ... existing chains
   'newcoin-mainnet': {
     name: 'New Coin',
-    bech32: 'nc',           // Optional, only if SegWit supported
-    pubKeyHash: 0x00,       // P2PKH version byte
-    scriptHash: 0x05,       // P2SH version byte
-    wif: 0x80,              // WIF version byte
-    coinType: 123,          // BIP44 coin type
+    bech32: 'nc', // Optional, only if SegWit supported
+    pubKeyHash: 0x00, // P2PKH version byte
+    scriptHash: 0x05, // P2SH version byte
+    wif: 0x80, // WIF version byte
+    coinType: 123, // BIP44 coin type
   },
 };
 ```
@@ -124,7 +142,7 @@ const bitcoinAssets: Record<string, RegistryAsset[]> = {
     {
       symbol: 'NEW',
       name: 'New Coin',
-      denom: 'newatoshi',     // Base unit name (smallest denomination)
+      denom: 'newatoshi', // Base unit name (smallest denomination)
       decimals: 8,
       coingeckoId: 'newcoin', // For price data
     },
@@ -137,7 +155,7 @@ const bitcoinAssets: Record<string, RegistryAsset[]> = {
 ```typescript
 const tokenColors: Record<string, string> = {
   // ... existing colors
-  NEW: '#F7931A',  // Use a distinctive hex color
+  NEW: '#F7931A', // Use a distinctive hex color
 };
 ```
 
@@ -149,27 +167,27 @@ Official registry: https://github.com/satoshilabs/slips/blob/master/slip-0044.md
 
 Common coin types:
 
-| Chain | Coin Type |
-|-------|-----------|
-| Bitcoin | 0 |
-| Litecoin | 2 |
-| Dogecoin | 3 |
-| Dash | 5 |
-| Zcash | 133 |
-| Ravencoin | 175 |
-| BitcoinZ | 177 |
+| Chain     | Coin Type |
+| --------- | --------- |
+| Bitcoin   | 0         |
+| Litecoin  | 2         |
+| Dogecoin  | 3         |
+| Dash      | 5         |
+| Zcash     | 133       |
+| Ravencoin | 175       |
+| BitcoinZ  | 177       |
 
 ### Address Version Bytes
 
 Common prefixes:
 
-| Chain | pubKeyHash | scriptHash | Bech32 |
-|-------|------------|------------|--------|
-| Bitcoin | 0x00 | 0x05 | bc |
-| Litecoin | 0x30 | 0x32 | ltc |
-| Dogecoin | 0x1e | 0x16 | - |
-| Ravencoin | 0x3c | 0x7a | - |
-| Zcash | 0x1cb8 | 0x1cbd | - |
+| Chain     | pubKeyHash | scriptHash | Bech32 |
+| --------- | ---------- | ---------- | ------ |
+| Bitcoin   | 0x00       | 0x05       | bc     |
+| Litecoin  | 0x30       | 0x32       | ltc    |
+| Dogecoin  | 0x1e       | 0x16       | -      |
+| Ravencoin | 0x3c       | 0x7a       | -      |
+| Zcash     | 0x1cb8     | 0x1cbd     | -      |
 
 ### Finding Parameters for Unknown Chains
 
@@ -191,6 +209,21 @@ GET /fee-estimates                  - Get fee rates (optional)
 
 If the chain uses a different API format, you may need to add an adapter in `src/lib/bitcoin/client.ts`.
 
+### Endpoint Failover
+
+The wallet automatically handles endpoint failover:
+
+- Endpoints are tried in order of preference (first in array = highest priority)
+- Failed endpoints are temporarily marked unhealthy
+- Healthy endpoints are preferred for subsequent requests
+- Include at least 2 endpoints for reliability when possible
+
+**Common API providers:**
+
+- Blockstream API (Bitcoin, Liquid)
+- Mempool.space (Bitcoin)
+- Chain-specific explorers (varies by chain)
+
 ## Testing
 
 After adding the chain:
@@ -207,6 +240,7 @@ After adding the chain:
 ### Wrong Address Format
 
 Check that `addressType` matches your configuration:
+
 - SegWit chains: use `p2wpkh` and ensure `bech32` is set
 - Legacy chains: use `p2pkh`
 - Zcash-forks: use `transparent` with two-byte prefix
@@ -218,5 +252,6 @@ Verify the `coinType` matches the BIP44 specification for the chain.
 ### API Compatibility
 
 Not all block explorers provide compatible APIs. You may need to:
+
 - Find a compatible API provider
 - Add custom API handling in the client code
