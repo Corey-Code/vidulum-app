@@ -5,7 +5,7 @@ import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import * as bip39 from 'bip39';
 
 export interface DerivedKey {
-  privateKey: Uint8Array;
+  privateKey?: Uint8Array;
   publicKey: Uint8Array;
   address: string;
 }
@@ -67,11 +67,12 @@ export class MnemonicManager {
 
     const account = accounts[0];
 
-    // We can't get the private key from DirectSecp256k1HdWallet directly
-    // This is a security feature. For display purposes, we'll return empty array
-    // The actual signing will be done through the wallet methods
+    // Note: privateKey is not exposed by CosmJS DirectSecp256k1HdWallet
+    // as a security feature. Use the wallet's signing methods instead of
+    // accessing private keys directly. The privateKey field is intentionally
+    // undefined to prevent misuse.
     return {
-      privateKey: new Uint8Array(32), // Placeholder - not exposed by CosmJS
+      privateKey: undefined,
       publicKey: account.pubkey,
       address: account.address,
     };
