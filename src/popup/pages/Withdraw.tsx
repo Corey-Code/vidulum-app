@@ -37,8 +37,8 @@ const MOONPAY_SELL_CODES: Record<string, string> = {
 // Default network for withdrawals
 const DEFAULT_WITHDRAW_NETWORK = 'base-mainnet';
 
-// MoonPay API Key (must be provided via environment; no test key fallback)
-const MOONPAY_API_KEY = import.meta.env.VITE_MOONPAY_API_KEY;
+// MoonPay API Key (must be provided via VITE_MOONPAY_API_KEY; empty string disables MoonPay)
+const MOONPAY_API_KEY = import.meta.env.VITE_MOONPAY_API_KEY ?? '';
 
 interface WithdrawProps {
   onBack: () => void;
@@ -67,9 +67,7 @@ const Withdraw: React.FC<WithdrawProps> = ({ onBack }) => {
   // Validate and update selected network when preferences load or supported networks change
   useEffect(() => {
     if (networkPrefsLoaded && supportedNetworks.length > 0) {
-      const isSelectedNetworkAvailable = supportedNetworks.some(
-        (n) => n.id === selectedNetwork
-      );
+      const isSelectedNetworkAvailable = supportedNetworks.some((n) => n.id === selectedNetwork);
       if (!isSelectedNetworkAvailable) {
         setSelectedNetwork(supportedNetworks[0].id);
       }
@@ -200,91 +198,97 @@ const Withdraw: React.FC<WithdrawProps> = ({ onBack }) => {
               </Select>
             </Box>
 
-        {/* Refund Address Display */}
-        <Box>
-          <HStack justify="space-between" mb={2}>
-            <Text fontSize="sm" color="gray.400">
-              Refund Address
-            </Text>
-            {walletAddress && (
-              <IconButton
-                aria-label="Copy address"
-                icon={<CopyIcon />}
-                size="xs"
-                variant="ghost"
-                color="gray.500"
-                _hover={{ color: 'orange.400' }}
-                onClick={handleCopyAddress}
-              />
-            )}
-          </HStack>
-          <Box
-            bg="#141414"
-            borderRadius="lg"
-            p={2}
-            borderWidth="1px"
-            borderColor="#2a2a2a"
-            fontFamily="mono"
-            fontSize="xs"
-            wordBreak="break-all"
-          >
-            {loadingAddress ? <Spinner size="sm" /> : walletAddress || 'No address available'}
-          </Box>
-          <Text fontSize="xs" color="gray.600" mt={1}>
-            Used if the sale fails or is cancelled
-          </Text>
-        </Box>
-
-        {/* Important Notes */}
-        <Box bg="#1a1a1a" borderRadius="lg" p={3} borderWidth="1px" borderColor="#2a2a2a">
-          <Text fontSize="xs" color="orange.400" fontWeight="medium" mb={1}>
-            Important:
-          </Text>
-          <VStack align="start" spacing={0.5}>
-            <Text fontSize="xs" color="gray.500">
-              • KYC verification required
-            </Text>
-            <Text fontSize="xs" color="gray.500">
-              • You'll send crypto to MoonPay's address
-            </Text>
-            <Text fontSize="xs" color="gray.500">
-              • Fiat is deposited to your bank account
-            </Text>
-          </VStack>
-        </Box>
-
-        {/* MoonPay Action */}
-        {!isSupported ? (
-          <Box bg="orange.900" borderRadius="lg" p={4} borderWidth="1px" borderColor="orange.700">
-            <Text fontSize="sm" color="orange.200">
-              {networkConfig?.name || 'This network'} is not supported for selling via MoonPay.
-            </Text>
-            <Text fontSize="xs" color="orange.300" mt={2}>
-              Sell support is limited to major cryptocurrencies.
-            </Text>
-          </Box>
-        ) : (
-          <VStack spacing={4} align="stretch">
-            <Box bg="#141414" borderRadius="xl" p={4} borderWidth="1px" borderColor="#2a2a2a">
-              <Text fontSize="sm" color="gray.400" mb={2}>
-                Sell {networkConfig?.symbol || 'crypto'} and receive funds to your bank account.
-              </Text>
-              <Text fontSize="xs" color="gray.500">
-                Opens MoonPay in a new tab to complete the sale.
+            {/* Refund Address Display */}
+            <Box>
+              <HStack justify="space-between" mb={2}>
+                <Text fontSize="sm" color="gray.400">
+                  Refund Address
+                </Text>
+                {walletAddress && (
+                  <IconButton
+                    aria-label="Copy address"
+                    icon={<CopyIcon />}
+                    size="xs"
+                    variant="ghost"
+                    color="gray.500"
+                    _hover={{ color: 'orange.400' }}
+                    onClick={handleCopyAddress}
+                  />
+                )}
+              </HStack>
+              <Box
+                bg="#141414"
+                borderRadius="lg"
+                p={2}
+                borderWidth="1px"
+                borderColor="#2a2a2a"
+                fontFamily="mono"
+                fontSize="xs"
+                wordBreak="break-all"
+              >
+                {loadingAddress ? <Spinner size="sm" /> : walletAddress || 'No address available'}
+              </Box>
+              <Text fontSize="xs" color="gray.600" mt={1}>
+                Used if the sale fails or is cancelled
               </Text>
             </Box>
 
-            <Button
-              colorScheme="orange"
-              size="lg"
-              onClick={handleOpenMoonPay}
-              isDisabled={!walletAddress || loadingAddress}
-              leftIcon={<ExternalLinkIcon />}
-            >
-              {loadingAddress ? 'Loading...' : 'Sell with MoonPay'}
-            </Button>
-          </VStack>
-        )}
+            {/* Important Notes */}
+            <Box bg="#1a1a1a" borderRadius="lg" p={3} borderWidth="1px" borderColor="#2a2a2a">
+              <Text fontSize="xs" color="orange.400" fontWeight="medium" mb={1}>
+                Important:
+              </Text>
+              <VStack align="start" spacing={0.5}>
+                <Text fontSize="xs" color="gray.500">
+                  • KYC verification required
+                </Text>
+                <Text fontSize="xs" color="gray.500">
+                  • You'll send crypto to MoonPay's address
+                </Text>
+                <Text fontSize="xs" color="gray.500">
+                  • Fiat is deposited to your bank account
+                </Text>
+              </VStack>
+            </Box>
+
+            {/* MoonPay Action */}
+            {!isSupported ? (
+              <Box
+                bg="orange.900"
+                borderRadius="lg"
+                p={4}
+                borderWidth="1px"
+                borderColor="orange.700"
+              >
+                <Text fontSize="sm" color="orange.200">
+                  {networkConfig?.name || 'This network'} is not supported for selling via MoonPay.
+                </Text>
+                <Text fontSize="xs" color="orange.300" mt={2}>
+                  Sell support is limited to major cryptocurrencies.
+                </Text>
+              </Box>
+            ) : (
+              <VStack spacing={4} align="stretch">
+                <Box bg="#141414" borderRadius="xl" p={4} borderWidth="1px" borderColor="#2a2a2a">
+                  <Text fontSize="sm" color="gray.400" mb={2}>
+                    Sell {networkConfig?.symbol || 'crypto'} and receive funds to your bank account.
+                  </Text>
+                  <Text fontSize="xs" color="gray.500">
+                    Opens MoonPay in a new tab to complete the sale.
+                  </Text>
+                </Box>
+
+                <Button
+                  colorScheme="orange"
+                  size="lg"
+                  onClick={handleOpenMoonPay}
+                  isDisabled={!walletAddress || loadingAddress}
+                  leftIcon={<ExternalLinkIcon />}
+                >
+                  {loadingAddress ? 'Loading...' : 'Sell with MoonPay'}
+                </Button>
+              </VStack>
+            )}
 
             {/* Footer */}
             <Box textAlign="center" pt={2}>
