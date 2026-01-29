@@ -26,18 +26,11 @@ export class MnemonicManager {
   }
 
   static validateMnemonic(mnemonic: string): boolean {
-    console.log('Validating mnemonic...');
-    console.log('Mnemonic:', mnemonic);
-    console.log('Word count:', mnemonic.split(' ').length);
-
     try {
       // Use CosmJS EnglishMnemonic which has built-in validation
       new EnglishMnemonic(mnemonic);
-      console.log('CosmJS validation result: true');
       return true;
-    } catch (error) {
-      console.log('CosmJS validation result: false');
-      console.log('Validation error:', error instanceof Error ? error.message : error);
+    } catch (_error) {
       return false;
     }
   }
