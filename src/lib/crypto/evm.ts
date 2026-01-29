@@ -45,39 +45,60 @@ function deriveChild(
   index: number,
   hardened: boolean = false
 ): { key: Uint8Array; chainCode: Uint8Array } {
-  const data = new Uint8Array(37);
-  
-  if (hardened) {
-    // Hardened derivation: 0x00 || private key || index
-    data[0] = 0x00;
-    data.set(parentKey, 1);
-    const indexBytes = new Uint8Array(4);
-    new DataView(indexBytes.buffer).setUint32(0, index + 0x80000000, false);
-    data.set(indexBytes, 33);
-  } else {
-    // Normal derivation: public key || index
-    const pubKey = secp256k1.getPublicKey(parentKey, true);
-    data.set(pubKey, 0);
-    const indexBytes = new Uint8Array(4);
-    new DataView(indexBytes.buffer).setUint32(0, index, false);
-    data.set(indexBytes, 33);
-  }
-  
-  const I = hmac(sha512, parentChainCode, data);
-  const IL = I.slice(0, 32);
-  const IR = I.slice(32);
-  
-  // Add IL to parent key (mod n)
+  // Curve order for secp256k1
   const n = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
   const parentBig = BigInt('0x' + Buffer.from(parentKey).toString('hex'));
-  const ILBig = BigInt('0x' + Buffer.from(IL).toString('hex'));
-  const childKey = (parentBig + ILBig) % n;
-  
-  const keyHex = childKey.toString(16).padStart(64, '0');
-  return {
-    key: new Uint8Array(Buffer.from(keyHex, 'hex')),
-    chainCode: IR,
-  };
+  let currentIndex = index;
+
+  // Retry derivation with subsequent indices if we hit invalid values as per BIP32
+  for (let attempts = 0; attempts < 1000; attempts++) {
+    const data = new Uint8Array(37);
+
+    if (hardened) {
+      // Hardened derivation: 0x00 || private key || (index + 0x80000000)
+      data[0] = 0x00;
+      data.set(parentKey, 1);
+      const indexBytes = new Uint8Array(4);
+      new DataView(indexBytes.buffer).setUint32(0, currentIndex + 0x80000000, false);
+      data.set(indexBytes, 33);
+    } else {
+      // Normal derivation: public key || index
+      const pubKey = secp256k1.getPublicKey(parentKey, true);
+      data.set(pubKey, 0);
+      const indexBytes = new Uint8Array(4);
+      new DataView(indexBytes.buffer).setUint32(0, currentIndex, false);
+      data.set(indexBytes, 33);
+    }
+
+    const I = hmac(sha512, parentChainCode, data);
+    const IL = I.slice(0, 32);
+    const IR = I.slice(32);
+
+    const ILBig = BigInt('0x' + Buffer.from(IL).toString('hex'));
+
+    // BIP32: if IL == 0 or IL >= n, discard this child and try next index
+    if (ILBig === 0n || ILBig >= n) {
+      currentIndex++;
+      continue;
+    }
+
+    // Add IL to parent key (mod n)
+    const childKey = (parentBig + ILBig) % n;
+
+    // BIP32: if resulting key == 0, discard this child and try next index
+    if (childKey === 0n) {
+      currentIndex++;
+      continue;
+    }
+
+    const keyHex = childKey.toString(16).padStart(64, '0');
+    return {
+      key: new Uint8Array(Buffer.from(keyHex, 'hex')),
+      chainCode: IR,
+    };
+  }
+
+  throw new Error('Unable to derive valid child key after multiple attempts');
 }
 
 /**
