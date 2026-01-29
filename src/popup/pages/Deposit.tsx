@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   VStack,
@@ -87,10 +87,25 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
   }, [networkPrefsLoaded, loadPreferences]);
 
   // Get supported networks for MoonPay - filter by user preferences
-  const supportedNetworks = networkRegistry
-    .getAll()
-    .filter((n) => isNetworkEnabled(n.id))
-    .filter((n) => MOONPAY_CRYPTO_CODES[n.id] && MOONPAY_CRYPTO_CODES[n.id] !== '');
+  const supportedNetworks = useMemo(
+    () =>
+      networkRegistry
+        .getAll()
+        .filter((n) => isNetworkEnabled(n.id))
+        .filter((n) => MOONPAY_CRYPTO_CODES[n.id] && MOONPAY_CRYPTO_CODES[n.id] !== ''),
+    [isNetworkEnabled]
+  );
+
+  // Ensure selected network is valid; if disabled, select the first available
+  useEffect(() => {
+    if (
+      networkPrefsLoaded &&
+      supportedNetworks.length > 0 &&
+      !supportedNetworks.some((n) => n.id === selectedNetwork)
+    ) {
+      setSelectedNetwork(supportedNetworks[0].id);
+    }
+  }, [networkPrefsLoaded, supportedNetworks, selectedNetwork]);
 
   // Get current network config
   const networkConfig = networkRegistry.get(selectedNetwork);
