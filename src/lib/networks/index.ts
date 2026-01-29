@@ -1,6 +1,6 @@
 /**
  * Networks Module
- * 
+ *
  * Central export point for all network-related functionality.
  */
 
@@ -24,19 +24,9 @@ export {
   COSMOS_NETWORKS,
 } from './cosmos';
 
-export {
-  BITCOIN_MAINNET,
-  BITCOIN_TESTNET,
-  BITCOIN_NETWORKS,
-} from './bitcoin';
+export { BITCOIN_MAINNET, BITCOIN_TESTNET, BITCOIN_NETWORKS } from './bitcoin';
 
-export {
-  ETHEREUM_MAINNET,
-  BNB_MAINNET,
-  BASE_MAINNET,
-  BASE_SEPOLIA,
-  EVM_NETWORKS,
-} from './evm';
+export { ETHEREUM_MAINNET, BNB_MAINNET, BASE_MAINNET, BASE_SEPOLIA, EVM_NETWORKS } from './evm';
 
 // Registry and helpers
 export {
@@ -60,3 +50,6 @@ export {
   clearAllEndpointHealth,
   type FailoverConfig,
 } from './failover';
+
+// Chain Registry Client (dynamic chain fetching)
+export { chainRegistryClient } from './chain-registry-client';

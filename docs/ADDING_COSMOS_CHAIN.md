@@ -2,57 +2,207 @@
 
 This guide explains how to add a new Cosmos SDK-based blockchain to The Extension Wallet.
 
-## Prerequisites
+## Source of Truth: Cosmos Chain Registry
 
-Before adding a chain, gather the following information:
+The wallet uses the **[Cosmos Chain Registry](https://github.com/cosmos/chain-registry)** as the authoritative source for chain and asset data. This community-maintained repository contains configuration for 200+ Cosmos chains.
 
-- Chain ID (e.g., `cosmoshub-4`)
-- RPC endpoint URLs (multiple for failover)
-- REST/LCD endpoint URLs (multiple for failover)
-- Bech32 address prefix (e.g., `cosmos`)
-- Native token symbol and denomination
-- Block explorer URL
+### How It Works
 
-## Step 1: Define Network Configuration
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Cosmos Chain Registry (github.com/cosmos/chain-registry)       │
+│  ├── osmosis/                                                   │
+│  │   ├── chain.json      → Network config (RPC, REST, fees)    │
+│  │   └── assetlist.json  → Token definitions (denoms, logos)   │
+│  ├── cosmoshub/                                                 │
+│  └── ... 200+ chains                                            │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+                    npm run sync:chains
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Generated Wallet Config                                         │
+│  ├── src/lib/networks/cosmos-registry.ts  (chain configs)       │
+│  └── src/lib/assets/cosmos-registry.ts    (asset definitions)   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Method 1: Add Chain to Cosmos Chain Registry (Recommended)
+
+If the chain isn't already in the registry, **submit a PR to the Cosmos Chain Registry first**:
+
+1. Fork [cosmos/chain-registry](https://github.com/cosmos/chain-registry)
+2. Create a directory for your chain (e.g., `mychain/`)
+3. Add `chain.json` with network configuration
+4. Add `assetlist.json` with token definitions
+5. Submit a PR following their [contribution guidelines](https://github.com/cosmos/chain-registry#contributing)
+
+Once merged, run the sync script to pull the chain into the wallet:
+
+```bash
+# Sync your chain (and other defaults)
+npm run sync:chains -- --chains mychain,osmosis,cosmoshub
+
+# Or add to the DEFAULT_CHAINS in scripts/sync-chain-registry.ts
+# then run:
+npm run sync:chains
+```
+
+### Chain Registry File Format
+
+**chain.json** (required fields):
+
+```json
+{
+  "chain_name": "mychain",
+  "chain_id": "mychain-1",
+  "pretty_name": "My Chain",
+  "status": "live",
+  "network_type": "mainnet",
+  "bech32_prefix": "mychain",
+  "slip44": 118,
+  "fees": {
+    "fee_tokens": [
+      {
+        "denom": "umytoken",
+        "average_gas_price": 0.025
+      }
+    ]
+  },
+  "apis": {
+    "rpc": [
+      { "address": "https://rpc.mychain.io", "provider": "MyChain" },
+      { "address": "https://mychain-rpc.polkachu.com", "provider": "Polkachu" }
+    ],
+    "rest": [
+      { "address": "https://api.mychain.io", "provider": "MyChain" },
+      { "address": "https://mychain-api.polkachu.com", "provider": "Polkachu" }
+    ]
+  },
+  "explorers": [
+    {
+      "kind": "mintscan",
+      "url": "https://www.mintscan.io/mychain",
+      "tx_page": "https://www.mintscan.io/mychain/tx/${txHash}",
+      "account_page": "https://www.mintscan.io/mychain/account/${accountAddress}"
+    }
+  ]
+}
+```
+
+**assetlist.json**:
+
+```json
+{
+  "chain_name": "mychain",
+  "assets": [
+    {
+      "denom_units": [
+        { "denom": "umytoken", "exponent": 0 },
+        { "denom": "mytoken", "exponent": 6 }
+      ],
+      "base": "umytoken",
+      "name": "My Token",
+      "display": "mytoken",
+      "symbol": "MYT",
+      "logo_URIs": {
+        "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/mychain/images/mytoken.png"
+      },
+      "coingecko_id": "my-token"
+    }
+  ]
+}
+```
+
+## Method 2: Dynamic Runtime Fetching
+
+For chains in the registry but not pre-bundled, users can enable them at runtime:
+
+```typescript
+import { chainRegistryClient } from '@/lib/networks';
+
+// Fetch chain config dynamically
+const chain = await chainRegistryClient.fetchChain('juno');
+
+// Search available chains
+const results = await chainRegistryClient.searchChains('terra');
+
+// Get list of all available chains
+const available = await chainRegistryClient.getAvailableChains();
+```
+
+The dynamic client:
+
+- Fetches from the chain registry on-demand
+- Caches results in `chrome.storage.local` for 24 hours
+- Works for any chain in the registry
+
+## Method 3: Manual Configuration (Legacy)
+
+For chains not in the registry, or for custom/private networks, you can still add manual configurations.
+
+### Step 1: Define Network Configuration
 
 Add the network configuration in `src/lib/networks/cosmos.ts`:
 
 ```typescript
 export const NEW_CHAIN_MAINNET: CosmosNetworkConfig = {
-  id: 'newchain-1', // Chain ID
-  name: 'New Chain', // Display name
+  id: 'newchain-1',
+  name: 'New Chain',
   type: 'cosmos',
   enabled: true,
-  symbol: 'NEW', // Native token symbol
-  decimals: 6, // Native token decimals (usually 6)
-  coinType: 118, // BIP44 coin type (118 for most Cosmos chains)
-  rpc: [
-    // Array of RPC endpoints (in failover order)
-    'https://rpc.newchain.io',
-    'https://rpc-2.newchain.io',
-    'https://newchain-rpc.polkachu.com',
-  ],
-  rest: [
-    // Array of REST/LCD endpoints (in failover order)
-    'https://api.newchain.io',
-    'https://api-2.newchain.io',
-    'https://newchain-api.polkachu.com',
-  ],
-  bech32Prefix: 'new', // Address prefix
-  feeDenom: 'unew', // Fee denomination (micro-denom)
-  gasPrice: '0.025', // Default gas price
+  symbol: 'NEW',
+  decimals: 6,
+  coinType: 118,
+  rpc: ['https://rpc.newchain.io', 'https://rpc-2.newchain.io'],
+  rest: ['https://api.newchain.io', 'https://api-2.newchain.io'],
+  bech32Prefix: 'new',
+  feeDenom: 'unew',
+  gasPrice: '0.025',
   features: ['stargate', 'ibc-transfer', 'no-legacy-stdTx'],
   explorerUrl: 'https://explorer.newchain.io',
   explorerAccountPath: '/account/{address}',
   explorerTxPath: '/tx/{txHash}',
 };
+
+// Register in the networks array
+export const COSMOS_NETWORKS: CosmosNetworkConfig[] = [
+  // ... existing networks
+  NEW_CHAIN_MAINNET,
+];
 ```
 
-### Configuration Fields
+### Step 2: Add Fallback Assets
+
+In `src/lib/assets/chainRegistry.ts`:
+
+```typescript
+const chainNameMap: Record<string, string> = {
+  // ... existing mappings
+  'newchain-1': 'newchain',
+};
+
+const fallbackAssets: Record<string, RegistryAsset[]> = {
+  // ... existing assets
+  'newchain-1': [
+    {
+      symbol: 'NEW',
+      name: 'New Chain',
+      denom: 'unew',
+      decimals: 6,
+      coingeckoId: 'newchain',
+    },
+  ],
+};
+```
+
+## Configuration Reference
+
+### Network Config Fields
 
 | Field          | Description                                   | Example                               |
 | -------------- | --------------------------------------------- | ------------------------------------- |
-| `id`           | Unique chain identifier                       | `cosmoshub-4`                         |
+| `id`           | Chain ID (unique identifier)                  | `cosmoshub-4`                         |
 | `name`         | Human-readable name                           | `Cosmos Hub`                          |
 | `symbol`       | Native token ticker                           | `ATOM`                                |
 | `decimals`     | Token decimal places                          | `6`                                   |
@@ -66,8 +216,6 @@ export const NEW_CHAIN_MAINNET: CosmosNetworkConfig = {
 
 ### Features Array
 
-Common features to include:
-
 - `stargate` - Stargate-compatible chain (most modern chains)
 - `ibc-transfer` - IBC token transfers supported
 - `no-legacy-stdTx` - Uses new transaction format
@@ -77,7 +225,7 @@ Common features to include:
 
 The wallet automatically handles endpoint failover:
 
-- Endpoints are tried in order of preference (first in array = highest priority)
+- Endpoints are tried in order of preference
 - Failed endpoints are temporarily marked unhealthy
 - Healthy endpoints are preferred for subsequent requests
 - Include at least 2-3 endpoints for reliability
@@ -89,114 +237,57 @@ The wallet automatically handles endpoint failover:
 - [Lavender.Five](https://www.lavenderfive.com/)
 - Chain's official endpoints
 
-## Step 2: Register the Network
+## Sync Script Reference
 
-Add the new network to the `COSMOS_NETWORKS` array in `src/lib/networks/cosmos.ts`:
+```bash
+# Sync default chains (defined in DEFAULT_CHAINS)
+npm run sync:chains
 
-```typescript
-export const COSMOS_NETWORKS: CosmosNetworkConfig[] = [
-  BEEZEE_MAINNET,
-  OSMOSIS_MAINNET,
-  // ... existing networks
-  NEW_CHAIN_MAINNET, // Add your new chain
-];
+# Sync specific chains
+npm run sync:chains -- --chains osmosis,juno,stargaze
+
+# View available chains
+# Check: https://github.com/cosmos/chain-registry (directory names)
 ```
 
-## Step 3: Add Chain Registry Mapping
+The sync script generates:
 
-In `src/lib/assets/chainRegistry.ts`, add the chain name mapping:
-
-```typescript
-const chainNameMap: Record<string, string> = {
-  'beezee-1': 'beezee',
-  'osmosis-1': 'osmosis',
-  // ... existing mappings
-  'newchain-1': 'newchain', // Maps to cosmos/chain-registry folder name
-};
-```
-
-This mapping is used to fetch assets from the Cosmos Chain Registry.
-
-## Step 4: Add Fallback Assets
-
-If the chain is not in the Cosmos Chain Registry, or you want to ensure specific assets are always available:
-
-```typescript
-const fallbackAssets: Record<string, RegistryAsset[]> = {
-  // ... existing assets
-  'newchain-1': [
-    {
-      symbol: 'NEW',
-      name: 'New Chain',
-      denom: 'unew',
-      decimals: 6,
-      coingeckoId: 'newchain', // Optional, for price data
-    },
-    // Add IBC tokens if needed
-    {
-      symbol: 'ATOM',
-      name: 'Cosmos Hub',
-      denom: 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2',
-      decimals: 6,
-    },
-  ],
-};
-```
-
-## Step 5: Add Token Color
-
-Add a color for the token in the `tokenColors` map:
-
-```typescript
-const tokenColors: Record<string, string> = {
-  // ... existing colors
-  NEW: '#3B82F6', // Use a distinctive hex color
-};
-```
-
-## Step 6: Enable Staking (Optional)
-
-If you want staking support, add the chain to the REStake mapping in `src/popup/pages/Staking.tsx`:
-
-```typescript
-function getRestakeChainName(chainId: string): string {
-  const mapping: Record<string, string> = {
-    // ... existing mappings
-    'newchain-1': 'newchain',
-  };
-  return mapping[chainId] || chainId.split('-')[0];
-}
-```
-
-Also update the Dashboard staking menu to include the new chain.
+- `src/lib/networks/cosmos-registry.ts` - Chain configurations
+- `src/lib/assets/cosmos-registry.ts` - Asset definitions with logos
 
 ## Testing
 
-After adding the chain:
+After adding a chain:
 
-1. Build the extension: `npm run build`
-2. Load the unpacked extension in Chrome
-3. Verify the network appears in the network selector
-4. Test address derivation
-5. Test balance fetching
-6. Test sending transactions (on testnet first if available)
+1. Run `npm run sync:chains` (if using registry method)
+2. Build the extension: `npm run build`
+3. Load the unpacked extension in Chrome
+4. Verify the network appears in the network selector
+5. Test address derivation
+6. Test balance fetching
+7. Test sending transactions (on testnet first if available)
 
-## Common Issues
+## Troubleshooting
 
-### Wrong Address Format
+### Chain Not Appearing
 
-Ensure `bech32Prefix` matches the chain's expected address prefix.
+- Ensure the chain has `status: "live"` and `network_type: "mainnet"` in the registry
+- Check the sync script output for errors
+- Verify the chain name matches the registry directory
 
 ### Balance Not Loading
 
-Check that the REST endpoint is accessible and returns data in the expected format.
+- Check that REST endpoints are accessible
+- Verify the `feeDenom` matches the chain's actual fee token
 
-### Transaction Failures
+### Wrong Address Format
 
-Verify `feeDenom` and `gasPrice` are correct for the chain.
+- Ensure `bech32_prefix` is correct in the chain registry
+- Check `slip44` coin type matches (118 for most Cosmos chains)
 
 ## Resources
 
-- [Cosmos Chain Registry](https://github.com/cosmos/chain-registry)
-- [Chain Registry NPM Package](https://www.npmjs.com/package/chain-registry)
+- **[Cosmos Chain Registry](https://github.com/cosmos/chain-registry)** - Source of truth for chain data
+- [Chain Registry NPM Package](https://www.npmjs.com/package/chain-registry) - TypeScript types and utilities
 - [BIP44 Coin Types](https://github.com/satoshilabs/slips/blob/master/slip-0044.md)
+- [Cosmos SDK Documentation](https://docs.cosmos.network/)
