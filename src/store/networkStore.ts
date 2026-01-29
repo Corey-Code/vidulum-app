@@ -138,6 +138,17 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
 
   setAssetEnabled: async (networkId: string, denom: string, enabled: boolean) => {
     const { preferences, savePreferences } = get();
+
+    // If there are no per-asset preferences yet for this network, do not
+    // create an entry based on a single toggle. This preserves the
+    // "all assets enabled by default" semantics used in isAssetEnabled().
+    const hasPreferencesForNetwork = Object.prototype.hasOwnProperty.call(
+      preferences.enabledAssets,
+      networkId,
+    );
+    if (!hasPreferencesForNetwork) {
+      return;
+    }
     const currentAssets = preferences.enabledAssets[networkId] || [];
 
     let newAssets: string[];
