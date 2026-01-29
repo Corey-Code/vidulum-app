@@ -6,17 +6,16 @@
  */
 
 import { Buffer } from 'buffer';
-// Polyfill Buffer for browser environment
-if (typeof globalThis.Buffer === 'undefined') {
-  globalThis.Buffer = Buffer;
-}
-
 import * as bip39 from 'bip39';
 import * as secp256k1 from '@noble/secp256k1';
 import { hmac } from '@noble/hashes/hmac';
 import { sha512 } from '@noble/hashes/sha512';
 import { keccak_256 } from '@noble/hashes/sha3';
 
+// Polyfill Buffer for browser environment
+if (typeof globalThis.Buffer === 'undefined') {
+  globalThis.Buffer = Buffer;
+}
 /**
  * EVM Key Pair
  */
