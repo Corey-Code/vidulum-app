@@ -20,6 +20,10 @@ export class ChainWebSocket {
   private isConnecting = false;
   private messageId = 0;
   private pendingSubscriptions: Map<string, Subscription> = new Map();
+  private connectResolve: (() => void) | null = null;
+  private connectReject: ((error: Error) => void) | null = null;
+  private connectionTimeout: NodeJS.Timeout | null = null;
+  private readonly CONNECTION_TIMEOUT_MS = 10000; // 10 second timeout
 
   constructor(rpcUrl: string) {
     // Convert HTTP RPC URL to WebSocket URL
@@ -40,23 +44,50 @@ export class ChainWebSocket {
       }
 
       if (this.isConnecting) {
-        // Wait for existing connection attempt
-        const checkConnection = setInterval(() => {
-          if (this.ws?.readyState === WebSocket.OPEN) {
-            clearInterval(checkConnection);
-            resolve();
+        // Wait for existing connection attempt to complete
+        // Store resolve/reject to be called when current attempt finishes
+        const checkInterval = setInterval(() => {
+          if (!this.isConnecting) {
+            clearInterval(checkInterval);
+            if (this.ws?.readyState === WebSocket.OPEN) {
+              resolve();
+            } else {
+              reject(new Error('Connection attempt failed'));
+            }
           }
         }, 100);
+
+        // Add timeout for the polling to prevent indefinite waiting
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          if (this.isConnecting) {
+            reject(new Error('Connection timeout while waiting for existing attempt'));
+          }
+        }, this.CONNECTION_TIMEOUT_MS);
         return;
       }
 
       this.isConnecting = true;
+      this.connectResolve = resolve;
+      this.connectReject = reject;
+
+      // Set up connection timeout
+      this.connectionTimeout = setTimeout(() => {
+        this.cleanupConnection();
+        const rejectFn = this.connectReject;
+        this.connectReject = null;
+        this.connectResolve = null;
+        if (rejectFn) {
+          rejectFn(new Error('WebSocket connection timeout'));
+        }
+      }, this.CONNECTION_TIMEOUT_MS);
 
       try {
         this.ws = new WebSocket(this.wsUrl);
 
         this.ws.onopen = () => {
           console.log('WebSocket connected to', this.wsUrl);
+          this.clearConnectionTimeout();
           this.isConnecting = false;
           this.reconnectAttempts = 0;
 
@@ -71,7 +102,13 @@ export class ChainWebSocket {
             this.sendSubscribe(id, sub.query);
           });
 
-          resolve();
+          // Resolve the promise
+          const resolveFn = this.connectResolve;
+          this.connectResolve = null;
+          this.connectReject = null;
+          if (resolveFn) {
+            resolveFn();
+          }
         };
 
         this.ws.onmessage = (event) => {
@@ -85,19 +122,71 @@ export class ChainWebSocket {
 
         this.ws.onerror = (error) => {
           console.error('WebSocket error:', error);
+          this.clearConnectionTimeout();
           this.isConnecting = false;
+
+          // Reject the promise if it hasn't been resolved yet
+          const rejectFn = this.connectReject;
+          this.connectReject = null;
+          this.connectResolve = null;
+          if (rejectFn) {
+            rejectFn(new Error('WebSocket connection error'));
+          }
         };
 
         this.ws.onclose = () => {
           console.log('WebSocket disconnected');
+          this.clearConnectionTimeout();
           this.isConnecting = false;
+
+          // Reject the promise if it hasn't been resolved yet
+          const rejectFn = this.connectReject;
+          this.connectReject = null;
+          this.connectResolve = null;
+          if (rejectFn) {
+            rejectFn(new Error('WebSocket connection closed before opening'));
+          }
+
           this.attemptReconnect();
         };
       } catch (error) {
+        this.clearConnectionTimeout();
         this.isConnecting = false;
-        reject(error);
+        const rejectFn = this.connectReject;
+        this.connectReject = null;
+        this.connectResolve = null;
+        if (rejectFn) {
+          rejectFn(error as Error);
+        } else {
+          reject(error);
+        }
       }
     });
+  }
+
+  /**
+   * Clear the connection timeout if it exists
+   */
+  private clearConnectionTimeout(): void {
+    if (this.connectionTimeout) {
+      clearTimeout(this.connectionTimeout);
+      this.connectionTimeout = null;
+    }
+  }
+
+  /**
+   * Clean up connection state and timeout
+   */
+  private cleanupConnection(): void {
+    this.clearConnectionTimeout();
+    this.isConnecting = false;
+    if (this.ws && this.ws.readyState !== WebSocket.OPEN && this.ws.readyState !== WebSocket.CLOSED) {
+      try {
+        this.ws.close();
+      } catch (error) {
+        console.error('Error closing WebSocket during cleanup:', error);
+      }
+    }
   }
 
   /**
@@ -240,6 +329,9 @@ export class ChainWebSocket {
    */
   disconnect(): void {
     this.unsubscribeAll();
+    this.clearConnectionTimeout();
+    this.connectResolve = null;
+    this.connectReject = null;
     if (this.ws) {
       this.ws.close();
       this.ws = null;
