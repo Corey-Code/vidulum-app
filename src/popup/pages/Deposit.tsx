@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   VStack,
@@ -17,6 +17,7 @@ import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
 import { useNetworkStore } from '@/store/networkStore';
 import { networkRegistry } from '@/lib/networks';
+import { useNetworkStore } from '@/store/networkStore';
 
 // MoonPay supported cryptocurrencies mapping
 const MOONPAY_CRYPTO_CODES: Record<string, string> = {
