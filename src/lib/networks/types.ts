@@ -52,8 +52,8 @@ export interface BitcoinNetworkConfig extends BaseNetworkConfig {
   addressType: 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent';  // Default address type
   // Chain-specific address configuration
   addressPrefix?: {
-    pubKeyHash?: number;         // P2PKH address version byte
-    scriptHash?: number;         // P2SH address version byte
+    pubKeyHash?: number | number[] | Uint8Array;   // P2PKH address version byte/prefix
+    scriptHash?: number | number[] | Uint8Array;   // P2SH address version byte/prefix
     bech32?: string;             // Bech32 HRP (human-readable part)
   };
 }

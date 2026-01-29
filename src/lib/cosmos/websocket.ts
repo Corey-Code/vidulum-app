@@ -251,10 +251,21 @@ export class ChainWebSocket {
     if (data.result?.data?.type === 'tendermint/event/Tx') {
       const txResult = data.result.data.value?.TxResult;
       if (txResult) {
-        // Notify all subscriptions - they'll filter by address
-        this.subscriptions.forEach((sub) => {
-          sub.callback(txResult);
-        });
+        const eventQuery = data.result?.query;
+
+        if (typeof eventQuery === 'string' && eventQuery.length > 0) {
+          // Route event only to subscriptions whose query matches the event query
+          this.subscriptions.forEach((sub) => {
+            if (sub.query === eventQuery) {
+              sub.callback(txResult);
+            }
+          });
+        } else {
+          // Fallback: if the event does not include a query, notify all subscriptions
+          this.subscriptions.forEach((sub) => {
+            sub.callback(txResult);
+          });
+        }
       }
     }
 
