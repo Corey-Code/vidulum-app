@@ -25,8 +25,19 @@ const DEFAULT_CONFIG: FailoverConfig = {
   recoveryTimeMs: 60000, // 1 minute
 };
 
-// Error types that indicate server-side issues (should trigger failover)
+// HTTP status codes that indicate server-side issues (should trigger failover)
 const SERVER_ERROR_CODES = [500, 502, 503, 504, 520, 521, 522, 523, 524];
+
+/**
+ * Check if a JSON-RPC error code is a server-side error (should trigger failover)
+ * Server errors: -32000 to -32099 (implementation-defined)
+ * Client errors: -32600 to -32603 (should NOT trigger failover)
+ * See: https://www.jsonrpc.org/specification#error_object
+ */
+function isRpcServerErrorCode(code: number): boolean {
+  // Server error range: -32000 to -32099
+  return code >= -32099 && code <= -32000;
+}
 
 // Global health tracking for all endpoints
 const endpointHealthMap: Map<string, EndpointHealth> = new Map();
@@ -129,6 +140,16 @@ function isServerError(error: unknown): boolean {
     return SERVER_ERROR_CODES.includes((error as { status: number }).status);
   }
 
+  // Check if it's an RpcError with a code property (JSON-RPC errors)
+  if (
+    error !== null &&
+    typeof error === 'object' &&
+    'code' in error &&
+    typeof (error as { code: unknown }).code === 'number'
+  ) {
+    return isRpcServerErrorCode((error as { code: number }).code);
+  }
+
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
     // Network errors, timeouts, and connection issues
@@ -140,7 +161,8 @@ function isServerError(error: unknown): boolean {
       message.includes('socket') ||
       message.includes('fetch failed') ||
       message.includes('failed to fetch') ||
-      message.includes('aborted')
+      message.includes('aborted') ||
+      message.includes('rpc server error') // JSON-RPC server errors from EVM client
     ) {
       return true;
     }

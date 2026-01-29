@@ -1,6 +1,6 @@
 /**
  * EVM Client Tests
- * 
+ *
  * Tests for EVM JSON-RPC client with failover
  */
 
@@ -13,6 +13,7 @@ import {
   parseGwei,
   isValidEvmAddress,
   checksumAddress,
+  RpcError,
 } from '@/lib/evm/client';
 import { mockFetchResponse, mockFetchSequence } from '../../setup';
 
@@ -83,7 +84,9 @@ describe('EVM Client', () => {
         rpcResponse('0xde0b6b3a7640000') // 1 ETH
       );
 
-      const balance = await client.getBalanceFormatted('0x1234567890abcdef1234567890abcdef12345678');
+      const balance = await client.getBalanceFormatted(
+        '0x1234567890abcdef1234567890abcdef12345678'
+      );
       expect(balance).toMatch(/^1\.0/);
     });
   });
@@ -115,10 +118,12 @@ describe('EVM Client', () => {
     it('should return EIP1559 fees when available', async () => {
       (global.fetch as jest.Mock)
         .mockResolvedValueOnce(rpcResponse('0x3b9aca00'))
-        .mockResolvedValueOnce(rpcResponse({
-          number: '0x1',
-          baseFeePerGas: '0x3b9aca00', // 1 gwei
-        }));
+        .mockResolvedValueOnce(
+          rpcResponse({
+            number: '0x1',
+            baseFeePerGas: '0x3b9aca00', // 1 gwei
+          })
+        );
 
       const feeData = await client.getFeeData();
       expect(feeData.maxFeePerGas).not.toBeNull();
@@ -128,9 +133,7 @@ describe('EVM Client', () => {
 
   describe('getTransactionCount', () => {
     it('should return nonce as number', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce(
-        rpcResponse('0x5')
-      );
+      (global.fetch as jest.Mock).mockResolvedValueOnce(rpcResponse('0x5'));
 
       const nonce = await client.getTransactionCount('0x1234567890abcdef1234567890abcdef12345678');
       expect(nonce).toBe(5);
@@ -168,18 +171,14 @@ describe('EVM Client', () => {
         transactionIndex: '0x0',
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce(
-        rpcResponse(mockTx)
-      );
+      (global.fetch as jest.Mock).mockResolvedValueOnce(rpcResponse(mockTx));
 
       const tx = await client.getTransaction('0xabc123');
       expect(tx?.hash).toBe('0xabc123');
     });
 
     it('should return null for non-existent transaction', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce(
-        rpcResponse(null)
-      );
+      (global.fetch as jest.Mock).mockResolvedValueOnce(rpcResponse(null));
 
       const tx = await client.getTransaction('0xnonexistent');
       expect(tx).toBeNull();
@@ -195,9 +194,7 @@ describe('EVM Client', () => {
         logs: [],
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce(
-        rpcResponse(mockReceipt)
-      );
+      (global.fetch as jest.Mock).mockResolvedValueOnce(rpcResponse(mockReceipt));
 
       const receipt = await client.getTransactionReceipt('0xabc123');
       expect(receipt?.status).toBe('0x1');
@@ -206,9 +203,7 @@ describe('EVM Client', () => {
 
   describe('sendRawTransaction', () => {
     it('should broadcast signed transaction', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce(
-        rpcResponse('0xnewtxhash')
-      );
+      (global.fetch as jest.Mock).mockResolvedValueOnce(rpcResponse('0xnewtxhash'));
 
       const txHash = await client.sendRawTransaction('0xsignedtx');
       expect(txHash).toBe('0xnewtxhash');
@@ -228,9 +223,7 @@ describe('EVM Client', () => {
 
   describe('getChainId', () => {
     it('should return chain ID', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce(
-        rpcResponse('0x1')
-      );
+      (global.fetch as jest.Mock).mockResolvedValueOnce(rpcResponse('0x1'));
 
       const chainId = await client.getChainId();
       expect(chainId).toBe(1);
@@ -321,5 +314,66 @@ describe('getEvmClient', () => {
     const eth = getEvmClient('ethereum-mainnet');
     const bnb = getEvmClient('bnb-mainnet');
     expect(eth).not.toBe(bnb);
+  });
+});
+
+describe('RpcError', () => {
+  it('should create error with code', () => {
+    const error = new RpcError('Server overloaded', -32000);
+    expect(error.message).toBe('Server overloaded');
+    expect(error.code).toBe(-32000);
+    expect(error.name).toBe('RpcError');
+  });
+
+  it('should be instanceof Error', () => {
+    const error = new RpcError('Test error', -32005);
+    expect(error instanceof Error).toBe(true);
+    expect(error instanceof RpcError).toBe(true);
+  });
+});
+
+describe('RPC Error Handling', () => {
+  let client: EvmClient;
+
+  beforeEach(() => {
+    client = new EvmClient('ethereum-mainnet');
+    jest.clearAllMocks();
+  });
+
+  it('should throw immediately on client errors (-32600 range)', async () => {
+    // Client errors (invalid params, method not found) should NOT trigger failover
+    (global.fetch as jest.Mock).mockResolvedValueOnce(rpcError('Invalid params', -32602));
+
+    await expect(client.getBalance('0x1234567890abcdef1234567890abcdef12345678')).rejects.toThrow(
+      'Invalid params'
+    );
+
+    // Should only have called fetch once (no retries for client errors)
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('should succeed after retry if server error recovers', async () => {
+    // First call fails with server error, second succeeds
+    // This verifies that -32000 errors trigger retry
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce(rpcError('Server overloaded', -32000))
+      .mockResolvedValueOnce(rpcResponse('0xde0b6b3a7640000'));
+
+    const balance = await client.getBalance('0x1234567890abcdef1234567890abcdef12345678');
+    expect(balance).toBe(1000000000000000000n);
+    // Should have retried (2 calls total)
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('should succeed after retry if rate limited recovers', async () => {
+    // First call fails with rate limit error, second succeeds
+    // This verifies that -32005 errors trigger retry
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce(rpcError('Rate limited', -32005))
+      .mockResolvedValueOnce(rpcResponse('0xde0b6b3a7640000'));
+
+    const balance = await client.getBalance('0x1234567890abcdef1234567890abcdef12345678');
+    expect(balance).toBe(1000000000000000000n);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 });

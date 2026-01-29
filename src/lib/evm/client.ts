@@ -1,12 +1,30 @@
 /**
  * EVM Client
- * 
+ *
  * Provides methods for interacting with EVM-compatible blockchains.
  * Uses JSON-RPC for balance queries and transaction handling.
  * Includes automatic failover across multiple RPC endpoints.
  */
 
-import { networkRegistry, EvmNetworkConfig, withFailover, getHealthyEndpoint } from '@/lib/networks';
+import {
+  networkRegistry,
+  EvmNetworkConfig,
+  withFailover,
+  getHealthyEndpoint,
+} from '@/lib/networks';
+
+/**
+ * JSON-RPC Error with code for proper failover handling
+ */
+export class RpcError extends Error {
+  code: number;
+
+  constructor(message: string, code: number) {
+    super(message);
+    this.name = 'RpcError';
+    this.code = code;
+  }
+}
 
 // Transaction structure
 export interface EvmTransaction {
@@ -102,42 +120,36 @@ export class EvmClient {
    * Make a JSON-RPC call with automatic failover
    */
   private async rpcCall<T>(method: string, params: unknown[] = []): Promise<T> {
-    const { result } = await withFailover(
-      this.rpcUrls,
-      async (rpcUrl) => {
-        const response = await fetch(rpcUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            id: Date.now(),
-            method,
-            params,
-          }),
-        });
+    const { result } = await withFailover(this.rpcUrls, async (rpcUrl) => {
+      const response = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: Date.now(),
+          method,
+          params,
+        }),
+      });
 
-        if (!response.ok) {
-          throw new Error(`RPC request failed: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        if (data.error) {
-          // RPC-level errors (like invalid params) should not trigger failover
-          // Server errors (rate limits, timeouts) should
-          if (data.error.code === -32000 || data.error.code === -32005) {
-            // Server overloaded or rate limited - try next endpoint
-            throw new Error(`RPC server error: ${data.error.message}`);
-          }
-          throw new Error(`RPC error: ${data.error.message}`);
-        }
-
-        return data.result as T;
+      if (!response.ok) {
+        throw new Error(`RPC request failed: ${response.status}`);
       }
-    );
-    
+
+      const data = await response.json();
+
+      if (data.error) {
+        // Throw RpcError with code so failover can detect server errors
+        // Server errors (-32000 to -32099) should trigger failover
+        // Client errors (-32600 to -32603) should not
+        throw new RpcError(data.error.message || 'Unknown RPC error', data.error.code || -32000);
+      }
+
+      return data.result as T;
+    });
+
     return result;
   }
 
@@ -170,16 +182,19 @@ export class EvmClient {
    */
   async getFeeData(): Promise<FeeData> {
     const gasPrice = await this.getGasPrice();
-    
+
     // Try to get EIP-1559 fee data
     try {
-      const block = await this.rpcCall<{ baseFeePerGas?: string }>('eth_getBlockByNumber', ['latest', false]);
-      
+      const block = await this.rpcCall<{ baseFeePerGas?: string }>('eth_getBlockByNumber', [
+        'latest',
+        false,
+      ]);
+
       if (block.baseFeePerGas) {
         const baseFee = BigInt(block.baseFeePerGas);
         const maxPriorityFeePerGas = BigInt('1500000000'); // 1.5 gwei
         const maxFeePerGas = baseFee * 2n + maxPriorityFeePerGas;
-        
+
         return {
           gasPrice,
           maxFeePerGas,
@@ -189,7 +204,7 @@ export class EvmClient {
     } catch (error) {
       console.warn('EIP-1559 not supported:', error);
     }
-    
+
     return {
       gasPrice,
       maxFeePerGas: null,
@@ -275,16 +290,16 @@ export function formatEther(wei: bigint, decimals: number = 18): string {
   const divisor = 10n ** BigInt(decimals);
   const integerPart = wei / divisor;
   const fractionalPart = wei % divisor;
-  
+
   // Pad fractional part with leading zeros
   const fractionalStr = fractionalPart.toString().padStart(decimals, '0');
-  
+
   // Trim trailing zeros but keep at least 6 decimals for display
   let trimmedFractional = fractionalStr.replace(/0+$/, '');
   if (trimmedFractional.length < 6) {
     trimmedFractional = fractionalStr.slice(0, 6);
   }
-  
+
   return `${integerPart}.${trimmedFractional || '0'}`;
 }
 
@@ -295,14 +310,14 @@ export function parseEther(eth: string, decimals: number = 18): bigint {
   const parts = eth.split('.');
   const integerPart = parts[0] || '0';
   let fractionalPart = parts[1] || '0';
-  
+
   // Pad or truncate fractional part to match decimals
   if (fractionalPart.length < decimals) {
     fractionalPart = fractionalPart.padEnd(decimals, '0');
   } else {
     fractionalPart = fractionalPart.slice(0, decimals);
   }
-  
+
   return BigInt(integerPart + fractionalPart);
 }
 
@@ -334,7 +349,7 @@ export function checksumAddress(address: string): string {
   if (!isValidEvmAddress(address)) {
     throw new Error('Invalid address');
   }
-  
+
   // For now, just lowercase it - full checksum requires keccak256
   // We'll implement proper checksumming when we add transaction signing
   return address.toLowerCase();
