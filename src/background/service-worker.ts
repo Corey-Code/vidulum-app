@@ -69,8 +69,20 @@ const sessionManager = new SessionManager();
 sessionManager.initialize();
 
 // Message handler
-browser.runtime.onMessage.addListener(async (message: Message): Promise<MessageResponse> => {
-  const origin = message.origin || '';
+browser.runtime.onMessage.addListener(async (message: Message, sender): Promise<MessageResponse> => {
+  let origin = '';
+  if (sender && typeof sender === 'object') {
+    if (typeof (sender as any).origin === 'string' && (sender as any).origin) {
+      origin = (sender as any).origin;
+    } else if ((sender as any).tab && typeof (sender as any).tab.url === 'string') {
+      try {
+        const url = new URL((sender as any).tab.url);
+        origin = url.origin;
+      } catch {
+        origin = '';
+      }
+    }
+  }
 
   try {
     switch (message.type) {
