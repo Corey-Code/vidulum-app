@@ -45,18 +45,22 @@ describe('MnemonicManager', () => {
       expect(MnemonicManager.validateMnemonic(invalidChecksum)).toBe(false);
     });
 
-    it('should handle extra whitespace', () => {
+    it('should reject mnemonic with extra whitespace', () => {
       const withSpaces =
         '  abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about  ';
-      // Trim should be handled - this tests the current behavior
+      // validateMnemonic should reject mnemonics with leading/trailing whitespace
+      expect(MnemonicManager.validateMnemonic(withSpaces)).toBe(false);
+      // But should accept properly trimmed mnemonics
       expect(MnemonicManager.validateMnemonic(withSpaces.trim())).toBe(true);
     });
 
-    it('should be case-insensitive for valid words', () => {
+    it('should reject mixed-case mnemonics', () => {
       const mixedCase =
         'Abandon ABANDON abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
-      // BIP39 words are lowercase, mixed case should fail
+      // BIP39 words must be lowercase, mixed case should fail
       expect(MnemonicManager.validateMnemonic(mixedCase)).toBe(false);
+      // But should accept properly lowercased mnemonics
+      expect(MnemonicManager.validateMnemonic(mixedCase.toLowerCase())).toBe(true);
     });
   });
 
