@@ -152,17 +152,25 @@ export const useChainStore = create<ChainState>((set, get) => ({
       const timeoutHandle = setTimeout(() => {
         get().fetchBalance(chainId, address).catch(console.error);
         // Clean up the timeout handle after execution
-        const { debounceTimeouts } = get();
-        debounceTimeouts.delete(key);
-        set({ debounceTimeouts: new Map(debounceTimeouts) });
+        const { debounceTimeouts: currentTimeouts } = get();
+        if (currentTimeouts.has(key)) {
+          const newTimeouts = new Map(currentTimeouts);
+          newTimeouts.delete(key);
+          set({ debounceTimeouts: newTimeouts });
+        }
       }, 1000);
       
-      debounceTimeouts.set(key, timeoutHandle);
-      set({ debounceTimeouts: new Map(debounceTimeouts) });
+      // Create new Map with the updated timeout
+      const newTimeouts = new Map(debounceTimeouts);
+      newTimeouts.set(key, timeoutHandle);
+      set({ debounceTimeouts: newTimeouts });
     });
 
-    subscriptions.set(key, subscriptionId);
-    set({ subscriptions: new Map(subscriptions), isSubscribed: true });
+    // Create new Map with the updated subscription
+    const newSubscriptions = new Map(subscriptions);
+    newSubscriptions.set(key, subscriptionId);
+    const isSubscribed = newSubscriptions.size > 0;
+    set({ subscriptions: newSubscriptions, isSubscribed });
 
     console.log(`Subscribed to balance updates for ${address} on ${chainId}`);
   },
@@ -178,20 +186,25 @@ export const useChainStore = create<ChainState>((set, get) => ({
     if (subscriptionId) {
       const ws = getChainWebSocket(chain.rpc);
       ws.unsubscribe(subscriptionId);
-      subscriptions.delete(key);
       
       // Clear any pending timeout for this subscription
       const timeoutHandle = debounceTimeouts.get(key);
       if (timeoutHandle) {
         clearTimeout(timeoutHandle);
-        debounceTimeouts.delete(key);
       }
       
+      // Create new Maps without the removed entries
+      const newSubscriptions = new Map(subscriptions);
+      newSubscriptions.delete(key);
+      
+      const newTimeouts = new Map(debounceTimeouts);
+      newTimeouts.delete(key);
+      
       // Update isSubscribed based on whether any subscriptions remain
-      const isSubscribed = subscriptions.size > 0;
+      const isSubscribed = newSubscriptions.size > 0;
       set({ 
-        subscriptions: new Map(subscriptions), 
-        debounceTimeouts: new Map(debounceTimeouts),
+        subscriptions: newSubscriptions, 
+        debounceTimeouts: newTimeouts,
         isSubscribed 
       });
       console.log(`Unsubscribed from balance updates for ${address} on ${chainId}`);
