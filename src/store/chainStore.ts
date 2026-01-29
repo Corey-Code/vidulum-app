@@ -10,6 +10,7 @@ interface ChainState {
   chains: Map<string, ChainInfo>;
   balances: Map<string, Map<string, Balance[]>>; // chainId -> address -> balances
   subscriptions: Map<string, string>; // "chainId:address" -> subscriptionId
+  timeoutHandles: Map<string, NodeJS.Timeout>; // "chainId:address" -> timeout handle for debounced refresh
   isSubscribed: boolean;
 
   getChain: (chainId: string) => ChainInfo | undefined;
@@ -30,6 +31,7 @@ export const useChainStore = create<ChainState>((set, get) => ({
   chains: new Map(SUPPORTED_CHAINS),
   balances: new Map(),
   subscriptions: new Map(),
+  timeoutHandles: new Map(),
   isSubscribed: false,
 
   getChain: (chainId: string) => {
@@ -136,14 +138,29 @@ export const useChainStore = create<ChainState>((set, get) => ({
     // Subscribe to transactions affecting this address
     const subscriptionId = ws.subscribeToAddress(address, async (txResult) => {
       console.log('Transaction detected for', address, txResult);
+      
+      // Clear existing timeout for this chainId:address to prevent queue buildup
+      const { timeoutHandles } = get();
+      const existingTimeout = timeoutHandles.get(key);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+      }
+      
       // Debounce balance refresh
-      setTimeout(() => {
+      const timeoutHandle = setTimeout(() => {
         get().fetchBalance(chainId, address).catch(console.error);
+        // Clean up the timeout handle after execution
+        const { timeoutHandles: currentHandles } = get();
+        currentHandles.delete(key);
+        set({ timeoutHandles: new Map(currentHandles) });
       }, 1000);
+      
+      timeoutHandles.set(key, timeoutHandle);
+      set({ timeoutHandles: new Map(timeoutHandles) });
     });
 
     subscriptions.set(key, subscriptionId);
-    set({ subscriptions: new Map(subscriptions), isSubscribed: true });
+    set({ subscriptions: new Map(subscriptions), isSubscribed: subscriptions.size > 0 });
 
     console.log(`Subscribed to balance updates for ${address} on ${chainId}`);
   },
@@ -153,21 +170,38 @@ export const useChainStore = create<ChainState>((set, get) => ({
     if (!chain) return;
 
     const key = `${chainId}:${address}`;
-    const { subscriptions } = get();
+    const { subscriptions, timeoutHandles } = get();
     const subscriptionId = subscriptions.get(key);
 
     if (subscriptionId) {
       const ws = getChainWebSocket(chain.rpc);
       ws.unsubscribe(subscriptionId);
       subscriptions.delete(key);
-      set({ subscriptions: new Map(subscriptions) });
+      
+      // Clear any pending timeout for this subscription
+      const timeoutHandle = timeoutHandles.get(key);
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+        timeoutHandles.delete(key);
+      }
+      
+      // Update isSubscribed based on whether there are any remaining subscriptions
+      set({ 
+        subscriptions: new Map(subscriptions),
+        timeoutHandles: new Map(timeoutHandles),
+        isSubscribed: subscriptions.size > 0
+      });
       console.log(`Unsubscribed from balance updates for ${address} on ${chainId}`);
     }
   },
 
   unsubscribeAll: () => {
+    // Clear all pending timeouts
+    const { timeoutHandles } = get();
+    timeoutHandles.forEach((handle) => clearTimeout(handle));
+    
     disconnectAllWebSockets();
-    set({ subscriptions: new Map(), isSubscribed: false });
+    set({ subscriptions: new Map(), timeoutHandles: new Map(), isSubscribed: false });
     console.log('Unsubscribed from all balance updates');
   },
 }));
