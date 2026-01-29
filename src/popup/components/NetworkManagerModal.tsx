@@ -51,8 +51,7 @@ const NetworkItem: React.FC<NetworkItemProps> = ({
   const [assets, setAssets] = useState<RegistryAsset[]>([]);
   const [loadingAssets, setLoadingAssets] = useState(false);
   const [expandedForAssets, setExpandedForAssets] = useState(false);
-  const { isAssetEnabled, setAssetEnabled, setEnabledAssets, getEnabledAssets } =
-    useNetworkStore();
+  const { isAssetEnabled, setAssetEnabled, setEnabledAssets } = useNetworkStore();
 
   // Load assets when expanded
   useEffect(() => {
