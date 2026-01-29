@@ -15,6 +15,7 @@ import {
 import { ArrowBackIcon, ExternalLinkIcon, CopyIcon } from '@chakra-ui/icons';
 import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
+import { useNetworkStore } from '@/store/networkStore';
 import { networkRegistry } from '@/lib/networks';
 
 // MoonPay supported cryptocurrencies mapping
@@ -64,6 +65,7 @@ const DEFAULT_DEPOSIT_NETWORK = 'base-mainnet';
 
 // MoonPay API Key (must be provided via VITE_MOONPAY_API_KEY; empty string disables MoonPay)
 const MOONPAY_API_KEY = import.meta.env.VITE_MOONPAY_API_KEY ?? '';
+
 interface DepositProps {
   onBack: () => void;
 }
@@ -71,16 +73,36 @@ interface DepositProps {
 const Deposit: React.FC<DepositProps> = ({ onBack }) => {
   const { selectedAccount, getAddressForChain, getBitcoinAddress, getEvmAddress } =
     useWalletStore();
+  const { loadPreferences, isLoaded: networkPrefsLoaded, isNetworkEnabled } = useNetworkStore();
   const toast = useToast();
 
   const [selectedNetwork, setSelectedNetwork] = useState(DEFAULT_DEPOSIT_NETWORK);
   const [walletAddress, setWalletAddress] = useState<string>('');
   const [loadingAddress, setLoadingAddress] = useState(false);
 
-  // Get supported networks for MoonPay
+  // Load network preferences on mount
+  useEffect(() => {
+    if (!networkPrefsLoaded) {
+      loadPreferences();
+    }
+  }, [networkPrefsLoaded, loadPreferences]);
+
+  // Get supported networks for MoonPay - filter by user preferences
   const supportedNetworks = networkRegistry
-    .getEnabled()
+    .getAll()
+    .filter((n) => isNetworkEnabled(n.id))
     .filter((n) => MOONPAY_CRYPTO_CODES[n.id] && MOONPAY_CRYPTO_CODES[n.id] !== '');
+
+  // Ensure selected network is valid; if disabled, select the first available
+  useEffect(() => {
+    if (
+      networkPrefsLoaded &&
+      supportedNetworks.length > 0 &&
+      !supportedNetworks.some((n) => n.id === selectedNetwork)
+    ) {
+      setSelectedNetwork(supportedNetworks[0].id);
+    }
+  }, [networkPrefsLoaded, supportedNetworks]);
 
   // Get current network config
   const networkConfig = networkRegistry.get(selectedNetwork);
