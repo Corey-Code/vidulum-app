@@ -221,6 +221,26 @@ function transformChain(chain: ChainRegistryChain): WalletChainConfig | null {
   // Get explorer info
   const explorer = chain.explorers?.find((e) => e.kind === 'mintscan') || chain.explorers?.[0];
 
+  // Extract relative paths from explorer URLs if they are absolute
+  let explorerAccountPath = explorer?.account_page?.replace('${accountAddress}', '{address}');
+  let explorerTxPath = explorer?.tx_page?.replace('${txHash}', '{txHash}');
+  
+  // If the paths are absolute URLs and we have an explorerUrl, extract the relative part
+  if (explorer?.url && explorerAccountPath?.startsWith('http')) {
+    // Remove the base URL to get just the path
+    const baseUrl = explorer.url.replace(/\/$/, ''); // Remove trailing slash
+    if (explorerAccountPath.startsWith(baseUrl)) {
+      explorerAccountPath = explorerAccountPath.substring(baseUrl.length);
+    }
+  }
+  
+  if (explorer?.url && explorerTxPath?.startsWith('http')) {
+    const baseUrl = explorer.url.replace(/\/$/, '');
+    if (explorerTxPath.startsWith(baseUrl)) {
+      explorerTxPath = explorerTxPath.substring(baseUrl.length);
+    }
+  }
+
   // Get logo
   const logoUrl = chain.images?.[0]?.png || chain.images?.[0]?.svg;
 
@@ -241,8 +261,8 @@ function transformChain(chain: ChainRegistryChain): WalletChainConfig | null {
     features,
     logoUrl,
     explorerUrl: explorer?.url,
-    explorerAccountPath: explorer?.account_page?.replace('${accountAddress}', '{address}'),
-    explorerTxPath: explorer?.tx_page?.replace('${txHash}', '{txHash}'),
+    explorerAccountPath,
+    explorerTxPath,
   };
 }
 

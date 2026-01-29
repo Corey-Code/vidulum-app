@@ -89,8 +89,18 @@ EVM_NETWORKS.forEach((network) => networkRegistry.register(network));
  */
 export function getExplorerAccountUrl(networkId: string, address: string): string | null {
   const network = networkRegistry.get(networkId);
-  if (!network?.explorerUrl || !network?.explorerAccountPath) return null;
-  return network.explorerUrl + network.explorerAccountPath.replace('{address}', address);
+  if (!network?.explorerAccountPath) return null;
+  
+  const accountPath = network.explorerAccountPath.replace('{address}', address);
+  
+  // If the path is already an absolute URL, return it directly
+  if (accountPath.startsWith('http://') || accountPath.startsWith('https://')) {
+    return accountPath;
+  }
+  
+  // Otherwise, concatenate with explorerUrl
+  if (!network.explorerUrl) return null;
+  return network.explorerUrl + accountPath;
 }
 
 /**
@@ -98,8 +108,18 @@ export function getExplorerAccountUrl(networkId: string, address: string): strin
  */
 export function getExplorerTxUrl(networkId: string, txHash: string): string | null {
   const network = networkRegistry.get(networkId);
-  if (!network?.explorerUrl || !network?.explorerTxPath) return null;
-  return network.explorerUrl + network.explorerTxPath.replace('{txHash}', txHash);
+  if (!network?.explorerTxPath) return null;
+  
+  const txPath = network.explorerTxPath.replace('{txHash}', txHash);
+  
+  // If the path is already an absolute URL, return it directly
+  if (txPath.startsWith('http://') || txPath.startsWith('https://')) {
+    return txPath;
+  }
+  
+  // Otherwise, concatenate with explorerUrl
+  if (!network.explorerUrl) return null;
+  return network.explorerUrl + txPath;
 }
 
 /**

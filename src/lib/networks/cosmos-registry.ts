@@ -6,7 +6,7 @@
  * 
  * DO NOT EDIT MANUALLY - Run `npm run sync:chains` to update
  * 
- * Generated: 2026-01-29T16:25:45.290Z
+ * Generated: 2026-01-29T17:23:21.452Z
  */
 
 import { CosmosNetworkConfig } from './types';
@@ -24,38 +24,40 @@ export interface CosmosRegistryConfig extends CosmosNetworkConfig {
  */
 export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
   {
-    id: 'beezee-1',
-    name: 'BeeZee',
-    chainName: 'beezee',
+    id: 'cosmoshub-4',
+    name: 'Cosmos Hub',
+    chainName: 'cosmoshub',
     type: 'cosmos',
     enabled: true,
-    symbol: 'BZE',
+    symbol: 'ATOM',
     decimals: 6,
     coinType: 118,
     rpc: [
-      'https://rpc.getbze.com',
-      'https://rpc-1.getbze.com',
-      'https://rpc-2.getbze.com',
-      'https://beezee_mainnet_rpc.chain.whenmoonwhenlambo.money'
+      'https://rpc.cosmoshub-main.ccvalidators.com:443',
+      'https://cosmoshub.tendermintrpc.lava.build:443',
+      'https://cosmos-rpc.quickapi.com:443',
+      'https://cosmos-rpc.onivalidator.com',
+      'https://rpc-cosmoshub.whispernode.com:443'
     ],
     rest: [
-      'https://rest.getbze.com',
-      'https://rest-1.getbze.com',
-      'https://rest-2.getbze.com',
-      'https://beezee_mainnet_api.chain.whenmoonwhenlambo.money'
+      'https://rest.cosmoshub-main.ccvalidators.com:443',
+      'https://cosmoshub.lava.build:443',
+      'https://cosmos-lcd.quickapi.com:443',
+      'https://rest.cosmoshub.goldenratiostaking.net',
+      'https://rest.lavenderfive.com:443/cosmoshub'
     ],
-    bech32Prefix: 'bze',
-    feeDenom: 'ubze',
+    bech32Prefix: 'cosmos',
+    feeDenom: 'uatom',
     gasPrice: '0.025',
     features: [
       'stargate',
       'ibc-transfer',
       'no-legacy-stdTx'
     ],
-    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/beezee/images/bze.png',
-    explorerUrl: 'https://ping.pub/beezee',
-    explorerAccountPath: 'https://ping.pub/beezee/account/{address}',
-    explorerTxPath: 'https://ping.pub/beezee/tx/{txHash}'
+    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/cosmoshub/images/atom.png',
+    explorerUrl: 'https://www.mintscan.io/cosmos',
+    explorerAccountPath: '/accounts/{address}',
+    explorerTxPath: '/transactions/{txHash}'
   },
   {
     id: 'osmosis-1',
@@ -90,44 +92,577 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     ],
     logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/osmo.png',
     explorerUrl: 'https://www.mintscan.io/osmosis',
-    explorerAccountPath: 'https://www.mintscan.io/osmosis/accounts/{address}',
-    explorerTxPath: 'https://www.mintscan.io/osmosis/transactions/{txHash}'
+    explorerAccountPath: '/accounts/{address}',
+    explorerTxPath: '/transactions/{txHash}'
   },
   {
-    id: 'cosmoshub-4',
-    name: 'Cosmos Hub',
-    chainName: 'cosmoshub',
+    id: 'celestia',
+    name: 'Celestia',
+    chainName: 'celestia',
     type: 'cosmos',
-    enabled: true,
-    symbol: 'ATOM',
+    enabled: false,
+    symbol: 'TIA',
     decimals: 6,
     coinType: 118,
     rpc: [
-      'https://rpc.cosmoshub-main.ccvalidators.com:443',
-      'https://cosmoshub.tendermintrpc.lava.build:443',
-      'https://cosmos-rpc.quickapi.com:443',
-      'https://cosmos-rpc.onivalidator.com',
-      'https://rpc-cosmoshub.whispernode.com:443'
+      'https://public-celestia-rpc.numia.xyz',
+      'https://celestia-rpc.mesa.newmetric.xyz',
+      'https://rpc.lunaroasis.net',
+      'https://rpc.celestia.nodestake.org',
+      'https://rpc.lavenderfive.com:443/celestia'
     ],
     rest: [
-      'https://rest.cosmoshub-main.ccvalidators.com:443',
-      'https://cosmoshub.lava.build:443',
-      'https://cosmos-lcd.quickapi.com:443',
-      'https://rest.cosmoshub.goldenratiostaking.net',
-      'https://rest.lavenderfive.com:443/cosmoshub'
+      'https://public-celestia-lcd.numia.xyz',
+      'https://celestia-rest.mesa.newmetric.xyz',
+      'http://celestia.rpc.nodersteam.com:1617',
+      'https://api.lunaroasis.net',
+      'https://api.celestia.nodestake.org'
     ],
-    bech32Prefix: 'cosmos',
-    feeDenom: 'uatom',
+    bech32Prefix: 'celestia',
+    feeDenom: 'utia',
+    gasPrice: '0.02',
+    features: [
+      'stargate',
+      'ibc-transfer',
+      'no-legacy-stdTx'
+    ],
+    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/celestia/images/celestia.png',
+    explorerUrl: 'https://celestia.explorers.guru/',
+    explorerAccountPath: '/account/{address}',
+    explorerTxPath: '/transaction/{txHash}'
+  },
+  {
+    id: 'dydx-mainnet-1',
+    name: 'dYdX Protocol',
+    chainName: 'dydx',
+    type: 'cosmos',
+    enabled: false,
+    symbol: 'ADYDX',
+    decimals: 6,
+    coinType: 118,
+    rpc: [
+      'https://dydx-rpc.kingnodes.com:443',
+      'https://dydx-dao-rpc.polkachu.com',
+      'https://dydx-mainnet-full-rpc.public.blastapi.io',
+      'https://rpc.lavenderfive.com:443/dydx',
+      'https://dydx-mainnet-rpc.autostake.com:443'
+    ],
+    rest: [
+      'https://community.nuxian-node.ch:6797/dydx/crpc',
+      'https://dydx-dao-api.polkachu.com',
+      'https://dydx-mainnet-full-lcd.public.blastapi.io',
+      'https://dydx-rest.kingnodes.com:443',
+      'https://rest.lavenderfive.com:443/dydx'
+    ],
+    bech32Prefix: 'dydx',
+    feeDenom: 'adydx',
+    gasPrice: '12500000000',
+    features: [
+      'stargate',
+      'ibc-transfer',
+      'no-legacy-stdTx'
+    ],
+    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/dydx/images/dydx.png',
+    explorerUrl: 'https://www.mintscan.io/dydx',
+    explorerAccountPath: '/account/{address}',
+    explorerTxPath: '/txs/{txHash}'
+  },
+  {
+    id: 'injective-1',
+    name: 'Injective',
+    chainName: 'injective',
+    type: 'cosmos',
+    enabled: false,
+    symbol: 'INJ',
+    decimals: 6,
+    coinType: 60,
+    rpc: [
+      'https://injective-rpc.highstakes.ch',
+      'https://rpc.injective.goldenratiostaking.net',
+      'https://injective-rpc.polkachu.com',
+      'https://rpc.lavenderfive.com:443/injective',
+      'https://rpc-injective-01.stakeflow.io'
+    ],
+    rest: [
+      'https://injective-api.highstakes.ch',
+      'https://injective-api.polkachu.com',
+      'https://rest.lavenderfive.com:443/injective',
+      'https://injective-rest.publicnode.com',
+      'https://public.stakewolle.com/cosmos/injective/rest'
+    ],
+    bech32Prefix: 'inj',
+    feeDenom: 'inj',
+    gasPrice: '160000000',
+    features: [
+      'stargate',
+      'ibc-transfer',
+      'no-legacy-stdTx'
+    ],
+    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/inj.png',
+    explorerUrl: 'https://www.mintscan.io/injective',
+    explorerAccountPath: '/accounts/{address}',
+    explorerTxPath: '/transactions/{txHash}'
+  },
+  {
+    id: 'pacific-1',
+    name: 'Sei',
+    chainName: 'sei',
+    type: 'cosmos',
+    enabled: false,
+    symbol: 'SEI',
+    decimals: 6,
+    coinType: 118,
+    rpc: [
+      'https://rpc.sei-apis.com',
+      'https://rpc.lavenderfive.com:443/sei',
+      'https://sei-rpc.polkachu.com',
+      'https://rpc-sei.stingray.plus',
+      'https://rpc-sei.whispernode.com:443'
+    ],
+    rest: [
+      'https://rest.sei-apis.com',
+      'https://rest.lavenderfive.com:443/sei',
+      'https://sei-api.polkachu.com',
+      'https://api-sei.stingray.plus',
+      'https://lcd-sei.whispernode.com:443'
+    ],
+    bech32Prefix: 'sei',
+    feeDenom: 'usei',
+    gasPrice: '0.02',
+    features: [
+      'stargate',
+      'ibc-transfer',
+      'no-legacy-stdTx'
+    ],
+    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/sei/images/sei.png',
+    explorerUrl: 'https://www.mintscan.io/sei',
+    explorerAccountPath: '/accounts/{address}',
+    explorerTxPath: '/transactions/{txHash}'
+  },
+  {
+    id: 'stargaze-1',
+    name: 'Stargaze',
+    chainName: 'stargaze',
+    type: 'cosmos',
+    enabled: false,
+    symbol: 'STARS',
+    decimals: 6,
+    coinType: 118,
+    rpc: [
+      'https://rpc.stargaze-apis.com/',
+      'https://rpc-stargaze.pupmos.network',
+      'https://rpc-stargaze.ezstaking.dev',
+      'https://stargaze-rpc.polkachu.com',
+      'https://rpc-stargaze-ia.cosmosia.notional.ventures/'
+    ],
+    rest: [
+      'https://rest.stargaze-apis.com/',
+      'https://api-stargaze.pupmos.network',
+      'https://api-stargaze.ezstaking.dev',
+      'https://api-stargaze-ia.cosmosia.notional.ventures/',
+      'https://stargaze.c29r3.xyz:443/api/'
+    ],
+    bech32Prefix: 'stars',
+    feeDenom: 'ustars',
+    gasPrice: '1.1',
+    features: [
+      'stargate',
+      'ibc-transfer',
+      'no-legacy-stdTx'
+    ],
+    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/stars.png',
+    explorerUrl: 'https://www.mintscan.io/stargaze/',
+    explorerAccountPath: '/accounts/{address}',
+    explorerTxPath: '/transactions/{txHash}'
+  },
+  {
+    id: 'juno-1',
+    name: 'Juno',
+    chainName: 'juno',
+    type: 'cosmos',
+    enabled: false,
+    symbol: 'JUNO',
+    decimals: 6,
+    coinType: 118,
+    rpc: [
+      'https://rpc-juno.itastakers.com',
+      'https://juno.rpc.m.stavr.tech',
+      'https://juno-rpc.polkachu.com',
+      'https://rpc.lavenderfive.com:443/juno',
+      'https://juno-rpc.kleomedes.network'
+    ],
+    rest: [
+      'https://rest.lavenderfive.com:443/juno',
+      'https://juno.api.m.stavr.tech',
+      'https://juno-api.polkachu.com',
+      'https://juno-api.kleomedes.network',
+      'https://juno-api.stakeandrelax.net'
+    ],
+    bech32Prefix: 'juno',
+    feeDenom: 'ujuno',
+    gasPrice: '0.1',
+    features: [
+      'stargate',
+      'ibc-transfer',
+      'no-legacy-stdTx'
+    ],
+    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/juno.png',
+    explorerUrl: 'https://ezstaking.app/juno',
+    explorerAccountPath: '/account/{address}',
+    explorerTxPath: '/txs/{txHash}'
+  },
+  {
+    id: 'akashnet-2',
+    name: 'Akash',
+    chainName: 'akash',
+    type: 'cosmos',
+    enabled: false,
+    symbol: 'AKT',
+    decimals: 6,
+    coinType: 118,
+    rpc: [
+      'https://rpc-akash.ecostake.com:443',
+      'https://akash-rpc.polkachu.com',
+      'https://akash-rpc.kleomedes.network',
+      'https://akash-mainnet-rpc.cosmonautstakes.com:443',
+      'https://akash-rpc.w3coins.io'
+    ],
+    rest: [
+      'https://rest-akash.ecostake.com',
+      'https://akash-api.polkachu.com',
+      'https://akash.c29r3.xyz:443/api',
+      'https://akash-api.kleomedes.network',
+      'https://api-akash-01.stakeflow.io'
+    ],
+    bech32Prefix: 'akash',
+    feeDenom: 'uakt',
     gasPrice: '0.025',
     features: [
       'stargate',
       'ibc-transfer',
       'no-legacy-stdTx'
     ],
-    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/cosmoshub/images/atom.png',
-    explorerUrl: 'https://www.mintscan.io/cosmos',
-    explorerAccountPath: 'https://www.mintscan.io/cosmos/accounts/{address}',
-    explorerTxPath: 'https://www.mintscan.io/cosmos/transactions/{txHash}'
+    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/akash/images/akt.png',
+    explorerUrl: 'https://www.mintscan.io/akash',
+    explorerAccountPath: '/accounts/{address}',
+    explorerTxPath: '/transactions/{txHash}'
+  },
+  {
+    id: 'kaiyo-1',
+    name: 'Kujira',
+    chainName: 'kujira',
+    type: 'cosmos',
+    enabled: false,
+    symbol: 'KUJI',
+    decimals: 6,
+    coinType: 118,
+    rpc: [
+      'https://rpc.kaiyo.kujira.setten.io',
+      'https://kujira-rpc.polkachu.com',
+      'https://rpc.lavenderfive.com:443/kujira',
+      'https://rpc-kujira-ia.cosmosia.notional.ventures/',
+      'https://kujira.ibs.team:443/rpc'
+    ],
+    rest: [
+      'https://lcd.kaiyo.kujira.setten.io',
+      'https://rest.lavenderfive.com:443/kujira',
+      'https://kujira-api.polkachu.com/',
+      'https://api-kujira-ia.cosmosia.notional.ventures/',
+      'https://kujira-lcd.wildsage.io/'
+    ],
+    bech32Prefix: 'kujira',
+    feeDenom: 'ukuji',
+    gasPrice: '0.0051',
+    features: [
+      'stargate',
+      'ibc-transfer',
+      'no-legacy-stdTx'
+    ],
+    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/kujira-chain-logo.png',
+    explorerUrl: 'https://finder.kujira.app',
+    explorerTxPath: '/kaiyo-1/tx/{txHash}'
+  },
+  {
+    id: 'neutron-1',
+    name: 'Neutron',
+    chainName: 'neutron',
+    type: 'cosmos',
+    enabled: false,
+    symbol: 'NTRN',
+    decimals: 6,
+    coinType: 118,
+    rpc: [
+      'https://rpc-lb.neutron.org',
+      'https://rpc-solara.neutron-1.neutron.org',
+      'https://rpc-vertexa.neutron-1.neutron.org',
+      'https://rpc.novel.remedy.tm.p2p.org',
+      'https://rpc.lavenderfive.com:443/neutron'
+    ],
+    rest: [
+      'https://rest-lb.neutron.org',
+      'https://rest-solara.neutron-1.neutron.org',
+      'https://rest-vertexa.neutron-1.neutron.org',
+      'https://rest-voidara.neutron-1.neutron.org',
+      'https://rest-pulsarix.neutron-1.neutron.org'
+    ],
+    bech32Prefix: 'neutron',
+    feeDenom: 'untrn',
+    gasPrice: '0.0053',
+    features: [
+      'stargate',
+      'ibc-transfer',
+      'no-legacy-stdTx'
+    ],
+    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/neutron-raw.png',
+    explorerUrl: 'https://www.mintscan.io/neutron',
+    explorerAccountPath: '/accounts/{address}',
+    explorerTxPath: '/transactions/{txHash}'
+  },
+  {
+    id: 'archway-1',
+    name: 'Archway',
+    chainName: 'archway',
+    type: 'cosmos',
+    enabled: false,
+    symbol: 'AARCH',
+    decimals: 6,
+    coinType: 118,
+    rpc: [
+      'https://rpc.mainnet.archway.io',
+      'https://archway-mainnet-archive.allthatnode.com:26657',
+      'https://m-archway.rpc.utsa.tech',
+      'https://rpc-1.archway.nodes.guru',
+      'https://archway.rpc.silknodes.io/'
+    ],
+    rest: [
+      'https://api.mainnet.archway.io',
+      'https://archway-api.w3coins.io',
+      'https://m-archway.api.utsa.tech',
+      'https://api-1.archway.nodes.guru',
+      'https://archway.api.silknodes.io/'
+    ],
+    bech32Prefix: 'archway',
+    feeDenom: 'aarch',
+    gasPrice: '225400000000',
+    features: [
+      'stargate',
+      'ibc-transfer',
+      'no-legacy-stdTx'
+    ],
+    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/archway/images/archway.png',
+    explorerUrl: 'https://archway.explorers.guru/',
+    explorerAccountPath: '/account/{address}',
+    explorerTxPath: '/transaction/{txHash}'
+  },
+  {
+    id: 'axelar-dojo-1',
+    name: 'Axelar',
+    chainName: 'axelar',
+    type: 'cosmos',
+    enabled: false,
+    symbol: 'AXL',
+    decimals: 6,
+    coinType: 118,
+    rpc: [
+      'https://rpc-axelar.imperator.co:443',
+      'https://axelar-rpc.quickapi.com:443',
+      'https://rpc-axelar.cosmos-spaces.cloud',
+      'https://axelar-rpc.pops.one:443',
+      'https://axelar-rpc.qubelabs.io:443'
+    ],
+    rest: [
+      'https://lcd-axelar.imperator.co:443',
+      'https://axelar-lcd.quickapi.com:443',
+      'https://api-axelar.cosmos-spaces.cloud',
+      'https://axelar-lcd.qubelabs.io:443',
+      'https://api-1.axelar.nodes.guru:443'
+    ],
+    bech32Prefix: 'axelar',
+    feeDenom: 'uaxl',
+    gasPrice: '0.007',
+    features: [
+      'stargate',
+      'ibc-transfer',
+      'no-legacy-stdTx'
+    ],
+    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/axelar/images/axl.png',
+    explorerUrl: 'https://www.mintscan.io/axelar',
+    explorerAccountPath: '/accounts/{address}',
+    explorerTxPath: '/transactions/{txHash}'
+  },
+  {
+    id: 'evmos_9001-2',
+    name: 'Evmos',
+    chainName: 'evmos',
+    type: 'cosmos',
+    enabled: false,
+    symbol: 'AEVMOS',
+    decimals: 6,
+    coinType: 60,
+    rpc: [
+      'https://rpc.lavenderfive.com:443/evmos',
+      'https://tendermint.bd.evmos.org:26657',
+      'https://rpc-evmos-ia.cosmosia.notional.ventures:443',
+      'https://rpc.evmos.testnet.run',
+      'https://evmos-rpc.polkachu.com'
+    ],
+    rest: [
+      'https://rest.bd.evmos.org:1317',
+      'https://rest.lavenderfive.com:443/evmos',
+      'https://api-evmos-ia.cosmosia.notional.ventures/',
+      'https://evmos-api.polkachu.com',
+      'https://api.evmos.silentvalidator.com/'
+    ],
+    bech32Prefix: 'evmos',
+    feeDenom: 'aevmos',
+    gasPrice: '25000000000',
+    features: [
+      'stargate',
+      'ibc-transfer',
+      'no-legacy-stdTx'
+    ],
+    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/evmos/images/evmos.png',
+    explorerUrl: 'https://www.mintscan.io/evmos',
+    explorerAccountPath: '/accounts/{address}',
+    explorerTxPath: '/transactions/{txHash}'
+  },
+  {
+    id: 'noble-1',
+    name: 'Noble',
+    chainName: 'noble',
+    type: 'cosmos',
+    enabled: false,
+    symbol: 'NOBLE',
+    decimals: 6,
+    coinType: 118,
+    rpc: [
+      'https://noble-rpc.polkachu.com',
+      'https://rpc.lavenderfive.com:443/noble',
+      'https://noble-rpc.owallet.io'
+    ],
+    rest: [
+      'https://noble-api.polkachu.com',
+      'https://rest.lavenderfive.com:443/noble',
+      'https://noble-rest.owallet.io'
+    ],
+    bech32Prefix: 'noble',
+    feeDenom: 'uusdc',
+    gasPrice: '0.1',
+    features: [
+      'stargate',
+      'ibc-transfer',
+      'no-legacy-stdTx'
+    ],
+    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/noble/images/stake.png',
+    explorerUrl: 'https://www.mintscan.io/noble',
+    explorerAccountPath: '/account/{address}',
+    explorerTxPath: '/txs/{txHash}'
+  },
+  {
+    id: 'stride-1',
+    name: 'Stride',
+    chainName: 'stride',
+    type: 'cosmos',
+    enabled: false,
+    symbol: 'STRD',
+    decimals: 6,
+    coinType: 118,
+    rpc: [
+      'https://stride-rpc.polkachu.com/',
+      'https://stride-rpc.onivalidator.com',
+      'https://rpc.lavenderfive.com:443/stride',
+      'https://rpc.stride.silentvalidator.com/',
+      'https://rpc-stride.cosmos-spaces.cloud'
+    ],
+    rest: [
+      'https://stride-api.polkachu.com/',
+      'https://api-stride.cosmos-spaces.cloud',
+      'https://rest.lavenderfive.com:443/stride',
+      'https://api.stride.silentvalidator.com/',
+      'https://stride.api.kjnodes.com'
+    ],
+    bech32Prefix: 'stride',
+    feeDenom: 'ustrd',
+    gasPrice: '0.005',
+    features: [
+      'stargate',
+      'ibc-transfer',
+      'no-legacy-stdTx'
+    ],
+    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/strd.png',
+    explorerUrl: 'https://www.mintscan.io/stride',
+    explorerAccountPath: '/accounts/{address}',
+    explorerTxPath: '/transactions/{txHash}'
+  },
+  {
+    id: 'phoenix-1',
+    name: 'Terra',
+    chainName: 'terra2',
+    type: 'cosmos',
+    enabled: false,
+    symbol: 'LUNA',
+    decimals: 6,
+    coinType: 330,
+    rpc: [
+      'https://rpc.lavenderfive.com:443/terra2',
+      'https://terra-rpc.polkachu.com',
+      'https://terra-rpc.stakely.io:443/',
+      'https://terra-rpc.publicnode.com:443',
+      'https://rpc-terra-01.stakeflow.io'
+    ],
+    rest: [
+      'https://phoenix-lcd.terra.dev:443',
+      'https://terra-rest.publicnode.com',
+      'https://api-terra-01.stakeflow.io',
+      'https://terra-phoenix-api.highstakes.ch',
+      'https://terra2.tdrsys.com'
+    ],
+    bech32Prefix: 'terra',
+    feeDenom: 'uluna',
+    gasPrice: '0.015',
+    features: [
+      'stargate',
+      'ibc-transfer',
+      'no-legacy-stdTx'
+    ],
+    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/luna.png',
+    explorerUrl: 'https://www.mintscan.io/terra',
+    explorerAccountPath: '/accounts/{address}',
+    explorerTxPath: '/transactions/{txHash}'
+  },
+  {
+    id: 'beezee-1',
+    name: 'BeeZee',
+    chainName: 'beezee',
+    type: 'cosmos',
+    enabled: true,
+    symbol: 'BZE',
+    decimals: 6,
+    coinType: 118,
+    rpc: [
+      'https://rpc.getbze.com',
+      'https://rpc-1.getbze.com',
+      'https://rpc-2.getbze.com',
+      'https://beezee_mainnet_rpc.chain.whenmoonwhenlambo.money'
+    ],
+    rest: [
+      'https://rest.getbze.com',
+      'https://rest-1.getbze.com',
+      'https://rest-2.getbze.com',
+      'https://beezee_mainnet_api.chain.whenmoonwhenlambo.money'
+    ],
+    bech32Prefix: 'bze',
+    feeDenom: 'ubze',
+    gasPrice: '0.025',
+    features: [
+      'stargate',
+      'ibc-transfer',
+      'no-legacy-stdTx'
+    ],
+    logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/beezee/images/bze.png',
+    explorerUrl: 'https://ping.pub/beezee',
+    explorerAccountPath: '/account/{address}',
+    explorerTxPath: '/tx/{txHash}'
   },
   {
     id: 'atomone-1',
@@ -162,8 +697,8 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     ],
     logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/atomone/images/atomone.png',
     explorerUrl: 'https://explorer.allinbits.com/atomone',
-    explorerAccountPath: 'https://explorer.allinbits.com/atomone/account/{address}',
-    explorerTxPath: 'https://explorer.allinbits.com/atomone/tx/{txHash}'
+    explorerAccountPath: '/account/{address}',
+    explorerTxPath: '/tx/{txHash}'
   }
 ];
 
