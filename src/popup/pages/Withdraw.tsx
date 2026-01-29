@@ -15,6 +15,7 @@ import {
 import { ArrowBackIcon, ExternalLinkIcon, CopyIcon } from '@chakra-ui/icons';
 import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
+import { useNetworkStore } from '@/store/networkStore';
 import { networkRegistry } from '@/lib/networks';
 
 // MoonPay supported cryptocurrencies for selling (off-ramp)
@@ -36,9 +37,8 @@ const MOONPAY_SELL_CODES: Record<string, string> = {
 // Default network for withdrawals
 const DEFAULT_WITHDRAW_NETWORK = 'base-mainnet';
 
-// MoonPay API Key
-const MOONPAY_API_KEY =
-  import.meta.env.VITE_MOONPAY_API_KEY || 'pk_test_pKULLlqQbOAEd7usXz7yUiVCc8yNBNGY';
+// MoonPay API Key (must be provided via VITE_MOONPAY_API_KEY; empty string disables MoonPay)
+const MOONPAY_API_KEY = import.meta.env.VITE_MOONPAY_API_KEY ?? '';
 
 interface WithdrawProps {
   onBack: () => void;
@@ -47,6 +47,7 @@ interface WithdrawProps {
 const Withdraw: React.FC<WithdrawProps> = ({ onBack }) => {
   const { selectedAccount, getAddressForChain, getBitcoinAddress, getEvmAddress } =
     useWalletStore();
+  const { getEnabledNetworks } = useNetworkStore();
   const toast = useToast();
 
   const [selectedNetwork, setSelectedNetwork] = useState(DEFAULT_WITHDRAW_NETWORK);
@@ -54,8 +55,7 @@ const Withdraw: React.FC<WithdrawProps> = ({ onBack }) => {
   const [loadingAddress, setLoadingAddress] = useState(false);
 
   // Get supported networks for MoonPay sell
-  const supportedNetworks = networkRegistry
-    .getEnabled()
+  const supportedNetworks = getEnabledNetworks()
     .filter((n) => MOONPAY_SELL_CODES[n.id] && MOONPAY_SELL_CODES[n.id] !== '');
 
   // Get current network config
