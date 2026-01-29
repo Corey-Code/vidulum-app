@@ -1,6 +1,6 @@
 /**
  * EVM Module
- * 
+ *
  * Re-exports all EVM-related functionality.
  */
 
@@ -11,7 +11,10 @@ export {
   type EvmTransaction,
   type TransactionReceipt,
   type FeeData,
-  
+
+  // Errors
+  RpcError,
+
   // Utilities
   formatEther,
   parseEther,
