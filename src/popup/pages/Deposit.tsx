@@ -103,7 +103,7 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
     ) {
       setSelectedNetwork(supportedNetworks[0].id);
     }
-  }, [networkPrefsLoaded, supportedNetworks]);
+  }, [networkPrefsLoaded, supportedNetworks, selectedNetwork]);
 
   // Get current network config
   const networkConfig = networkRegistry.get(selectedNetwork);
