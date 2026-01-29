@@ -23,7 +23,7 @@ const App: React.FC = () => {
     initialize().then(() => {
       setIsReady(true);
     });
-  }, []);
+  }, [initialize]);
 
   // Update view when state changes (after initialization)
   useEffect(() => {
