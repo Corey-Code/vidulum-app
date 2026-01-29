@@ -65,7 +65,6 @@ export const BZE_TESTNET: ChainInfo = cosmosConfigToChainInfo(
   networkRegistry.getCosmos('bzetestnet-2')!
 );
 
-// Osmosis is disabled but we keep the export for code that might reference it
 export const OSMOSIS_MAINNET: ChainInfo = cosmosConfigToChainInfo(
   networkRegistry.getCosmos('osmosis-1')!
 );
