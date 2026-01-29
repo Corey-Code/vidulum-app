@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   VStack,
@@ -17,6 +17,7 @@ import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
 import { useNetworkStore } from '@/store/networkStore';
 import { networkRegistry } from '@/lib/networks';
+import { useNetworkStore } from '@/store/networkStore';
 
 // MoonPay supported cryptocurrencies mapping
 const MOONPAY_CRYPTO_CODES: Record<string, string> = {
@@ -65,6 +66,7 @@ const DEFAULT_DEPOSIT_NETWORK = 'base-mainnet';
 
 // MoonPay API Key (must be provided via VITE_MOONPAY_API_KEY; empty string disables MoonPay)
 const MOONPAY_API_KEY = import.meta.env.VITE_MOONPAY_API_KEY ?? '';
+
 interface DepositProps {
   onBack: () => void;
 }
@@ -72,7 +74,7 @@ interface DepositProps {
 const Deposit: React.FC<DepositProps> = ({ onBack }) => {
   const { selectedAccount, getAddressForChain, getBitcoinAddress, getEvmAddress } =
     useWalletStore();
-  const { loadPreferences, getEnabledNetworks, isLoaded: networkPrefsLoaded } = useNetworkStore();
+  const { loadPreferences, isLoaded: networkPrefsLoaded, isNetworkEnabled } = useNetworkStore();
   const toast = useToast();
 
   const [selectedNetwork, setSelectedNetwork] = useState(DEFAULT_DEPOSIT_NETWORK);
@@ -81,25 +83,27 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
 
   // Load network preferences on mount
   useEffect(() => {
-    loadPreferences();
-  }, [loadPreferences]);
-
-  // Get supported networks for MoonPay from user preferences
-  const supportedNetworks = getEnabledNetworks().filter(
-    (n) => MOONPAY_CRYPTO_CODES[n.id] && MOONPAY_CRYPTO_CODES[n.id] !== ''
-  );
-
-  // Validate and update selected network when preferences load or supported networks change
-  useEffect(() => {
-    if (networkPrefsLoaded && supportedNetworks.length > 0) {
-      const isSelectedNetworkAvailable = supportedNetworks.some(
-        (n) => n.id === selectedNetwork
-      );
-      if (!isSelectedNetworkAvailable) {
-        setSelectedNetwork(supportedNetworks[0].id);
-      }
+    if (!networkPrefsLoaded) {
+      loadPreferences();
     }
-  }, [networkPrefsLoaded, supportedNetworks, selectedNetwork]);
+  }, [networkPrefsLoaded, loadPreferences]);
+
+  // Get supported networks for MoonPay - filter by user preferences
+  const supportedNetworks = networkRegistry
+    .getAll()
+    .filter((n) => isNetworkEnabled(n.id))
+    .filter((n) => MOONPAY_CRYPTO_CODES[n.id] && MOONPAY_CRYPTO_CODES[n.id] !== '');
+
+  // Ensure selected network is valid; if disabled, select the first available
+  useEffect(() => {
+    if (
+      networkPrefsLoaded &&
+      supportedNetworks.length > 0 &&
+      !supportedNetworks.some((n) => n.id === selectedNetwork)
+    ) {
+      setSelectedNetwork(supportedNetworks[0].id);
+    }
+  }, [networkPrefsLoaded, supportedNetworks]);
 
   // Get current network config
   const networkConfig = networkRegistry.get(selectedNetwork);
