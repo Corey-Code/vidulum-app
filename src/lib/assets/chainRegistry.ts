@@ -8,6 +8,8 @@
  */
 
 import { networkRegistry, isBitcoinNetwork, isEvmNetwork } from '@/lib/networks';
+import { COSMOS_REGISTRY_ASSETS } from './cosmos-registry';
+import { COSMOS_REGISTRY_CHAINS } from '@/lib/networks/cosmos-registry';
 
 export interface RegistryAsset {
   symbol: string;
@@ -42,13 +44,28 @@ const assetCache: Map<string, RegistryAsset[]> = new Map();
 const cacheExpiry: Map<string, number> = new Map();
 const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
 
-// Chain name mapping (chainId -> registry name) for Cosmos chains
-const chainNameMap: Record<string, string> = {
-  'beezee-1': 'beezee',
-  'osmosis-1': 'osmosis',
-  'atomone-1': 'atomone',
-  'cosmoshub-4': 'cosmoshub',
-};
+/**
+ * Get chain name from network ID for Cosmos chains
+ * Uses the pre-bundled registry config which has chainName
+ */
+function getChainName(networkId: string): string | undefined {
+  // First check the pre-bundled registry chains
+  const registryChain = COSMOS_REGISTRY_CHAINS.find((c) => c.id === networkId);
+  if (registryChain) {
+    return registryChain.chainName;
+  }
+
+  // Fallback mapping for manual configs
+  const fallbackMap: Record<string, string> = {
+    'beezee-1': 'beezee',
+    'bzetestnet-2': 'bzetest',
+    'osmosis-1': 'osmosis',
+    'atomone-1': 'atomone',
+    'cosmoshub-4': 'cosmoshub',
+  };
+
+  return fallbackMap[networkId];
+}
 
 // UTXO chain assets (Bitcoin and UTXO-based altcoins)
 const bitcoinAssets: Record<string, RegistryAsset[]> = {
@@ -333,13 +350,32 @@ export async function fetchChainAssets(networkId: string): Promise<RegistryAsset
     return assets;
   }
 
-  // Handle Cosmos chains - fetch from chain registry
-  const chainName = chainNameMap[networkId];
+  // Handle Cosmos chains
+  const chainName = getChainName(networkId);
   if (!chainName) {
     console.warn(`No chain registry mapping for ${networkId}`);
     return fallbackAssets[networkId] || [];
   }
 
+  // First check pre-bundled assets (faster, no network request)
+  const bundledAssets = COSMOS_REGISTRY_ASSETS[chainName];
+  if (bundledAssets && bundledAssets.length > 0) {
+    const assets: RegistryAsset[] = bundledAssets.map((asset) => ({
+      symbol: asset.symbol,
+      name: asset.name,
+      denom: asset.denom,
+      decimals: asset.decimals,
+      logoUrl: asset.logoUrl,
+      coingeckoId: asset.coingeckoId,
+    }));
+
+    assetCache.set(networkId, assets);
+    cacheExpiry.set(networkId, Date.now() + CACHE_DURATION);
+    console.log(`Loaded ${assets.length} assets from pre-bundled registry for ${networkId}`);
+    return assets;
+  }
+
+  // Fallback: fetch from chain registry if not pre-bundled
   try {
     const url = `https://raw.githubusercontent.com/cosmos/chain-registry/master/${chainName}/assetlist.json`;
     const response = await fetch(url);
