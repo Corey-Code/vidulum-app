@@ -10,7 +10,7 @@ interface ChainState {
   chains: Map<string, ChainInfo>;
   balances: Map<string, Map<string, Balance[]>>; // chainId -> address -> balances
   subscriptions: Map<string, string>; // "chainId:address" -> subscriptionId
-  debounceTimeouts: Map<string, NodeJS.Timeout>; // "chainId:address" -> timeout handle
+  debounceTimeouts: Map<string, ReturnType<typeof setTimeout>>; // "chainId:address" -> timeout handle
   isSubscribed: boolean;
 
   getChain: (chainId: string) => ChainInfo | undefined;
