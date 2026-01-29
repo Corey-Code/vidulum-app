@@ -139,26 +139,26 @@ export const useChainStore = create<ChainState>((set, get) => ({
     const subscriptionId = ws.subscribeToAddress(address, async (txResult) => {
       console.log('Transaction detected for', address, txResult);
       
-      // Clear existing timeout for this chainId:address to prevent queue buildup
-      const state = get();
-      const existingTimeout = state.timeoutHandles.get(key);
-      if (existingTimeout) {
-        clearTimeout(existingTimeout);
-      }
-      
-      // Debounce balance refresh
-      const timeoutHandle = setTimeout(() => {
-        get().fetchBalance(chainId, address).catch(console.error);
-        // Clean up the timeout handle after execution
-        set((currentState) => {
-          const newHandles = new Map(currentState.timeoutHandles);
-          newHandles.delete(key);
-          return { timeoutHandles: newHandles };
-        });
-      }, 1000);
-      
-      // Update state with the new timeout handle
+      // Atomically clear existing timeout and set new one to prevent race conditions
       set((currentState) => {
+        // Clear any existing timeout for this chainId:address
+        const existingTimeout = currentState.timeoutHandles.get(key);
+        if (existingTimeout) {
+          clearTimeout(existingTimeout);
+        }
+        
+        // Create new timeout for debounced balance refresh
+        const timeoutHandle = setTimeout(() => {
+          get().fetchBalance(chainId, address).catch(console.error);
+          // Clean up the timeout handle after execution
+          set((state) => {
+            const newHandles = new Map(state.timeoutHandles);
+            newHandles.delete(key);
+            return { timeoutHandles: newHandles };
+          });
+        }, 1000);
+        
+        // Store the new timeout handle
         const newHandles = new Map(currentState.timeoutHandles);
         newHandles.set(key, timeoutHandle);
         return { timeoutHandles: newHandles };
