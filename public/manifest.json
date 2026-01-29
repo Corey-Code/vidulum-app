@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Multi-chain browser wallet supporting Cosmos SDK, Bitcoin/UTXO, and EVM networks",
   "permissions": ["storage", "activeTab"],
-  "host_permissions": ["https://*/*"],
+  "host_permissions": ["https://*.vidulum.app/*"],
   "background": {
     "service_worker": "background.js"
   },
