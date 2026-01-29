@@ -23,14 +23,14 @@ export enum MessageType {
 
 export interface Message {
   type: MessageType;
-  payload?: any;
+  payload?: unknown;
   origin?: string;
   id?: string;
 }
 
 export interface MessageResponse {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
   id?: string;
 }
