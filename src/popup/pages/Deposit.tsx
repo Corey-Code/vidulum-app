@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   VStack,
@@ -15,7 +15,9 @@ import {
 import { ArrowBackIcon, ExternalLinkIcon, CopyIcon } from '@chakra-ui/icons';
 import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
+import { useNetworkStore } from '@/store/networkStore';
 import { networkRegistry } from '@/lib/networks';
+import { useNetworkStore } from '@/store/networkStore';
 
 // MoonPay supported cryptocurrencies mapping
 const MOONPAY_CRYPTO_CODES: Record<string, string> = {
@@ -64,6 +66,7 @@ const DEFAULT_DEPOSIT_NETWORK = 'base-mainnet';
 
 // MoonPay API Key (must be provided via VITE_MOONPAY_API_KEY; empty string disables MoonPay)
 const MOONPAY_API_KEY = import.meta.env.VITE_MOONPAY_API_KEY ?? '';
+
 interface DepositProps {
   onBack: () => void;
 }
@@ -71,16 +74,36 @@ interface DepositProps {
 const Deposit: React.FC<DepositProps> = ({ onBack }) => {
   const { selectedAccount, getAddressForChain, getBitcoinAddress, getEvmAddress } =
     useWalletStore();
+  const { loadPreferences, isLoaded: networkPrefsLoaded, isNetworkEnabled } = useNetworkStore();
   const toast = useToast();
 
   const [selectedNetwork, setSelectedNetwork] = useState(DEFAULT_DEPOSIT_NETWORK);
   const [walletAddress, setWalletAddress] = useState<string>('');
   const [loadingAddress, setLoadingAddress] = useState(false);
 
-  // Get supported networks for MoonPay
+  // Load network preferences on mount
+  useEffect(() => {
+    if (!networkPrefsLoaded) {
+      loadPreferences();
+    }
+  }, [networkPrefsLoaded, loadPreferences]);
+
+  // Get supported networks for MoonPay - filter by user preferences
   const supportedNetworks = networkRegistry
-    .getEnabled()
+    .getAll()
+    .filter((n) => isNetworkEnabled(n.id))
     .filter((n) => MOONPAY_CRYPTO_CODES[n.id] && MOONPAY_CRYPTO_CODES[n.id] !== '');
+
+  // Ensure selected network is valid; if disabled, select the first available
+  useEffect(() => {
+    if (
+      networkPrefsLoaded &&
+      supportedNetworks.length > 0 &&
+      !supportedNetworks.some((n) => n.id === selectedNetwork)
+    ) {
+      setSelectedNetwork(supportedNetworks[0].id);
+    }
+  }, [networkPrefsLoaded, supportedNetworks]);
 
   // Get current network config
   const networkConfig = networkRegistry.get(selectedNetwork);
@@ -177,26 +200,36 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
       </HStack>
 
       <VStack spacing={4} align="stretch">
-        {/* Network Selection */}
-        <Box>
-          <Text fontSize="sm" color="gray.400" mb={2}>
-            Select Network
-          </Text>
-          <Select
-            value={selectedNetwork}
-            onChange={(e) => setSelectedNetwork(e.target.value)}
-            bg="#141414"
-            borderColor="#2a2a2a"
-            size="sm"
-            _hover={{ borderColor: '#3a3a3a' }}
-          >
-            {supportedNetworks.map((network) => (
-              <option key={network.id} value={network.id} style={{ background: '#141414' }}>
-                {network.name} ({network.symbol})
-              </option>
-            ))}
-          </Select>
-        </Box>
+        {/* Loading State */}
+        {!networkPrefsLoaded ? (
+          <Box textAlign="center" py={8}>
+            <Spinner size="lg" color="teal.400" />
+            <Text fontSize="sm" color="gray.400" mt={2}>
+              Loading network preferences...
+            </Text>
+          </Box>
+        ) : (
+          <>
+            {/* Network Selection */}
+            <Box>
+              <Text fontSize="sm" color="gray.400" mb={2}>
+                Select Network
+              </Text>
+              <Select
+                value={selectedNetwork}
+                onChange={(e) => setSelectedNetwork(e.target.value)}
+                bg="#141414"
+                borderColor="#2a2a2a"
+                size="sm"
+                _hover={{ borderColor: '#3a3a3a' }}
+              >
+                {supportedNetworks.map((network) => (
+                  <option key={network.id} value={network.id} style={{ background: '#141414' }}>
+                    {network.name} ({network.symbol})
+                  </option>
+                ))}
+              </Select>
+            </Box>
 
         {/* Wallet Address Display */}
         <Box>
@@ -264,15 +297,17 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
           </VStack>
         )}
 
-        {/* Footer */}
-        <Box textAlign="center" pt={2}>
-          <Text fontSize="xs" color="gray.500">
-            Powered by{' '}
-            <Link href="https://www.moonpay.com" isExternal color="teal.400">
-              MoonPay
-            </Link>
-          </Text>
-        </Box>
+            {/* Footer */}
+            <Box textAlign="center" pt={2}>
+              <Text fontSize="xs" color="gray.500">
+                Powered by{' '}
+                <Link href="https://www.moonpay.com" isExternal color="teal.400">
+                  MoonPay
+                </Link>
+              </Text>
+            </Box>
+          </>
+        )}
       </VStack>
     </Box>
   );

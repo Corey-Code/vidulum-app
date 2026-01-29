@@ -138,6 +138,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
 
   setAssetEnabled: async (networkId: string, denom: string, enabled: boolean) => {
     const { preferences, savePreferences } = get();
+
     const currentAssets = preferences.enabledAssets[networkId] || [];
 
     let newAssets: string[];

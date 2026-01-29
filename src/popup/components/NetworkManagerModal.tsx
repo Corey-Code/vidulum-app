@@ -51,7 +51,7 @@ const NetworkItem: React.FC<NetworkItemProps> = ({
   const [assets, setAssets] = useState<RegistryAsset[]>([]);
   const [loadingAssets, setLoadingAssets] = useState(false);
   const [expandedForAssets, setExpandedForAssets] = useState(false);
-  const { isAssetEnabled, setAssetEnabled } = useNetworkStore();
+  const { isAssetEnabled, setAssetEnabled, setEnabledAssets } = useNetworkStore();
 
   // Load assets when expanded
   useEffect(() => {
@@ -164,7 +164,10 @@ const NetworkItem: React.FC<NetworkItemProps> = ({
                     px={2}
                     onClick={(e) => {
                       e.stopPropagation();
-                      assets.forEach((asset) => setAssetEnabled(network.id, asset.denom, true));
+                      setEnabledAssets(
+                        network.id,
+                        assets.map((asset) => asset.denom),
+                      );
                     }}
                   >
                     Select All
@@ -177,7 +180,7 @@ const NetworkItem: React.FC<NetworkItemProps> = ({
                     px={2}
                     onClick={(e) => {
                       e.stopPropagation();
-                      assets.forEach((asset) => setAssetEnabled(network.id, asset.denom, false));
+                      setEnabledAssets(network.id, []);
                     }}
                   >
                     Clear
