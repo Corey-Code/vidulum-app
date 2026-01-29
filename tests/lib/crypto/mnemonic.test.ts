@@ -46,7 +46,8 @@ describe('MnemonicManager', () => {
     });
 
     it('should handle extra whitespace', () => {
-      const withSpaces = '  abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about  ';
+      const withSpaces =
+        '  abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about  ';
       // Trim should be handled - this tests the current behavior
       expect(MnemonicManager.validateMnemonic(withSpaces.trim())).toBe(true);
     });
@@ -157,11 +158,11 @@ describe('MnemonicManager', () => {
   });
 
   describe('mnemonicToSeed', () => {
-    it('should derive seed from mnemonic', async () => {
+    it('should derive 64-byte BIP39 seed from mnemonic', async () => {
       const seed = await MnemonicManager.mnemonicToSeed(validMnemonic12);
 
       expect(seed).toBeInstanceOf(Uint8Array);
-      expect(seed.length).toBeGreaterThan(0);
+      expect(seed.length).toBe(64); // BIP39 seeds are always 64 bytes
     });
 
     it('should produce consistent results', async () => {
@@ -169,6 +170,15 @@ describe('MnemonicManager', () => {
       const seed2 = await MnemonicManager.mnemonicToSeed(validMnemonic12);
 
       expect(Buffer.from(seed1).toString('hex')).toBe(Buffer.from(seed2).toString('hex'));
+    });
+
+    it('should produce known test vector', async () => {
+      // Test vector for "abandon" x11 + "about" mnemonic
+      const seed = await MnemonicManager.mnemonicToSeed(validMnemonic12);
+      const seedHex = Buffer.from(seed).toString('hex');
+
+      // BIP39 test vector - this is the known seed for this mnemonic with empty passphrase
+      expect(seedHex.startsWith('5eb00bbddcf069084889a8ab9155568165f5c453')).toBe(true);
     });
   });
 });

@@ -2,6 +2,7 @@ import { sha256 } from '@noble/hashes/sha256';
 import { ripemd160, EnglishMnemonic } from '@cosmjs/crypto';
 import { toBech32, fromBech32 } from '@cosmjs/encoding';
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
+import * as bip39 from 'bip39';
 
 export interface DerivedKey {
   privateKey: Uint8Array;
@@ -41,14 +42,13 @@ export class MnemonicManager {
     }
   }
 
-  // Note: Seed derivation is handled internally by DirectSecp256k1HdWallet
-  // This method is kept for API compatibility but uses CosmJS under the hood
+  /**
+   * Derive a BIP39 seed from a mnemonic phrase.
+   * Returns a 64-byte seed that can be used for HD key derivation.
+   */
   static async mnemonicToSeed(mnemonic: string): Promise<Uint8Array> {
-    // Create a wallet to validate the mnemonic and derive keys
-    const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic);
-    const accounts = await wallet.getAccounts();
-    // Return the public key as a seed proxy (actual seed is not exposed by CosmJS for security)
-    return accounts[0]?.pubkey || new Uint8Array(32);
+    const seedBuffer = await bip39.mnemonicToSeed(mnemonic);
+    return new Uint8Array(seedBuffer);
   }
 
   static async deriveKeyFromMnemonic(
