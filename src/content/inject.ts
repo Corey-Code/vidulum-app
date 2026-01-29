@@ -21,3 +21,6 @@ const injectKeplrAPI = () => {
   (document.head || document.documentElement).appendChild(script);
   script.remove(); // Clean up
 };
+
+// Automatically inject Keplr API when this content script loads
+injectKeplrAPI();

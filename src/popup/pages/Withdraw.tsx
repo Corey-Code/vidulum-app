@@ -37,8 +37,8 @@ const MOONPAY_SELL_CODES: Record<string, string> = {
 // Default network for withdrawals
 const DEFAULT_WITHDRAW_NETWORK = 'base-mainnet';
 
-// MoonPay API Key (must be provided via VITE_MOONPAY_API_KEY; empty string disables MoonPay)
-const MOONPAY_API_KEY = import.meta.env.VITE_MOONPAY_API_KEY ?? '';
+// MoonPay API Key (must be provided via environment; no test key fallback)
+const MOONPAY_API_KEY = import.meta.env.VITE_MOONPAY_API_KEY;
 
 interface WithdrawProps {
   onBack: () => void;
