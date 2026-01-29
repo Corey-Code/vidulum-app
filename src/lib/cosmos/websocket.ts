@@ -22,7 +22,7 @@ export class ChainWebSocket {
   private pendingSubscriptions: Map<string, Subscription> = new Map();
   private connectResolve: (() => void) | null = null;
   private connectReject: ((error: Error) => void) | null = null;
-  private connectionTimeout: NodeJS.Timeout | null = null;
+  private connectionTimeout: ReturnType<typeof setTimeout> | null = null;
   private readonly CONNECTION_TIMEOUT_MS = 10000; // 10 second timeout
   private intentionalDisconnect = false;
 
