@@ -63,16 +63,10 @@ describe('Network Store', () => {
     mockChromeStorage.local.get.mockClear();
     mockChromeStorage.local.set.mockClear();
 
-    // Reset the store state
+    // Reset the store state (empty overrides - defaults from registry)
     useNetworkStore.setState({
       preferences: {
-        enabledNetworks: {
-          'beezee-1': true,
-          'osmosis-1': true,
-          'cosmoshub-4': false,
-          'bitcoin-mainnet': true,
-          'ethereum-mainnet': true,
-        },
+        enabledNetworks: {}, // Empty - defaults computed from registry
         enabledAssets: {},
       },
       isLoaded: false,
@@ -154,26 +148,57 @@ describe('Network Store', () => {
   });
 
   describe('Network Enablement', () => {
-    it('should enable a network and persist', async () => {
+    it('should enable a network that defaults to disabled (stores override)', async () => {
       const { result } = renderHook(() => useNetworkStore());
 
+      // cosmoshub-4 defaults to false in mock registry
       await act(async () => {
         await result.current.setNetworkEnabled('cosmoshub-4', true);
       });
 
       expect(result.current.isNetworkEnabled('cosmoshub-4')).toBe(true);
       expect(mockChromeStorage.local.set).toHaveBeenCalled();
+
+      // Verify override is stored
+      const lastCall = mockChromeStorage.local.set.mock.calls.slice(-1)[0][0] as {
+        network_preferences: { enabledNetworks: Record<string, boolean> };
+      };
+      expect(lastCall.network_preferences.enabledNetworks['cosmoshub-4']).toBe(true);
     });
 
-    it('should disable a network and persist', async () => {
+    it('should disable a network that defaults to enabled (stores override)', async () => {
       const { result } = renderHook(() => useNetworkStore());
 
+      // beezee-1 defaults to true in mock registry
       await act(async () => {
         await result.current.setNetworkEnabled('beezee-1', false);
       });
 
       expect(result.current.isNetworkEnabled('beezee-1')).toBe(false);
       expect(mockChromeStorage.local.set).toHaveBeenCalled();
+
+      // Verify override is stored
+      const lastCall = mockChromeStorage.local.set.mock.calls.slice(-1)[0][0] as {
+        network_preferences: { enabledNetworks: Record<string, boolean> };
+      };
+      expect(lastCall.network_preferences.enabledNetworks['beezee-1']).toBe(false);
+    });
+
+    it('should not store override when value matches default', async () => {
+      const { result } = renderHook(() => useNetworkStore());
+
+      // beezee-1 defaults to true, setting to true should not store override
+      await act(async () => {
+        await result.current.setNetworkEnabled('beezee-1', true);
+      });
+
+      expect(result.current.isNetworkEnabled('beezee-1')).toBe(true);
+
+      // Verify no override stored (key should not exist)
+      const lastCall = mockChromeStorage.local.set.mock.calls.slice(-1)[0][0] as {
+        network_preferences: { enabledNetworks: Record<string, boolean> };
+      };
+      expect(lastCall.network_preferences.enabledNetworks['beezee-1']).toBeUndefined();
     });
 
     it('should get enabled networks only', () => {
@@ -333,9 +358,10 @@ describe('Network Store', () => {
   });
 
   describe('Persistence', () => {
-    it('should persist network changes to storage', async () => {
+    it('should persist network overrides to storage (only when different from default)', async () => {
       const { result } = renderHook(() => useNetworkStore());
 
+      // beezee-1 defaults to true, so disabling it should store an override
       await act(async () => {
         await result.current.setNetworkEnabled('beezee-1', false);
       });
@@ -349,6 +375,31 @@ describe('Network Store', () => {
           }),
         })
       );
+    });
+
+    it('should remove override when value matches default', async () => {
+      const { result } = renderHook(() => useNetworkStore());
+
+      // First disable beezee-1 (creates override since default is true)
+      await act(async () => {
+        await result.current.setNetworkEnabled('beezee-1', false);
+      });
+
+      expect(result.current.isNetworkEnabled('beezee-1')).toBe(false);
+
+      // Re-enable beezee-1 (matches default, should remove override)
+      await act(async () => {
+        await result.current.setNetworkEnabled('beezee-1', true);
+      });
+
+      // Should still work correctly
+      expect(result.current.isNetworkEnabled('beezee-1')).toBe(true);
+
+      // The override should be removed from storage
+      const lastCall = mockChromeStorage.local.set.mock.calls.slice(-1)[0][0] as {
+        network_preferences: { enabledNetworks: Record<string, boolean> };
+      };
+      expect(lastCall.network_preferences.enabledNetworks['beezee-1']).toBeUndefined();
     });
 
     it('should persist asset changes to storage', async () => {

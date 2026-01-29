@@ -33,16 +33,11 @@ interface NetworkState {
   hasAssetPreferences: (networkId: string) => boolean; // true if explicit preferences exist
 }
 
-// Get default enabled state from network config
+// Get default preferences (empty - we compute defaults from registry at runtime)
+// This approach stores only user overrides, not all networks, to minimize storage size
 function getDefaultPreferences(): NetworkPreferences {
-  const enabledNetworks: Record<string, boolean> = {};
-
-  networkRegistry.getAll().forEach((network) => {
-    enabledNetworks[network.id] = network.enabled;
-  });
-
   return {
-    enabledNetworks,
+    enabledNetworks: {}, // Empty - defaults computed from registry
     enabledAssets: {},
   };
 }
@@ -56,14 +51,13 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
       if (typeof chrome !== 'undefined' && chrome.storage?.local) {
         const result = await chrome.storage.local.get(STORAGE_KEY);
         if (result[STORAGE_KEY]) {
-          // Merge stored preferences with defaults (to handle new networks)
+          // Load stored overrides directly (defaults computed from registry at runtime)
           const stored = result[STORAGE_KEY] as NetworkPreferences;
-          const defaults = getDefaultPreferences();
 
           set({
             preferences: {
-              enabledNetworks: { ...defaults.enabledNetworks, ...stored.enabledNetworks },
-              enabledAssets: { ...defaults.enabledAssets, ...stored.enabledAssets },
+              enabledNetworks: stored.enabledNetworks || {},
+              enabledAssets: stored.enabledAssets || {},
             },
             isLoaded: true,
           });
@@ -100,14 +94,22 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
 
   setNetworkEnabled: async (networkId: string, enabled: boolean) => {
     const { preferences, savePreferences } = get();
+    const defaultEnabled = networkRegistry.get(networkId)?.enabled ?? false;
+
+    const newEnabledNetworks = { ...preferences.enabledNetworks };
+
+    if (enabled === defaultEnabled) {
+      // Remove override if it matches default (minimizes storage)
+      delete newEnabledNetworks[networkId];
+    } else {
+      // Store override only when different from default
+      newEnabledNetworks[networkId] = enabled;
+    }
 
     set({
       preferences: {
         ...preferences,
-        enabledNetworks: {
-          ...preferences.enabledNetworks,
-          [networkId]: enabled,
-        },
+        enabledNetworks: newEnabledNetworks,
       },
     });
 
