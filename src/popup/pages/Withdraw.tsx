@@ -13,6 +13,7 @@ import {
   Link,
 } from '@chakra-ui/react';
 import { ArrowBackIcon, ExternalLinkIcon, CopyIcon } from '@chakra-ui/icons';
+import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
 import { networkRegistry } from '@/lib/networks';
 
@@ -125,7 +126,7 @@ const Withdraw: React.FC<WithdrawProps> = ({ onBack }) => {
   };
 
   const handleOpenMoonPay = () => {
-    chrome.tabs.create({ url: buildMoonPaySellUrl() });
+    browser.tabs.create({ url: buildMoonPaySellUrl() });
   };
 
   return (
