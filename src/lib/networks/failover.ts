@@ -1,6 +1,6 @@
 /**
  * Endpoint Failover Utility
- * 
+ *
  * Provides automatic failover logic for network endpoints.
  * Tracks endpoint health and automatically routes requests to healthy endpoints.
  */
@@ -9,11 +9,11 @@ import { EndpointHealth } from './types';
 
 // Configuration for failover behavior
 export interface FailoverConfig {
-  maxRetries: number;              // Max retries per endpoint before failing over
-  retryDelayMs: number;            // Delay between retries (ms)
-  requestTimeoutMs: number;        // Request timeout (ms)
-  failureThreshold: number;        // Consecutive failures before marking unhealthy
-  recoveryTimeMs: number;          // Time before retrying an unhealthy endpoint (ms)
+  maxRetries: number; // Max retries per endpoint before failing over
+  retryDelayMs: number; // Delay between retries (ms)
+  requestTimeoutMs: number; // Request timeout (ms)
+  failureThreshold: number; // Consecutive failures before marking unhealthy
+  recoveryTimeMs: number; // Time before retrying an unhealthy endpoint (ms)
 }
 
 // Default failover configuration
@@ -62,7 +62,7 @@ function markEndpointFailure(url: string, config: FailoverConfig = DEFAULT_CONFI
   const health = getEndpointHealth(url);
   health.lastFailure = Date.now();
   health.consecutiveFailures++;
-  
+
   if (health.consecutiveFailures >= config.failureThreshold) {
     health.isHealthy = false;
     console.warn(`Endpoint marked unhealthy after ${health.consecutiveFailures} failures: ${url}`);
@@ -74,15 +74,15 @@ function markEndpointFailure(url: string, config: FailoverConfig = DEFAULT_CONFI
  */
 function shouldTryEndpoint(url: string, config: FailoverConfig = DEFAULT_CONFIG): boolean {
   const health = getEndpointHealth(url);
-  
+
   if (health.isHealthy) return true;
-  
+
   // Check if recovery time has elapsed
   if (health.lastFailure && Date.now() - health.lastFailure >= config.recoveryTimeMs) {
     console.log(`Retrying previously unhealthy endpoint: ${url}`);
     return true;
   }
-  
+
   return false;
 }
 
@@ -96,21 +96,21 @@ export function getSortedEndpoints(
   return [...endpoints].sort((a, b) => {
     const healthA = getEndpointHealth(a);
     const healthB = getEndpointHealth(b);
-    
+
     // Healthy endpoints first
     if (healthA.isHealthy !== healthB.isHealthy) {
       return healthA.isHealthy ? -1 : 1;
     }
-    
+
     // Among healthy, prefer more recently successful
     if (healthA.lastSuccess && healthB.lastSuccess) {
       return healthB.lastSuccess - healthA.lastSuccess;
     }
-    
+
     // Prefer endpoints that have been tried
     if (healthA.lastSuccess && !healthB.lastSuccess) return -1;
     if (!healthA.lastSuccess && healthB.lastSuccess) return 1;
-    
+
     return 0;
   });
 }
@@ -128,7 +128,7 @@ function isServerError(error: unknown): boolean {
   ) {
     return SERVER_ERROR_CODES.includes((error as { status: number }).status);
   }
-  
+
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
     // Network errors, timeouts, and connection issues
@@ -144,13 +144,13 @@ function isServerError(error: unknown): boolean {
     ) {
       return true;
     }
-    
+
     // Check for HTTP status codes in error message
     for (const code of SERVER_ERROR_CODES) {
       if (message.includes(`${code}`)) return true;
     }
   }
-  
+
   return false;
 }
 
@@ -158,13 +158,16 @@ function isServerError(error: unknown): boolean {
  * Delay helper
  */
 function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
  * Create an AbortController with timeout
  */
-function createTimeoutController(timeoutMs: number): { controller: AbortController; timeoutId: NodeJS.Timeout } {
+function createTimeoutController(timeoutMs: number): {
+  controller: AbortController;
+  timeoutId: ReturnType<typeof setTimeout>;
+} {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   return { controller, timeoutId };
@@ -182,25 +185,25 @@ export async function fetchWithFailover<T>(
   const cfg = { ...DEFAULT_CONFIG, ...config };
   const sortedEndpoints = getSortedEndpoints(endpoints, cfg);
   const errors: Error[] = [];
-  
+
   for (const baseUrl of sortedEndpoints) {
     if (!shouldTryEndpoint(baseUrl, cfg)) {
       continue;
     }
-    
+
     const fullUrl = pathOrUrl.startsWith('http') ? pathOrUrl : `${baseUrl}${pathOrUrl}`;
-    
+
     for (let attempt = 0; attempt <= cfg.maxRetries; attempt++) {
       const { controller, timeoutId } = createTimeoutController(cfg.requestTimeoutMs);
-      
+
       try {
         const response = await fetch(fullUrl, {
           ...options,
           signal: controller.signal,
         });
-        
+
         clearTimeout(timeoutId);
-        
+
         if (!response.ok) {
           if (SERVER_ERROR_CODES.includes(response.status)) {
             throw new Error(`Server error: ${response.status} ${response.statusText}`);
@@ -209,44 +212,43 @@ export async function fetchWithFailover<T>(
           const errorText = await response.text().catch(() => response.statusText);
           throw new Error(`Request failed: ${response.status} - ${errorText}`);
         }
-        
+
         const data = await response.json();
         markEndpointSuccess(baseUrl);
         return data as T;
-        
       } catch (error) {
         clearTimeout(timeoutId);
-        
+
         const err = error instanceof Error ? error : new Error(String(error));
         errors.push(err);
-        
+
         // Check if this is a server-side error that warrants failover
         if (isServerError(error) || err.name === 'AbortError') {
           markEndpointFailure(baseUrl, cfg);
-          
+
           // Retry on same endpoint if we have retries left
           if (attempt < cfg.maxRetries) {
             console.log(`Retrying ${fullUrl} (attempt ${attempt + 2}/${cfg.maxRetries + 1})`);
             await delay(cfg.retryDelayMs);
             continue;
           }
-          
+
           // Move to next endpoint
           console.warn(`Endpoint failed, trying next: ${baseUrl}`);
           break;
         }
-        
+
         // Client-side errors (4xx, parsing, etc.) - don't failover, throw immediately
         throw error;
       }
     }
   }
-  
+
   // All endpoints failed
   const lastError = errors[errors.length - 1];
   throw new Error(
     `All endpoints failed. Last error: ${lastError?.message || 'Unknown error'}. ` +
-    `Tried ${sortedEndpoints.length} endpoint(s).`
+      `Tried ${sortedEndpoints.length} endpoint(s).`
   );
 }
 
@@ -262,50 +264,51 @@ export async function withFailover<T>(
   const cfg = { ...DEFAULT_CONFIG, ...config };
   const sortedEndpoints = getSortedEndpoints(endpoints, cfg);
   const errors: Error[] = [];
-  
+
   for (const endpoint of sortedEndpoints) {
     if (!shouldTryEndpoint(endpoint, cfg)) {
       continue;
     }
-    
+
     for (let attempt = 0; attempt <= cfg.maxRetries; attempt++) {
       try {
         // Create a timeout promise
         const timeoutPromise = new Promise<never>((_, reject) => {
           setTimeout(() => reject(new Error('Operation timeout')), cfg.requestTimeoutMs);
         });
-        
+
         const result = await Promise.race([operation(endpoint), timeoutPromise]);
         markEndpointSuccess(endpoint);
         return { result, endpoint };
-        
       } catch (error) {
         const err = error instanceof Error ? error : new Error(String(error));
         errors.push(err);
-        
+
         if (isServerError(error) || err.message.includes('timeout')) {
           markEndpointFailure(endpoint, cfg);
-          
+
           if (attempt < cfg.maxRetries) {
-            console.log(`Retrying operation on ${endpoint} (attempt ${attempt + 2}/${cfg.maxRetries + 1})`);
+            console.log(
+              `Retrying operation on ${endpoint} (attempt ${attempt + 2}/${cfg.maxRetries + 1})`
+            );
             await delay(cfg.retryDelayMs);
             continue;
           }
-          
+
           console.warn(`Operation failed on endpoint, trying next: ${endpoint}`);
           break;
         }
-        
+
         // Non-server errors - throw immediately
         throw error;
       }
     }
   }
-  
+
   const lastError = errors[errors.length - 1];
   throw new Error(
     `All endpoints failed. Last error: ${lastError?.message || 'Unknown error'}. ` +
-    `Tried ${sortedEndpoints.length} endpoint(s).`
+      `Tried ${sortedEndpoints.length} endpoint(s).`
   );
 }
 
@@ -318,13 +321,13 @@ export function getHealthyEndpoint(
 ): string | null {
   const cfg = { ...DEFAULT_CONFIG, ...config };
   const sorted = getSortedEndpoints(endpoints, cfg);
-  
+
   for (const endpoint of sorted) {
     if (shouldTryEndpoint(endpoint, cfg)) {
       return endpoint;
     }
   }
-  
+
   // If no healthy endpoints, return the first one (will trigger recovery check)
   return endpoints[0] || null;
 }
@@ -342,7 +345,7 @@ export function resetEndpointHealth(endpoints: string[]): void {
  * Get health status for debugging/monitoring
  */
 export function getEndpointHealthStatus(endpoints: string[]): EndpointHealth[] {
-  return endpoints.map(url => getEndpointHealth(url));
+  return endpoints.map((url) => getEndpointHealth(url));
 }
 
 /**
