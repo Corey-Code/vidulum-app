@@ -1,6 +1,6 @@
 /**
  * Network Registry Tests
- * 
+ *
  * Tests for network configuration and registry functionality
  */
 
@@ -12,9 +12,7 @@ import {
   isBitcoinNetwork,
   isEvmNetwork,
   getUINetworks,
-  BEEZEE_MAINNET,
   BITCOIN_MAINNET,
-  ETHEREUM_MAINNET,
 } from '@/lib/networks';
 
 describe('Network Registry', () => {
@@ -22,19 +20,19 @@ describe('Network Registry', () => {
     it('should have registered Cosmos networks', () => {
       const cosmos = networkRegistry.getByType('cosmos');
       expect(cosmos.length).toBeGreaterThan(0);
-      expect(cosmos.some(n => n.id === 'beezee-1')).toBe(true);
+      expect(cosmos.some((n) => n.id === 'beezee-1')).toBe(true);
     });
 
     it('should have registered Bitcoin networks', () => {
       const bitcoin = networkRegistry.getByType('bitcoin');
       expect(bitcoin.length).toBeGreaterThan(0);
-      expect(bitcoin.some(n => n.id === 'bitcoin-mainnet')).toBe(true);
+      expect(bitcoin.some((n) => n.id === 'bitcoin-mainnet')).toBe(true);
     });
 
     it('should have registered EVM networks', () => {
       const evm = networkRegistry.getByType('evm');
       expect(evm.length).toBeGreaterThan(0);
-      expect(evm.some(n => n.id === 'ethereum-mainnet')).toBe(true);
+      expect(evm.some((n) => n.chainId === 1)).toBe(true); // Ethereum mainnet
     });
 
     it('should get network by ID', () => {
@@ -64,7 +62,7 @@ describe('Network Registry', () => {
     });
 
     it('should get EVM network with correct type', () => {
-      const evm = networkRegistry.getEvm('ethereum-mainnet');
+      const evm = networkRegistry.getEvm('eth-mainnet');
       expect(evm).toBeDefined();
       expect(evm?.type).toBe('evm');
       expect(evm?.rpcUrls).toBeInstanceOf(Array);
@@ -83,38 +81,41 @@ describe('Network Registry', () => {
 
     it('should get only enabled networks', () => {
       const enabled = networkRegistry.getEnabled();
-      const allEnabled = enabled.every(n => n.enabled);
+      const allEnabled = enabled.every((n) => n.enabled);
       expect(allEnabled).toBe(true);
     });
 
     it('should get enabled networks by type', () => {
       const enabledCosmos = networkRegistry.getEnabledByType('cosmos');
-      expect(enabledCosmos.every(n => n.enabled && n.type === 'cosmos')).toBe(true);
+      expect(enabledCosmos.every((n) => n.enabled && n.type === 'cosmos')).toBe(true);
     });
   });
 
   describe('Network Configurations', () => {
     describe('Cosmos Networks', () => {
       it('should have valid BeeZee mainnet config', () => {
-        expect(BEEZEE_MAINNET.id).toBe('beezee-1');
-        expect(BEEZEE_MAINNET.type).toBe('cosmos');
-        expect(BEEZEE_MAINNET.rpc.length).toBeGreaterThan(0);
-        expect(BEEZEE_MAINNET.rest.length).toBeGreaterThan(0);
-        expect(BEEZEE_MAINNET.bech32Prefix).toBe('bze');
-        expect(BEEZEE_MAINNET.feeDenom).toBe('ubze');
-        expect(BEEZEE_MAINNET.coinType).toBe(118);
+        const beezee = networkRegistry.getCosmos('beezee-1')!;
+        expect(beezee.id).toBe('beezee-1');
+        expect(beezee.type).toBe('cosmos');
+        expect(beezee.rpc.length).toBeGreaterThan(0);
+        expect(beezee.rest.length).toBeGreaterThan(0);
+        expect(beezee.bech32Prefix).toBe('bze');
+        expect(beezee.feeDenom).toBe('ubze');
+        expect(beezee.coinType).toBe(118);
       });
 
       it('should have multiple RPC endpoints for failover', () => {
-        expect(BEEZEE_MAINNET.rpc.length).toBeGreaterThanOrEqual(1);
-        BEEZEE_MAINNET.rpc.forEach(endpoint => {
+        const beezee = networkRegistry.getCosmos('beezee-1')!;
+        expect(beezee.rpc.length).toBeGreaterThanOrEqual(1);
+        beezee.rpc.forEach((endpoint) => {
           expect(endpoint).toMatch(/^https?:\/\//);
         });
       });
 
       it('should have multiple REST endpoints for failover', () => {
-        expect(BEEZEE_MAINNET.rest.length).toBeGreaterThanOrEqual(1);
-        BEEZEE_MAINNET.rest.forEach(endpoint => {
+        const beezee = networkRegistry.getCosmos('beezee-1')!;
+        expect(beezee.rest.length).toBeGreaterThanOrEqual(1);
+        beezee.rest.forEach((endpoint) => {
           expect(endpoint).toMatch(/^https?:\/\//);
         });
       });
@@ -137,7 +138,7 @@ describe('Network Registry', () => {
 
       it('should have multiple API endpoints for failover', () => {
         expect(BITCOIN_MAINNET.apiUrls.length).toBeGreaterThanOrEqual(1);
-        BITCOIN_MAINNET.apiUrls.forEach(endpoint => {
+        BITCOIN_MAINNET.apiUrls.forEach((endpoint) => {
           expect(endpoint).toMatch(/^https?:\/\//);
         });
       });
@@ -145,23 +146,26 @@ describe('Network Registry', () => {
 
     describe('EVM Networks', () => {
       it('should have valid Ethereum mainnet config', () => {
-        expect(ETHEREUM_MAINNET.id).toBe('ethereum-mainnet');
-        expect(ETHEREUM_MAINNET.type).toBe('evm');
-        expect(ETHEREUM_MAINNET.rpcUrls.length).toBeGreaterThan(0);
-        expect(ETHEREUM_MAINNET.chainId).toBe(1);
-        expect(ETHEREUM_MAINNET.coinType).toBe(60);
-        expect(ETHEREUM_MAINNET.decimals).toBe(18);
+        const ethereum = networkRegistry.getEvm('eth-mainnet')!;
+        expect(ethereum.id).toBe('eth-mainnet');
+        expect(ethereum.type).toBe('evm');
+        expect(ethereum.rpcUrls.length).toBeGreaterThan(0);
+        expect(ethereum.chainId).toBe(1);
+        expect(ethereum.coinType).toBe(60);
+        expect(ethereum.decimals).toBe(18);
       });
 
       it('should have valid native currency', () => {
-        expect(ETHEREUM_MAINNET.nativeCurrency).toBeDefined();
-        expect(ETHEREUM_MAINNET.nativeCurrency.symbol).toBe('ETH');
-        expect(ETHEREUM_MAINNET.nativeCurrency.decimals).toBe(18);
+        const ethereum = networkRegistry.getEvm('eth-mainnet')!;
+        expect(ethereum.nativeCurrency).toBeDefined();
+        expect(ethereum.nativeCurrency.symbol).toBe('ETH');
+        expect(ethereum.nativeCurrency.decimals).toBe(18);
       });
 
       it('should have multiple RPC endpoints for failover', () => {
-        expect(ETHEREUM_MAINNET.rpcUrls.length).toBeGreaterThanOrEqual(1);
-        ETHEREUM_MAINNET.rpcUrls.forEach(endpoint => {
+        const ethereum = networkRegistry.getEvm('eth-mainnet')!;
+        expect(ethereum.rpcUrls.length).toBeGreaterThanOrEqual(1);
+        ethereum.rpcUrls.forEach((endpoint) => {
           expect(endpoint).toMatch(/^https?:\/\//);
         });
       });
@@ -192,7 +196,7 @@ describe('Network Registry', () => {
     });
 
     it('should generate account URL for EVM', () => {
-      const url = getExplorerAccountUrl('ethereum-mainnet', '0x1234567890abcdef');
+      const url = getExplorerAccountUrl('eth-mainnet', '0x1234567890abcdef');
       expect(url).toContain('0x1234567890abcdef');
     });
 
@@ -220,10 +224,10 @@ describe('Network Registry', () => {
         explorerUrl: 'https://explorer-base.com',
         explorerAccountPath: 'https://mintscan.io/test/accounts/{address}',
       };
-      
+
       networkRegistry.register(mockNetwork);
       const url = getExplorerAccountUrl('test-absolute', 'test1abc123');
-      
+
       expect(url).toBe('https://mintscan.io/test/accounts/test1abc123');
       expect(url).toMatch(/^https:\/\//);
       // Should not have double host
@@ -249,10 +253,10 @@ describe('Network Registry', () => {
         explorerUrl: 'https://explorer-base.com',
         explorerTxPath: 'https://mintscan.io/test/transactions/{txHash}',
       };
-      
+
       networkRegistry.register(mockNetwork);
       const url = getExplorerTxUrl('test-absolute-tx', 'ABCD1234TXHASH');
-      
+
       expect(url).toBe('https://mintscan.io/test/transactions/ABCD1234TXHASH');
       expect(url).toMatch(/^https:\/\//);
       // Should not have double host
@@ -261,7 +265,7 @@ describe('Network Registry', () => {
 
     it('should handle relative paths with explorerUrl', () => {
       // Test with Ethereum which uses relative paths
-      const url = getExplorerAccountUrl('ethereum-mainnet', '0xtest');
+      const url = getExplorerAccountUrl('eth-mainnet', '0xtest');
       expect(url).toContain('etherscan.io');
       expect(url).toContain('/address/0xtest');
       expect(url).toMatch(/^https:\/\//);
@@ -286,7 +290,7 @@ describe('Network Registry', () => {
     });
 
     it('should identify EVM network', () => {
-      const ethereum = networkRegistry.get('ethereum-mainnet')!;
+      const ethereum = networkRegistry.get('eth-mainnet')!;
       expect(isCosmosNetwork(ethereum)).toBe(false);
       expect(isBitcoinNetwork(ethereum)).toBe(false);
       expect(isEvmNetwork(ethereum)).toBe(true);
@@ -301,7 +305,7 @@ describe('Network Registry', () => {
 
     it('should include required UI fields', () => {
       const uiNetworks = getUINetworks();
-      uiNetworks.forEach(network => {
+      uiNetworks.forEach((network) => {
         expect(network.id).toBeDefined();
         expect(network.name).toBeDefined();
         expect(network.symbol).toBeDefined();
@@ -311,7 +315,7 @@ describe('Network Registry', () => {
 
     it('should include prefix only for Cosmos chains', () => {
       const uiNetworks = getUINetworks();
-      uiNetworks.forEach(network => {
+      uiNetworks.forEach((network) => {
         if (network.type === 'cosmos') {
           expect(network.prefix).toBeDefined();
         } else {

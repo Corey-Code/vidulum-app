@@ -17,7 +17,6 @@ import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
 import { useNetworkStore } from '@/store/networkStore';
 import { networkRegistry } from '@/lib/networks';
-import { useNetworkStore } from '@/store/networkStore';
 
 // MoonPay supported cryptocurrencies mapping
 const MOONPAY_CRYPTO_CODES: Record<string, string> = {
@@ -109,7 +108,8 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
   const networkConfig = networkRegistry.get(selectedNetwork);
   const cryptoCode = MOONPAY_CRYPTO_CODES[selectedNetwork] || '';
   const isSupported = cryptoCode !== '';
-  const displayAsset = MOONPAY_DISPLAY_NAMES[selectedNetwork] || 
+  const displayAsset =
+    MOONPAY_DISPLAY_NAMES[selectedNetwork] ||
     (networkConfig ? `${networkConfig.symbol} (${networkConfig.name})` : 'crypto');
 
   // Fetch wallet address when network changes
@@ -231,71 +231,76 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
               </Select>
             </Box>
 
-        {/* Wallet Address Display */}
-        <Box>
-          <HStack justify="space-between" mb={2}>
-            <Text fontSize="sm" color="gray.400">
-              Receiving Address
-            </Text>
-            {walletAddress && (
-              <IconButton
-                aria-label="Copy address"
-                icon={<CopyIcon />}
-                size="xs"
-                variant="ghost"
-                color="gray.500"
-                _hover={{ color: 'teal.400' }}
-                onClick={handleCopyAddress}
-              />
-            )}
-          </HStack>
-          <Box
-            bg="#141414"
-            borderRadius="lg"
-            p={2}
-            borderWidth="1px"
-            borderColor="#2a2a2a"
-            fontFamily="mono"
-            fontSize="xs"
-            wordBreak="break-all"
-          >
-            {loadingAddress ? <Spinner size="sm" /> : walletAddress || 'No address available'}
-          </Box>
-        </Box>
-
-        {/* MoonPay Action */}
-        {!isSupported ? (
-          <Box bg="orange.900" borderRadius="lg" p={4} borderWidth="1px" borderColor="orange.700">
-            <Text fontSize="sm" color="orange.200">
-              {networkConfig?.name || 'This network'} is not currently supported by MoonPay.
-            </Text>
-            <Text fontSize="xs" color="orange.300" mt={2}>
-              Please select a different network.
-            </Text>
-          </Box>
-        ) : (
-          <VStack spacing={4} align="stretch">
-            <Box bg="#141414" borderRadius="xl" p={4} borderWidth="1px" borderColor="#2a2a2a">
-              <Text fontSize="sm" color="gray.400" mb={2}>
-                Buy {displayAsset} with credit card, debit card, or bank
-                transfer.
-              </Text>
-              <Text fontSize="xs" color="gray.500">
-                Opens MoonPay in a new tab. Funds will be sent directly to your wallet.
-              </Text>
+            {/* Wallet Address Display */}
+            <Box>
+              <HStack justify="space-between" mb={2}>
+                <Text fontSize="sm" color="gray.400">
+                  Receiving Address
+                </Text>
+                {walletAddress && (
+                  <IconButton
+                    aria-label="Copy address"
+                    icon={<CopyIcon />}
+                    size="xs"
+                    variant="ghost"
+                    color="gray.500"
+                    _hover={{ color: 'teal.400' }}
+                    onClick={handleCopyAddress}
+                  />
+                )}
+              </HStack>
+              <Box
+                bg="#141414"
+                borderRadius="lg"
+                p={2}
+                borderWidth="1px"
+                borderColor="#2a2a2a"
+                fontFamily="mono"
+                fontSize="xs"
+                wordBreak="break-all"
+              >
+                {loadingAddress ? <Spinner size="sm" /> : walletAddress || 'No address available'}
+              </Box>
             </Box>
 
-            <Button
-              colorScheme="teal"
-              size="lg"
-              onClick={handleOpenMoonPay}
-              isDisabled={!walletAddress || loadingAddress}
-              leftIcon={<ExternalLinkIcon />}
-            >
-              {loadingAddress ? 'Loading...' : 'Buy with MoonPay'}
-            </Button>
-          </VStack>
-        )}
+            {/* MoonPay Action */}
+            {!isSupported ? (
+              <Box
+                bg="orange.900"
+                borderRadius="lg"
+                p={4}
+                borderWidth="1px"
+                borderColor="orange.700"
+              >
+                <Text fontSize="sm" color="orange.200">
+                  {networkConfig?.name || 'This network'} is not currently supported by MoonPay.
+                </Text>
+                <Text fontSize="xs" color="orange.300" mt={2}>
+                  Please select a different network.
+                </Text>
+              </Box>
+            ) : (
+              <VStack spacing={4} align="stretch">
+                <Box bg="#141414" borderRadius="xl" p={4} borderWidth="1px" borderColor="#2a2a2a">
+                  <Text fontSize="sm" color="gray.400" mb={2}>
+                    Buy {displayAsset} with credit card, debit card, or bank transfer.
+                  </Text>
+                  <Text fontSize="xs" color="gray.500">
+                    Opens MoonPay in a new tab. Funds will be sent directly to your wallet.
+                  </Text>
+                </Box>
+
+                <Button
+                  colorScheme="teal"
+                  size="lg"
+                  onClick={handleOpenMoonPay}
+                  isDisabled={!walletAddress || loadingAddress}
+                  leftIcon={<ExternalLinkIcon />}
+                >
+                  {loadingAddress ? 'Loading...' : 'Buy with MoonPay'}
+                </Button>
+              </VStack>
+            )}
 
             {/* Footer */}
             <Box textAlign="center" pt={2}>

@@ -11,10 +11,9 @@ import {
   parseEther,
   formatGwei,
   parseGwei,
-  isValidEvmAddress,
-  checksumAddress,
   RpcError,
 } from '@/lib/evm/client';
+import { isValidEvmAddress, toChecksumAddress } from '@/lib/crypto/evm';
 import { mockFetchResponse, mockFetchSequence } from '../../setup';
 
 // Helper to create RPC response
@@ -38,13 +37,13 @@ describe('EVM Client', () => {
   let client: EvmClient;
 
   beforeEach(() => {
-    client = new EvmClient('ethereum-mainnet');
+    client = new EvmClient('eth-mainnet');
     jest.clearAllMocks();
   });
 
   describe('constructor', () => {
     it('should create client for valid network', () => {
-      expect(client.getNetwork().id).toBe('ethereum-mainnet');
+      expect(client.getNetwork().id).toBe('eth-mainnet');
     });
 
     it('should throw for invalid network', () => {
@@ -291,27 +290,37 @@ describe('EVM Utility Functions', () => {
     });
   });
 
-  describe('checksumAddress', () => {
-    it('should convert address to lowercase', () => {
-      const result = checksumAddress('0xABCDEF1234567890ABCDEF1234567890ABCDEF12');
-      expect(result).toBe('0xabcdef1234567890abcdef1234567890abcdef12');
+  describe('toChecksumAddress', () => {
+    it('should produce EIP-55 compliant checksum', () => {
+      // Known test vector - the checksum should have mixed case based on keccak hash
+      const result = toChecksumAddress('0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed');
+      expect(result).toBe('0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed');
     });
 
-    it('should throw for invalid address', () => {
-      expect(() => checksumAddress('invalid')).toThrow('Invalid address');
+    it('should handle already checksummed address', () => {
+      const checksummed = '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed';
+      expect(toChecksumAddress(checksummed)).toBe(checksummed);
+    });
+
+    it('should convert all lowercase to proper checksum', () => {
+      const lowercase = '0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed';
+      const result = toChecksumAddress(lowercase);
+      // Should produce mixed case checksum
+      expect(result).not.toBe(lowercase);
+      expect(result.toLowerCase()).toBe(lowercase);
     });
   });
 });
 
 describe('getEvmClient', () => {
   it('should return singleton instance', () => {
-    const client1 = getEvmClient('ethereum-mainnet');
-    const client2 = getEvmClient('ethereum-mainnet');
+    const client1 = getEvmClient('eth-mainnet');
+    const client2 = getEvmClient('eth-mainnet');
     expect(client1).toBe(client2);
   });
 
   it('should return different instances for different networks', () => {
-    const eth = getEvmClient('ethereum-mainnet');
+    const eth = getEvmClient('eth-mainnet');
     const bnb = getEvmClient('bnb-mainnet');
     expect(eth).not.toBe(bnb);
   });
@@ -336,7 +345,7 @@ describe('RPC Error Handling', () => {
   let client: EvmClient;
 
   beforeEach(() => {
-    client = new EvmClient('ethereum-mainnet');
+    client = new EvmClient('eth-mainnet');
     jest.clearAllMocks();
   });
 
