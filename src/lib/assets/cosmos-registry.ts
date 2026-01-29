@@ -6,7 +6,7 @@
  * 
  * DO NOT EDIT MANUALLY - Run `npm run sync:chains` to update
  * 
- * Generated: 2026-01-29T16:25:45.295Z
+ * Generated: 2026-01-29T17:23:21.457Z
  */
 
 export interface RegistryAssetConfig {
@@ -23,135 +23,214 @@ export interface RegistryAssetConfig {
  * Pre-bundled assets by chain name
  */
 export const COSMOS_REGISTRY_ASSETS: Record<string, RegistryAssetConfig[]> = {
-  beezee: [
+  cosmoshub: [
     {
-      symbol: 'BZE',
-      name: 'BeeZee',
-      denom: 'ubze',
+      symbol: 'ATOM',
+      name: 'Cosmos Hub Atom',
+      denom: 'uatom',
       decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/beezee/images/bze.png',
-      coingeckoId: 'bzedge',
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/cosmoshub/images/atom.png',
+      coingeckoId: 'cosmos',
       type: 'native'
     },
     {
-      symbol: 'VDL',
-      name: 'Vidulum',
-      denom: 'factory/bze13gzq40che93tgfm9kzmkpjamah5nj0j73pyhqk/uvdl',
+      symbol: 'USDt',
+      name: 'Tether USDt',
+      denom: 'ibc/F04D72CF9B5D9C849BB278B691CDFA2241813327430EC9CDC83F8F4CA4CDC2B0',
       decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/beezee/images/vdl.png',
-      coingeckoId: 'vidulum',
-      type: 'factory'
-    },
-    {
-      symbol: 'OSMO',
-      name: 'Osmosis',
-      denom: 'ibc/ED07A3391A112B175915CD8FAF43A2DA8E4790EDE12566649D0C2F97716B8518',
-      decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/osmo.png',
-      coingeckoId: 'osmosis',
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png',
+      coingeckoId: 'tether',
       type: 'ibc'
     },
     {
-      symbol: 'C2M',
-      name: 'Crypto2Mars',
-      denom: 'factory/bze15pqjgk4la0mfphwddce00d05n3th3u66n3ptcv/2MARS',
-      decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/beezee/images/c2m.png',
-      type: 'factory'
-    },
-    {
-      symbol: 'ARCH',
-      name: 'Archway',
-      denom: 'ibc/C00D101A3572A5374E23F11944463D1325319E255D7C824B33AF2F927F532348',
+      symbol: 'FX',
+      name: 'Function X',
+      denom: 'ibc/4925E6ABA571A44D2BE0286D2D29AF42A294D0FF2BB16490149A1B26EAD33729',
       decimals: 18,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/archway/images/arch.png',
-      coingeckoId: 'archway',
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/fxcore/images/fx.png',
       type: 'ibc'
     },
     {
-      symbol: 'USDC',
-      name: 'USDC',
-      denom: 'ibc/6490A7EAB61059BFC1CDDEB05917DD70BDF3A611654162A1A47DB930D40D8AF4',
-      decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png',
-      coingeckoId: 'usd-coin',
+      symbol: 'CROWDP',
+      name: 'Crowdpunk DAO',
+      denom: 'ibc/74C4FE1EC3BDD66B02C691496371DDBB86DDE512C5BC072D76262C6C9B4B20D1',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/evmos/images/crowdp.png',
       type: 'ibc'
     },
     {
-      symbol: 'SPICE',
-      name: 'Spice',
-      denom: 'ibc/08EAEAB525E59C611D5BD8FAC4BE65DF65A69E62874377F6889BBD01A33F385F',
-      decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/spice.png',
-      coingeckoId: 'spice-2',
+      symbol: 'WBTC',
+      name: 'Wrapped Bitcoin',
+      denom: 'ibc/D742E8566B0B8CC8F569D950051C09CF57988A88F0E45574BFB3079D41DE6462',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/wbtc.png',
       type: 'ibc'
     },
     {
-      symbol: 'JKL',
-      name: 'Jackal',
-      denom: 'ibc/4AA3B163580B4377250CD4486FB6AD098EB27822EE056949EC4A39B09C5E3B4E',
-      decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/jackal/images/jkl.png',
-      coingeckoId: 'jackal-protocol',
+      symbol: 'LBTC',
+      name: 'Lombard Staked Bitcoin',
+      denom: 'ibc/DBD9E339E1B093A052D76BECFFDE8435EAC114CF2133346B4D691F3F2068C957',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/lbtc.png',
+      coingeckoId: 'lombard-staked-btc',
       type: 'ibc'
     },
     {
-      symbol: 'FLIX',
-      name: 'Flix',
-      denom: 'ibc/FF39851E73089ACBD0B09BDF62FA3C67FBD77A2CD97CD159DBCE9C770561F8AF',
-      decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/omniflixhub/images/flix.png',
-      coingeckoId: 'omniflix-network',
+      symbol: 'SolvBTC',
+      name: 'SolvBTC',
+      denom: 'ibc/0C4417F123459B47B6933939BF6F128C362B0C1F9EDA6A6EBC08860E4672AF7E',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/solvBTC.png',
       type: 'ibc'
     },
     {
-      symbol: 'SHERPA',
-      name: 'Sherpa',
-      denom: 'ibc/02EE50AB3A4B7540FA001B24CB75E688016F65547CABE885EA184338440080B2',
-      decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/sherpa.png',
+      symbol: 'xSolvBTC',
+      name: 'xSolvBTC',
+      denom: 'ibc/486D45458E018B59D1F23ADD116D21A881D8DA3BC348B9E0E22354CA031C977E',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/xSolvBTC.png',
       type: 'ibc'
     },
     {
-      symbol: 'ATONE',
-      name: 'Atone',
-      denom: 'ibc/B2219CA05421EA988F83E5E824BF69362E80A6A87503EFD18B92C91C9E03763D',
-      decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/atomone/images/atomone.png',
+      symbol: 'pumpBTC',
+      name: 'pumpBTC',
+      denom: 'ibc/9DA8B22BC0E6D76C2D621EF008168BC163B09A517697B14B68DE75382043152E',
+      decimals: 8,
       type: 'ibc'
     },
     {
-      symbol: 'PHMN',
-      name: 'POSTHUMAN',
-      denom: 'ibc/12C0B8B561AFCFDA3C73DEE0F7F84AA2B860D48493C27E8E81A5D14724FAB08B',
-      decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/phmn.png',
-      coingeckoId: 'posthuman',
+      symbol: 'uniBTC',
+      name: 'UniBTC',
+      denom: 'ibc/9EE1F80BA2AE01138A40D656BBB42D11B1720000D6F64FC5988E412B6EDB4F71',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/uniBTC_200px.png',
       type: 'ibc'
     },
     {
-      symbol: 'GGE',
-      name: 'GEEGEE',
-      denom: 'factory/bze12gyp30f29zg26nuqrwdhl26ej4q066pt572fhm/GGE',
-      decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/beezee/images/gge.png',
-      type: 'factory'
+      symbol: 'stBTC',
+      name: 'stBTC',
+      denom: 'ibc/286A30F7F093357CE113A2E3B9A2E497F7A691CAFC624ABC615DE147DCE9FD17',
+      decimals: 18,
+      type: 'ibc'
     },
     {
-      symbol: 'CTL',
-      name: 'CryptoTrtl',
-      denom: 'factory/bze1972aqfzdg29ugjln74edx0xvcg4ehvysjptk77/CTL',
-      decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/beezee/images/ctl.png',
-      type: 'factory'
+      symbol: 'mBTC',
+      name: 'mBTC',
+      denom: 'ibc/6583B66D1450B5A0E997C85A4048749ADCBD745562D62F3CC1CEE5D41B5814D1',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/mbtc.png',
+      type: 'ibc'
     },
     {
-      symbol: 'PHOTON',
-      name: 'Photon',
-      denom: 'ibc/82931180F0962712BFABB189083A94C77EA90E269ABFC6D310AF922B2B14E011',
+      symbol: 'kBTC',
+      name: 'kBTC',
+      denom: 'ibc/AE65FB498AFB35CC06301BEE6EA8063DC41CE04D80A8D167258B73D7A863DA8D',
+      decimals: 18,
+      type: 'ibc'
+    },
+    {
+      symbol: 'eBTC',
+      name: 'eBTC',
+      denom: 'ibc/6F8F0E9D472BF053261F2DEBE521801B703372777F3923B48DAE55D4F1212B5F',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eBTC.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'enzoBTC',
+      name: 'enzoBTC',
+      denom: 'ibc/9CB24EF57DF00EFFCE3B52FC1225EDEDF98B31DB8C792B43C7E3D4AD9B3982CF',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/lorenzo-wrapped-bitcoin.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'USDT',
+      name: 'Tether USD',
+      denom: 'ibc/E7E51FFF94A8B55BE84CEB0345E5CAF0A5DAEB374C6806CE908098B8996C7782',
       decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/atomone/images/photon.png',
-      coingeckoId: 'photon-2',
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'ETH',
+      name: 'Ethereum',
+      denom: 'ibc/C0B53D3D23827AE38058BED0BDCD554229278AF530A8D265FCF6DFF7C4B2ADFF',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eth-white.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'sUSDS',
+      name: 'Savings USDS',
+      denom: 'ibc/B9B561EB378C9EB8C13CAA11FCBC78E6B865A3C65707972F17B1052CFC39F473',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/susds.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'OPHIR',
+      name: 'Ophir DAO',
+      denom: 'ibc/B26F762ED6D20D0D5305FE1870A476EBCB95127C10199F3CB16E69D893E9F775',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/migaloo/images/ophir.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'mBTC.midas',
+      name: 'Midas BTC Yield Token',
+      denom: 'ibc/62F1A800DCE1AA0FD47B3592DEBB7A8956A383A14A4F756E4881AEA927B21671',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/midas-mbtc.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'PAXG',
+      name: 'Pax Gold',
+      denom: 'ibc/09E95F57939E344EE36109AC41780B8A51F1FE0548A5203C5957674FF64C0F26',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/paxg.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'QUARK',
+      name: 'Quark',
+      denom: 'ibc/7B6EBFC446E50DFF981C994E207BFB398889706C2B0DF8A14D8B87F6C0E33A1A',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/quark.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'INTO',
+      name: 'Intento',
+      denom: 'ibc/DC1EF3EA03CD7F2226981D610335C3E62E3DD868A1B83EB017CE294E29C8D473',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/intento/images/into.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'XAUt',
+      name: 'Eureka Bridged Tether Gold (ATOM)',
+      denom: 'ibc/A96C4DBCB7E36F8D265E92240510DB0F29F39CE4AAF52DBDE686E448BA447886',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/xaut.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'NEIRO',
+      name: 'Eureka Bridged Neiro (NEIRO)',
+      denom: 'ibc/F7C4726BF9F1B1872C48BA39688A1AC741E9D77B3182662CF6D42A149C86B758',
+      decimals: 9,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/neiro.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'stATOM',
+      name: 'Stride Staked ATOM',
+      denom: 'ibc/B05539B66B72E2739B986B86391E5D08F12B8D5D2C2A7F8F8CF9ADF674DFA231',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/statom.png',
+      coingeckoId: 'stride-staked-atom',
       type: 'ibc'
     }
   ],
@@ -5017,214 +5096,4002 @@ export const COSMOS_REGISTRY_ASSETS: Record<string, RegistryAssetConfig[]> = {
       type: 'factory'
     }
   ],
-  cosmoshub: [
+  celestia: [
     {
-      symbol: 'ATOM',
-      name: 'Cosmos Hub Atom',
-      denom: 'uatom',
+      symbol: 'TIA',
+      name: 'Celestia',
+      denom: 'utia',
       decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/cosmoshub/images/atom.png',
-      coingeckoId: 'cosmos',
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/celestia/images/celestia.png',
+      coingeckoId: 'celestia',
+      type: 'native'
+    }
+  ],
+  dydx: [
+    {
+      symbol: 'DYDX',
+      name: 'dYdX',
+      denom: 'adydx',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/dydx/images/dydx.png',
+      coingeckoId: 'dydx-chain',
       type: 'native'
     },
     {
-      symbol: 'USDt',
+      symbol: 'USDC',
+      name: 'Noble USDC',
+      denom: 'ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png',
+      coingeckoId: 'usd-coin',
+      type: 'ibc'
+    }
+  ],
+  injective: [
+    {
+      symbol: 'INJ',
+      name: 'Injective',
+      denom: 'inj',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/inj.png',
+      coingeckoId: 'injective-protocol',
+      type: 'native'
+    },
+    {
+      symbol: 'USDTkv',
       name: 'Tether USDt',
-      denom: 'ibc/F04D72CF9B5D9C849BB278B691CDFA2241813327430EC9CDC83F8F4CA4CDC2B0',
+      denom: 'ibc/4ABBEF4C8926DDDB320AE5188CFD63267ABBCEFC0583E4AE05D6E5AA2401DDAB',
       decimals: 6,
       logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png',
       coingeckoId: 'tether',
       type: 'ibc'
     },
     {
-      symbol: 'FX',
-      name: 'Function X',
-      denom: 'ibc/4925E6ABA571A44D2BE0286D2D29AF42A294D0FF2BB16490149A1B26EAD33729',
+      symbol: 'USDT',
+      name: 'Tether USDT',
+      denom: 'peggy0xdAC17F958D2ee523a2206206994597C13D831ec7',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png',
+      type: 'native'
+    },
+    {
+      symbol: 'ampINJ',
+      name: 'ERIS Amplified INJ',
+      denom: 'factory/inj1cdwt8g7nxgtg2k4fn8sj363mh9ahkw2qt0vrnc/ampINJ',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/ampinj.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'AUTISM',
+      name: 'Autism',
+      denom: 'factory/inj14lf8xm6fcvlggpa7guxzjqwjmtr24gnvf56hvz/autism',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/autism.png',
+      coingeckoId: 'autism',
+      type: 'factory'
+    },
+    {
+      symbol: 'bINJ',
+      name: 'BackBone Labs Liquid Staked Injective',
+      denom: 'factory/inj1dxp690rd86xltejgfq2fa7f2nxtgmm5cer3hvu/bINJ',
       decimals: 18,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/fxcore/images/fx.png',
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/binj.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'NINJA',
+      name: 'Dog wif nunchucks',
+      denom: 'factory/inj1xtel2knkt8hmc9dnzpjz6kdmacgcfmlv5f308w/ninja',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/ninja.png',
+      coingeckoId: 'dog-wif-nuchucks',
+      type: 'factory'
+    },
+    {
+      symbol: 'OYCI',
+      name: 'Oyster Cage Initiative',
+      denom: 'factory/inj1jdt04erw6jdmh6c939u87kldf3mvvmkedsjp3w/OYCI',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/oyci.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'WGMI',
+      name: 'WGMI',
+      denom: 'factory/inj1rmjzj9fn47kdmfk4f3z39qr6czexxe0yjyc546/WGMI',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/wgmi.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'WOSMO',
+      name: 'Wosmo',
+      denom: 'ibc/DD648F5D3CDA56D0D8D8820CF703D246B9FC4007725D8B38D23A21FF1A1477E3',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/wosmo.png',
       type: 'ibc'
     },
     {
-      symbol: 'CROWDP',
-      name: 'Crowdpunk DAO',
-      denom: 'ibc/74C4FE1EC3BDD66B02C691496371DDBB86DDE512C5BC072D76262C6C9B4B20D1',
-      decimals: 18,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/evmos/images/crowdp.png',
+      symbol: 'GLTO',
+      name: 'Gelotto',
+      denom: 'peggy0xd73175f9eb15eee81745d367ae59309Ca2ceb5e2',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/glto.png',
+      type: 'native'
+    },
+    {
+      symbol: 'HAVA',
+      name: 'Hava Coin',
+      denom: 'factory/inj1h0ypsdtjfcjynqu3m75z2zwwz5mmrj8rtk2g52/uhava',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/hava.png',
+      coingeckoId: 'hava-coin',
+      type: 'factory'
+    },
+    {
+      symbol: 'BADKID',
+      name: 'Badkid',
+      denom: 'ibc/A0C5AD197FECAF6636F589071338DC7ECD6B0809CD3A5AB131EAAA5395E7E5E8',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/badkid.png',
       type: 'ibc'
     },
     {
-      symbol: 'WBTC',
-      name: 'Wrapped Bitcoin',
-      denom: 'ibc/D742E8566B0B8CC8F569D950051C09CF57988A88F0E45574BFB3079D41DE6462',
+      symbol: 'NINPO',
+      name: 'Ninpo',
+      denom: 'inj1sudjgsyhufqu95yp7rqad3g78ws8g6htf32h88',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/ninpo.png',
+      type: 'native'
+    },
+    {
+      symbol: 'JUDO',
+      name: 'Judo',
+      denom: 'inj16ukv8g2jcmml7gykxn5ws8ykhxjkugl4zhft5h',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/judo.png',
+      type: 'native'
+    },
+    {
+      symbol: 'BEAST',
+      name: 'Gelotto BEAST',
+      denom: 'peggy0xA4426666addBE8c4985377d36683D17FB40c31Be',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/beast.png',
+      type: 'native'
+    },
+    {
+      symbol: 'ASTRO',
+      name: 'Astroport token',
+      denom: 'ibc/063F4461F7317CFF10F50AB044E44932D22AAD84FA7107082744946E6DB7B7A8',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/astro.png',
+      coingeckoId: 'astroport-fi',
+      type: 'ibc'
+    },
+    {
+      symbol: 'nINJ',
+      name: 'Neptune Receipt INJ',
+      denom: 'inj1rmzufd7h09sqfrre5dtvu5d09ta7c0t4jzkr2f',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/ninj.png',
+      type: 'native'
+    },
+    {
+      symbol: 'nATOM',
+      name: 'Neptune Receipt ATOM',
+      denom: 'inj16jf4qkcarp3lan4wl2qkrelf4kduvvujwg0780',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/natom.png',
+      type: 'native'
+    },
+    {
+      symbol: 'nWETH',
+      name: 'Neptune Receipt WETH',
+      denom: 'inj1kehk5nvreklhylx22p3x0yjydfsz9fv3fvg5xt',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/nweth.png',
+      type: 'native'
+    },
+    {
+      symbol: 'nUSDT',
+      name: 'Neptune Receipt USDT',
+      denom: 'inj1cy9hes20vww2yr6crvs75gxy5hpycya2hmjg9s',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/nusdt.png',
+      type: 'native'
+    },
+    {
+      symbol: 'nTIA',
+      name: 'Neptune Receipt TIA',
+      denom: 'inj1fzquxxxam59z6fzewy2hvvreeh3m04x83zg4vv',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/ntia.png',
+      type: 'native'
+    },
+    {
+      symbol: 'NBZ',
+      name: 'Ninja Blaze',
+      denom: 'factory/inj1llr45x92t7jrqtxvc02gpkcqhqr82dvyzkr4mz/NBZ',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/NBZ.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'TALIS',
+      name: 'Talis Token',
+      denom: 'factory/inj1maeyvxfamtn8lfyxpjca8kuvauuf2qeu6gtxm3/Talis',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/talis.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'XTALIS',
+      name: 'xTalis Token',
+      denom: 'factory/inj1maeyvxfamtn8lfyxpjca8kuvauuf2qeu6gtxm3/xTalis',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/xtalis.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'USDC',
+      name: 'USDC',
+      denom: 'ibc/2CBC2EA121AE42563B08028466F37B600F2D7D4282342DE938283CC3FB2BC00E',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png',
+      coingeckoId: 'usd-coin',
+      type: 'ibc'
+    },
+    {
+      symbol: 'SYN',
+      name: 'Syndicate',
+      denom: 'factory/inj1a6xdezq7a94qwamec6n6cnup02nvewvjtz6h6e/SYN',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/syn.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'ashSYN',
+      name: 'ASH Syndicate',
+      denom: 'factory/inj1ej2f3lmpxj4djsmmuxvnfuvplrut7zmwrq7zj8/syn.ash',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/syn.ash.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'COSMO',
+      name: 'Cosmo',
+      denom: 'factory/inj1je6n5sr4qtx2lhpldfxndntmgls9hf38ncmcez/COSMO',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/cosmo.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'XTRUMP',
+      name: 'XTRUMP',
+      denom: 'ibc/5339B0D20986A7C20C2548ED9D6B8DE47BB64E03ABFD051B7792E713036EA20C',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/XTRUMP.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'DRUGS',
+      name: 'cw20 DRUGS',
+      denom: 'cw20:inj19vy83ne9tzta2yqynj8yg7dq9ghca6yqn9hyej',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/cw20drugs.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'DRUGS',
+      name: 'DRUGS',
+      denom: 'factory/inj178zy7myyxewek7ka7v9hru8ycpvfnen6xeps89/DRUGS',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/drugs.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'WHALE',
+      name: 'Migaloo',
+      denom: 'ibc/D6E6A20ABDD600742D22464340A7701558027759CE14D12590F8EA869CCCF445',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/migaloo/images/white-whale.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'nUSDC',
+      name: 'Neptune Receipt USDC',
+      denom: 'inj1dafy7fv7qczzatd98dv8hekx6ssckrflswpjaz',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/nusdc.png',
+      type: 'native'
+    },
+    {
+      symbol: 'SOL',
+      name: 'Solana',
+      denom: 'ibc/A8B0B746B5AB736C2D8577259B510D56B8AF598008F68041E3D634BCDE72BE97',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/solana/images/sol_circle.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'nSOL',
+      name: 'Neptune Receipt SOL',
+      denom: 'inj1zcwr03uqw57g88nqvgpwfkazwutpqz9kplny4s',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/nsol.png',
+      type: 'native'
+    },
+    {
+      symbol: 'NEPT',
+      name: 'Neptune Finance',
+      denom: 'factory/inj1v3a4zznudwpukpr8y987pu5gnh4xuf7v36jhva/nept',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/nept.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'BITCOIN',
+      name: 'Cosmos Bitcoin',
+      denom: 'factory/inj1s9hr5zfz3xrkzchde94hd2d0edjs4q5mrqrz6x/BITCOIN',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/bitcoin.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'CRYPTO',
+      name: 'Crypto',
+      denom: 'factory/inj1s9hr5zfz3xrkzchde94hd2d0edjs4q5mrqrz6x/CRYPTO',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/crypto.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'BRICS',
+      name: 'Bricscoin',
+      denom: 'factory/inj1s9hr5zfz3xrkzchde94hd2d0edjs4q5mrqrz6x/BRICS',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/brics.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'INC',
+      name: 'Instant Noodles Coin',
+      denom: 'factory/inj1s9hr5zfz3xrkzchde94hd2d0edjs4q5mrqrz6x/INC',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/inc.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'hINJ',
+      name: 'cw20 hINJ',
+      denom: 'cw20:inj18luqttqyckgpddndh8hvaq25d5nfwjc78m56lc',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/hinj.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'hINJ',
+      name: 'Hydro Wrapped hINJ',
+      denom: 'factory/inj14ejqjyq8um4p3xfqj74yld5waqljf88f9eneuk/inj18luqttqyckgpddndh8hvaq25d5nfwjc78m56lc',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/hinj.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'WBTC.atom',
+      name: 'Wrapped Bitcoin (Eureka)',
+      denom: 'ibc/0E293A7622DC9A6439DB60E6D234B5AF446962E27CA3AB44D0590603DFF6968E',
       decimals: 8,
       logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/wbtc.png',
       type: 'ibc'
     },
     {
-      symbol: 'LBTC',
-      name: 'Lombard Staked Bitcoin',
-      denom: 'ibc/DBD9E339E1B093A052D76BECFFDE8435EAC114CF2133346B4D691F3F2068C957',
-      decimals: 8,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/lbtc.png',
-      coingeckoId: 'lombard-staked-btc',
+      symbol: 'AUSD',
+      name: 'Agora USD',
+      denom: 'factory/inj1n636d9gzrqggdk66n2f97th0x8yuhfrtx520e7/ausd',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/ausd.png',
+      type: 'factory'
+    }
+  ],
+  sei: [
+    {
+      symbol: 'SEI',
+      name: 'Sei',
+      denom: 'usei',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/sei/images/sei.png',
+      coingeckoId: 'sei-network',
+      type: 'native'
+    },
+    {
+      symbol: 'OIN',
+      name: 'OIN STORE OF VALUE',
+      denom: 'factory/sei1thgp6wamxwqt7rthfkeehktmq0ujh5kspluw6w/OIN',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/sei/images/oin.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'ampSEI',
+      name: 'ERIS Amplified SEI',
+      denom: 'factory/sei1x2fgaaqecvk8kwuqkjqcj27clw5p5g99uawdzy9sc4rku8avumcq3cky4k/ampSEI',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/sei/images/ampsei.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'POPEYE',
+      name: 'Popeye',
+      denom: 'factory/sei1fl8pg59wfsgw2wp4aruk38zqccfnc2g8ptrm24/popeye',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/sei/images/popeye.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'SENSEI',
+      name: 'Sensei Dog',
+      denom: 'factory/sei1ta5rkr6y2qlkj7px8w2cvear7m2822q4f4ea0m/sensei',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/sei/images/SenseiDog.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'OOZARU',
+      name: 'Oozaru',
+      denom: 'sei1wlf9j5uv50rcg0u5j6xk00px5tflptzprj39keck27eg8g7qd7hqq6kvda',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/sei/images/oozaru.png',
+      type: 'native'
+    },
+    {
+      symbol: 'SEIYAN',
+      name: 'SEIYAN',
+      denom: 'cw20:sei1hrndqntlvtmx2kepr0zsfgr7nzjptcc72cr4ppk4yav58vvy7v3s4er8ed',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/sei/images/SEIYAN.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'ASTRO',
+      name: 'Astroport token',
+      denom: 'ibc/063F4461F7317CFF10F50AB044E44932D22AAD84FA7107082744946E6DB7B7A8',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/astro.png',
+      coingeckoId: 'astroport-fi',
+      type: 'ibc'
+    }
+  ],
+  stargaze: [
+    {
+      symbol: 'STARS',
+      name: 'Stargaze',
+      denom: 'ustars',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/stars.png',
+      coingeckoId: 'stargaze',
+      type: 'native'
+    },
+    {
+      symbol: 'STRDST',
+      name: 'Stardust STRDST',
+      denom: 'factory/stars16da2uus9zrsy83h23ur42v3lglg5rmyrpqnju4/dust',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/dust.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'GAZE',
+      name: 'Gaze GAZE',
+      denom: 'factory/stars16da2uus9zrsy83h23ur42v3lglg5rmyrpqnju4/mGAZE',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/gaze.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'BRNCH',
+      name: 'Branch',
+      denom: 'factory/stars16da2uus9zrsy83h23ur42v3lglg5rmyrpqnju4/uBRNCH',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/brnch.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'OHH',
+      name: 'ohhVAULT ohh',
+      denom: 'factory/stars16da2uus9zrsy83h23ur42v3lglg5rmyrpqnju4/uOHH',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/ohh.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'SNEAKY',
+      name: 'Sneaky Productions',
+      denom: 'factory/stars1xx5976njvxpl9n4v8huvff6cudhx7yuu8e7rt4/usneaky',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/sneaky.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'LAB',
+      name: 'LAB',
+      denom: 'ibc/93B1AE0AD5E88242745B245064A2A51DDA1319C18176A966D5F8F9E02ED5373E',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/LAB.png',
+      coingeckoId: 'mad-scientists',
       type: 'ibc'
     },
     {
-      symbol: 'SolvBTC',
-      name: 'SolvBTC',
-      denom: 'ibc/0C4417F123459B47B6933939BF6F128C362B0C1F9EDA6A6EBC08860E4672AF7E',
+      symbol: 'CDT',
+      name: 'CDT',
+      denom: 'ibc/B0263C28B6F44651F4596413B41FDB749EA010BD1220816DAC0ABF9947C1E806',
+      decimals: 6,
+      coingeckoId: 'collateralized-debt-token',
+      type: 'ibc'
+    },
+    {
+      symbol: 'MBRN',
+      name: 'MBRN',
+      denom: 'ibc/E94BB144B818CB8061F43E202BEA1E9273B87D6326C8C6F4E6AE71C62FD37854',
+      decimals: 6,
+      coingeckoId: 'membrane',
+      type: 'ibc'
+    },
+    {
+      symbol: 'ASTRO',
+      name: 'Astroport token',
+      denom: 'ibc/C9C8D88917374F27F03CBCEAF4F1B85F45A62F9F2316CBAADAAC5FDB3675DD3F',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/astro.png',
+      coingeckoId: 'astroport-fi',
+      type: 'ibc'
+    },
+    {
+      symbol: 'PLEB',
+      name: 'PLEB',
+      denom: 'factory/stars1k7qsxdxh8calmt4txk75e6hdntefslegwddqnlwjjqgjkmcfqy0qa97sn8/pleb',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/pleb.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'KINGSHIT',
+      name: 'KINGSHIT',
+      denom: 'factory/stars133a6mnkp9d3pkt48y699hy0tvq5xngpz7cwak0qr4suq0cj9zpfslvt0em/kingshit',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/kingshit.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'BOTZ',
+      name: 'BOTZ',
+      denom: 'factory/stars132jrwxjps93usq3ejy7cq6qqc7j3gtx3mu8jhaj5nnk3p0ste2ssqsndvj/botz',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/botz.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'COCKS',
+      name: 'COCKS',
+      denom: 'factory/stars14mfk0sd6rlajkvgpgrvfk9lfhjwmkrzvednekvcn32jzy3drjy5sfem9p7/cocks',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/cocks.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'XTRUMP',
+      name: 'XTRUMP',
+      denom: 'ibc/4982C47384F003FCCB02490F92CE2F23DBEC9A7A0C1F440BDB12D24357E6703D',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/XTRUMP.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'WOLFSHIT',
+      name: 'WOLFSHIT',
+      denom: 'factory/stars167y92c2fe690l0lrqyk9tahpqvu97au0cmpayh3j9455r2f6f06s78emw4/wolfshit',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/wolfshit.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'VAULT',
+      name: 'VLT',
+      denom: 'factory/stars1t6fyr84hn6lyjdvk3e3c697cptfn5cwat2jxqyzuvuesaypznslshy6x9v/vlt',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/vault.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'OLDbglSTARS',
+      name: 'OLDbglSTARS',
+      denom: 'factory/stars1ur79p98rmpn456esgzjernaxy7v25mlwqsv8uhymzxahfw77427syk2h9j/bglSTARS',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/bglSTARS.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'OLDbglUSDC',
+      name: 'OLDbglUSDC',
+      denom: 'factory/stars1ur79p98rmpn456esgzjernaxy7v25mlwqsv8uhymzxahfw77427syk2h9j/bglUSDC',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/bglUSDC.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'SHITMOS',
+      name: 'Shitmos',
+      denom: 'ibc/8577E98BDDD2758FD5647A53563DAAC89921326F964EBF899B945ED05A66CA5F',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/shitmos.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'YGATA',
+      name: 'Yield GATA',
+      denom: 'ibc/2A56F95E2B74AB769816403D384E2199C7BC510BFD2F8352FAC6DF0294B83EBA',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/omniflixhub/images/ygata.png',
+      coingeckoId: 'yield-gata',
+      type: 'ibc'
+    },
+    {
+      symbol: 'CROWDP',
+      name: 'Crowdpunk DAO',
+      denom: 'ibc/D29FF5FFE7B9A5C6CE595FF963F7C93F2B8603586645C39B13E1D336847863C3',
       decimals: 18,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/solvBTC.png',
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/evmos/images/crowdp.png',
       type: 'ibc'
     },
     {
-      symbol: 'xSolvBTC',
-      name: 'xSolvBTC',
-      denom: 'ibc/486D45458E018B59D1F23ADD116D21A881D8DA3BC348B9E0E22354CA031C977E',
-      decimals: 18,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/xSolvBTC.png',
+      symbol: 'CULT',
+      name: 'CULT',
+      denom: 'ibc/1CD4EED1BD74D41C165B9200AAF7A13C92DDB381DB7067EA32EEF8CC1370F764',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/cult.png',
       type: 'ibc'
     },
     {
-      symbol: 'pumpBTC',
-      name: 'pumpBTC',
-      denom: 'ibc/9DA8B22BC0E6D76C2D621EF008168BC163B09A517697B14B68DE75382043152E',
+      symbol: 'OM',
+      name: 'MANTRA',
+      denom: 'ibc/3BD86E80E000B52DA57C474A6A44E37F73D34E38A1FA79EE678E08D119FC555B',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/mantrachain/images/OM-Prim-Col.png',
+      coingeckoId: 'mantra-dao',
+      type: 'ibc'
+    },
+    {
+      symbol: 'HOOD',
+      name: 'HOOD',
+      denom: 'factory/stars1rru5m2wh3fylpheqh8h5g968jwhe7rctkfm7u0gwk7ka4vx3q5tqukjl4z/hood',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/hood.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'BIKE',
+      name: 'Ali-Rev-Gator',
+      denom: 'ibc/8A443E18BB2C30A0D635569935BB0364018EA97A372ADA5D7145378A40D3D967',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/mantrachain/images/BIKE.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'T7S',
+      name: 'The seven green shade',
+      denom: 'ibc/FEF6B2D5C0F7D3C3EE2E27D1C01EAE9CA04A7201661E69215726E7F84AFCD0FB',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/T7S.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'STLTH',
+      name: 'Stealth',
+      denom: 'ibc/D8B11C80BF6D03FD7DFF43EE3CCFDA70009B1FA8594F291EE0E2353070F4CABB',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/STLTH.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'CLW',
+      name: 'Clown Society',
+      denom: 'factory/stars1khzuhuhv02vaturh9x9lz4jach824x9umcgghl/uCLW',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/clw.png',
+      type: 'factory'
+    }
+  ],
+  juno: [
+    {
+      symbol: 'JUNO',
+      name: 'Juno',
+      denom: 'ujuno',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/juno.png',
+      coingeckoId: 'juno-network',
+      type: 'native'
+    },
+    {
+      symbol: 'ATOM',
+      name: 'ATOM on Juno',
+      denom: 'ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/cosmoshub/images/atom.png',
+      coingeckoId: 'cosmos',
+      type: 'ibc'
+    },
+    {
+      symbol: 'NETA',
+      name: 'Neta',
+      denom: 'cw20:juno168ctmpyppk90d34p3jjy658zf5a5l3w8wk35wht6ccqj4mr0yv8s4j5awr',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/neta.png',
+      coingeckoId: 'neta',
+      type: 'cw20'
+    },
+    {
+      symbol: 'MARBLE',
+      name: 'Marble',
+      denom: 'cw20:juno1g2g7ucurum66d42g8k5twk34yegdq8c82858gz0tq2fc75zy7khssgnhjl',
+      decimals: 3,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/marble.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'HOPE',
+      name: 'Hope Galaxy',
+      denom: 'cw20:juno1re3x67ppxap48ygndmrc7har2cnc7tcxtm9nplcas4v0gc3wnmvs3s807z',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/hope.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'RAC',
+      name: 'Racoon',
+      denom: 'cw20:juno1r4pzw8f9z0sypct5l9j906d47z998ulwvhvqe5xdwgy8wf84583sxwh0pa',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/rac.png',
+      coingeckoId: 'racoon',
+      type: 'cw20'
+    },
+    {
+      symbol: 'BLOCK',
+      name: 'Block',
+      denom: 'cw20:juno1y9rf7ql6ffwkv02hsgd4yruz23pn4w97p75e2slsnkm0mnamhzysvqnxaq',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/block.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'DHK',
+      name: 'DHK',
+      denom: 'cw20:juno1tdjwrqmnztn2j3sj2ln9xnyps5hs48q3ddwjrz7jpv6mskappjys5czd49',
+      decimals: 0,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/dhk.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'RAW',
+      name: 'JunoSwap',
+      denom: 'cw20:juno15u3dt79t6sxxa3x3kpkhzsy56edaa5a66wvt3kxmukqjz2sx0hes5sn38g',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/raw.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'ASVT',
+      name: 'Another.Software Validator Token',
+      denom: 'cw20:juno17wzaxtfdw5em7lc94yed4ylgjme63eh73lm3lutp2rhcxttyvpwsypjm4w',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/asvt.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'HNS',
+      name: 'IBC HNS (Handshake)',
+      denom: 'cw20:juno1ur4jx0sxchdevahep7fwq28yk4tqsrhshdtylz46yka3uf6kky5qllqp4k',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/hns.svg',
+      type: 'cw20'
+    },
+    {
+      symbol: 'JOE',
+      name: 'JoeDAO',
+      denom: 'cw20:juno1n7n7d5088qlzlj37e9mgmkhx6dfgtvt02hqxq66lcap4dxnzdhwqfmgng3',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/joe.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'DLA',
+      name: 'Digital Land Acquisition DAO',
+      denom: 'cw20:juno1sfwye65qxcfsc837gu5qcprcz7w49gkv3wnat04764ld76hy3arqs779tr',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/dla.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'GLTO',
+      name: 'Gelotto',
+      denom: 'cw20:juno1j0a9ymgngasfn3l5me8qpd53l5zlm9wurfdk7r65s5mg6tkxal3qpgf5se',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/glto.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'GKEY',
+      name: 'GKey',
+      denom: 'cw20:juno1gz8cf86zr4vw9cjcyyv432vgdaecvr9n254d3uwwkx9rermekddsxzageh',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/gkey.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'HOLE',
+      name: 'BlackHole',
+      denom: 'cw20:juno1t46z6hg8vvsena7sue0vg6w85ljar3cundplkre9sz0skeqkap9sxyyy6m',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/hole.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'SEJUNO',
+      name: 'StakeEasy seJUNO',
+      denom: 'cw20:juno1dd0k0um5rqncfueza62w9sentdfh3ec4nw4aq4lk5hkjl63vljqscth9gv',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/sejuno.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'BJUNO',
+      name: 'StakeEasy bJUNO',
+      denom: 'cw20:juno1wwnhkagvcd3tjz6f8vsdsw5plqnw8qy2aj3rrhqr2axvktzv9q2qz8jxn3',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/bjuno.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'SOLAR',
+      name: 'Solarbank DAO',
+      denom: 'cw20:juno159q8t5g02744lxq8lfmcn6f78qqulq9wn3y9w7lxjgkz4e0a6kvsfvapse',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/solar.svg',
+      type: 'cw20'
+    },
+    {
+      symbol: 'SEASY',
+      name: 'StakeEasy SEASY',
+      denom: 'cw20:juno19rqljkh95gh40s7qdx40ksx3zq5tm4qsmsrdz9smw668x9zdr3lqtg33mf',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/seasy.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'MUSE',
+      name: 'MuseDAO',
+      denom: 'cw20:juno1p8x807f6h222ur0vssqy3qk6mcpa40gw2pchquz5atl935t7kvyq894ne3',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/muse.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'LOOP',
+      name: 'Loop Finance',
+      denom: 'cw20:juno1qsrercqegvs4ye0yqg93knv73ye5dc3prqwd6jcdcuj8ggp6w0us66deup',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/loop.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'FURY.legacy',
+      name: 'FURY.legacy',
+      denom: 'cw20:juno1cltgm8v842gu54srmejewghnd6uqa26lzkpa635wzra9m9xuudkqa2gtcz',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/fanfury.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'PHMN',
+      name: 'POSTHUMAN',
+      denom: 'cw20:juno1rws84uz7969aaa7pej303udhlkt3j9ca0l3egpcae98jwak9quzq8szn2l',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/phmn.png',
+      coingeckoId: 'posthuman',
+      type: 'cw20'
+    },
+    {
+      symbol: 'HOPERS',
+      name: 'Hopers',
+      denom: 'cw20:juno1u45shlp0q4gcckvsj06ss4xuvsu0z24a0d0vr9ce6r24pht4e5xq7q995n',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/hopers.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'RED',
+      name: 'Red',
+      denom: 'cw20:juno1g647t78y2ulqlm3lss8rs3d0spzd0teuwhdvnqn92tr79yltk9dq2h24za',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/red.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'BLUE',
+      name: 'Blue',
+      denom: 'cw20:juno14q8kk464fafql2fwmlsgvgcdl6h2csqpzv4hr025fmcvgjahpess32k0j7',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/blue.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'WYND',
+      name: 'Wynd DAO Governance Token',
+      denom: 'cw20:juno1mkw83sv6c7sjdvsaplrzc8yaes9l42p4mhy0ssuxjnyzl87c9eps7ce3m9',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/wynd.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'BANANA',
+      name: 'Banana Token',
+      denom: 'cw20:juno1s2dp05rspeuzzpzyzdchk262szehrtfpz847uvf98cnwh53ulx4qg20qwj',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/banana.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'NRIDE',
+      name: 'nRide Token',
+      denom: 'cw20:juno1qmlchtmjpvu0cr7u0tad2pq8838h6farrrjzp39eqa9xswg7teussrswlq',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/nride.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'SGNL',
+      name: 'Signal',
+      denom: 'cw20:juno14lycavan8gvpjn97aapzvwmsj8kyrvf644p05r0hu79namyj3ens87650k',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/sgnl.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'JAPE',
+      name: 'Junø Apes',
+      denom: 'cw20:juno1zkwveux7y6fmsr88atf3cyffx96p0c96qr8tgcsj7vfnhx7sal3s3zu3ps',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/jape.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'CATOM',
+      name: 'Catom',
+      denom: 'cw20:juno12wxyvtqe76x2a5jj6ckp2hfq8v32m6rvyyxwwufl2tksqvkt7whqczv6pa',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/catom.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'HOWL',
+      name: 'Howl',
+      denom: 'cw20:juno1g0wuyu2f49ncf94r65278puxzclf5arse9f3kvffxyv4se4vgdmsk4dvqz',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/howl.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'FOX',
+      name: 'Juno Fox',
+      denom: 'cw20:juno1u8cr3hcjvfkzxcaacv9q75uw9hwjmn8pucc93pmy6yvkzz79kh3qncca8x',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/fox.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'GRDN',
+      name: 'Guardian',
+      denom: 'cw20:juno1xekkh27punj0uxruv3gvuydyt856fax0nu750xns99t2qcxp7xmsqwhfma',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/guardian.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'MNPU',
+      name: 'Mini Punks',
+      denom: 'cw20:juno166heaxlyntd33a5euh4rrz26svhean4klzw594esmd02l4atan6sazy2my',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/mnpu.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'KLEO',
+      name: 'Kleomedes',
+      denom: 'cw20:juno10gthz5ufgrpuk5cscve2f0hjp56wgp90psqxcrqlg4m9mcu9dh8q4864xy',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/kleomedes.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'SKOJ',
+      name: 'Sikoba Token',
+      denom: 'cw20:juno1qqwf3lkfjhp77yja7gmg3y95pda0e5xctqrdhf3wvwdd79flagvqfgrgxp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/sikoba.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'SHIBAC',
+      name: 'ShibaCosmos',
+      denom: 'cw20:juno1x5qt47rw84c4k6xvvywtrd40p8gxjt8wnmlahlqg07qevah3f8lqwxfs7z',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/shibacosmos.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'CLST',
+      name: 'Celestims',
+      denom: 'cw20:juno1ngww7zxak55fql42wmyqrr4rhzpne24hhs4p3w4cwhcdgqgr3hxsmzl9zg',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/celestims.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'WATR',
+      name: 'WATR',
+      denom: 'cw20:juno1m4h8q4p305wgy7vkux0w6e5ylhqll3s6pmadhxkhqtuwd5wlxhxs8xklsw',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/watr.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'CASA',
+      name: 'Casa',
+      denom: 'cw20:juno1ju8k8sqwsqu5k6umrypmtyqu2wqcpnrkf4w4mntvl0javt4nma7s8lzgss',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/casa.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'SUMMIT',
+      name: 'Summit',
+      denom: 'cw20:juno1j4ux0f6gt7e82z7jdpm25v4g2gts880ap64rdwa49989wzhd0dfqed6vqm',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/summit.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'MANNA',
+      name: 'Manna',
+      denom: 'cw20:juno13ca2g36ng6etcfhr9qxx352uw2n5e92np54thfkm3w3nzlhsgvwsjaqlyq',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/manna.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'EMPWR',
+      name: 'EMPWR',
+      denom: 'cw20:juno12etxwkxvms0uy9ak8g3pyq6a53myukufdnx82pakzmjmpm77a0ksr9gs5v',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/empwr.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'MIDDLE',
+      name: 'Middle',
+      denom: 'cw20:juno1525fuspletvzykpgr2atxpymu9le4mghd7qq4a4u23uwqzc2f3fq7fmafd',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/middle.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'SUNSET',
+      name: 'Sunset',
+      denom: 'cw20:juno17703kcxtsg37hryxnestejyyycuv5yyvnghp2e7w0kqvafnnyetsgzq62w',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/sunset.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'TREE',
+      name: 'Living Tree',
+      denom: 'cw20:juno1uu3rxu7w7fpfj4sl4xpxppgymk57mzdzn6kg7492jdxh5dwk7d2qq9429e',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/livingtree.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'INVDRS',
+      name: 'Invaders',
+      denom: 'cw20:juno1jwdy7v4egw36pd84aeks3ww6n8k7zhsumd4ac8q5lts83ppxueus4626e8',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/invdrs.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'APEMOS',
+      name: 'Apemos',
+      denom: 'cw20:juno1jrr0tuuzxrrwcg6hgeqhw5wqpck2y55734e7zcrp745aardlp0qqg8jz06',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/apemos.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'OSDOGE',
+      name: 'Osmosis Doge',
+      denom: 'cw20:juno1ytymtllllsp3hfmndvcp802p2xmy5s8m59ufel8xv9ahyxyfs4hs4kd4je',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/osdoge.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'DOGA',
+      name: 'Doge Apr',
+      denom: 'cw20:juno1k2ruzzvvwwtwny6gq6kcwyfhkzahaunp685wmz4hafplduekj98q9hgs6d',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/doga.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'PEPE',
+      name: 'Osmo Pepe',
+      denom: 'cw20:juno1zqrj3ta4u7ylv0wqzd8t8q3jrr9rdmn43zuzp9zemeunecnhy8fss778g7',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/pepe.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'CATMOS',
+      name: 'Catmos',
+      denom: 'cw20:juno1f5datjdse3mdgrapwuzs3prl7pvxxht48ns6calnn0t77v2s9l8s0qu488',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/catmos.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'SPACER',
+      name: 'Spacer',
+      denom: 'cw20:juno1dyyf7pxeassxvftf570krv7fdf5r8e4r04mp99h0mllsqzp3rs4q7y8yqg',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/spacer.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'LIGHT',
+      name: 'LIGHT',
+      denom: 'cw20:juno1dpany8c0lj526lsa02sldv7shzvnw5dt5ues72rk35hd69rrydxqeraz8l',
+      decimals: 9,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/light.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'MILE',
+      name: 'Mille',
+      denom: 'cw20:juno1llg7q2d5dqlrqzh5dxv8c7kzzjszld34s5vktqmlmaaxqjssz43sxyhq0d',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/mille.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'VOID',
+      name: 'Void',
+      denom: 'cw20:juno1lpvx3mv2a6ddzfjc7zzz2v2cm5gqgqf0hx67hc5p5qwn7hz4cdjsnznhu8',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/void.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'SLCA',
+      name: 'Silica',
+      denom: 'cw20:juno10vgf2u03ufcf25tspgn05l7j3tfg0j63ljgpffy98t697m5r5hmqaw95ux',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/silica.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'PEPEC',
+      name: 'Pepec',
+      denom: 'cw20:juno1epxnvge53c4hkcmqzlxryw5fp7eae2utyk6ehjcfpwajwp48km3sgxsh9k',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/pepec.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'PLTN',
+      name: 'Palantin',
+      denom: 'cw20:juno15au4k2jgwd0jnchy0fkg3lm00fpt7jt0j2duuzradn2q7sega2dszyn5pp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/pltn.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'YFD',
+      name: 'Y-Foundry DAO',
+      denom: 'cw20:juno12mcwmd6wqhledkjsurlfqtc8j0pedvxlcxw3gs4kh2qf808ehehsen8nmw',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/yfd.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'NEXX',
+      name: 'NEXX GEN AI',
+      denom: 'factory/juno1qly4zcmzr2gyxtze5yt9chv2srczwwunppxjfh/NEXX',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/nexx.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'DGL',
+      name: 'Licorice',
+      denom: 'factory/juno1u805lv20qc6jy7c3ttre7nct6uyl20pfky5r7e/DGL',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/dgl.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'ampJUNO',
+      name: 'ERIS Amplified JUNO',
+      denom: 'cw20:juno1a0khag6cfzu5lrwazmyndjgvlsuk7g4vn9jd8ceym8f4jf6v2l9q6d348a',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/ampjuno.svg',
+      type: 'cw20'
+    },
+    {
+      symbol: 'BITS',
+      name: 'BITS',
+      denom: 'cw20:juno14fz92ehqt37e096xr95kmy8nc0kz803uezxtg4fwx7agjjma86sqm8mg3h',
       decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/bits.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'POIL',
+      name: 'POIL',
+      denom: 'cw20:juno13epyeat7ef0k7q6kllmyvc8zpfd9xm7cqjrgtk0qkgrk7n5mjfmq8979jw',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/poil.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'MRVA',
+      name: 'MINERVA',
+      denom: 'cw20:juno1h86ut5aevlxuuxrra6wy3dfq6e39zkzzv9eelz678jr6amxlc4gsx46j82',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/minerva.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'LUNO',
+      name: 'LUNO',
+      denom: 'cw20:juno13c57ssxvlzefsj4v5spdz4m9r6c6s2far5npvmc9en7nz02xqjyqne40gk',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/luno.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'ATEN',
+      name: 'ATEN',
+      denom: 'cw20:juno1elpg96tju8a32vzn25u6asvscajjm4000589z0zthhvks28ajypqzurl7r',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/aten.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'HERA',
+      name: 'HERA',
+      denom: 'cw20:juno1dtd45vxvv080v9x7hffysnmvrqm6ysecjdnvafqul28646hm04xs9gheh0',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/hera.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'bJUNO',
+      name: 'BackBone Labs Liquid Staked JUNO',
+      denom: 'cw20:juno1mvkgcr5uce2rnpzr4qrzf50hx4qreuwzlt7fzsjrhjud3xnjmttq5mkh2m',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/bJUNO-bbl.png',
+      coingeckoId: 'backbone-labs-staked-juno',
+      type: 'cw20'
+    },
+    {
+      symbol: 'USDC',
+      name: 'USD Coin',
+      denom: 'ibc/4A482FA914A4B9B05801ED81C33713899F322B24F76A06F4B8FE872485EA22FF',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png',
+      coingeckoId: 'usd-coin',
       type: 'ibc'
     },
     {
-      symbol: 'uniBTC',
-      name: 'UniBTC',
-      denom: 'ibc/9EE1F80BA2AE01138A40D656BBB42D11B1720000D6F64FC5988E412B6EDB4F71',
-      decimals: 8,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/uniBTC_200px.png',
+      symbol: 'RSTK',
+      name: 'Restake DAO Token',
+      denom: 'ibc/F0C440C8040E2FCCAC621D32D3A00D9B347C989D52CE869A91CB34D07B0021D2',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/migaloo/images/rstk.png',
       type: 'ibc'
     },
     {
-      symbol: 'stBTC',
-      name: 'stBTC',
-      denom: 'ibc/286A30F7F093357CE113A2E3B9A2E497F7A691CAFC624ABC615DE147DCE9FD17',
-      decimals: 18,
+      symbol: 'WIND',
+      name: 'Wind Token',
+      denom: 'factory/juno1h6y8tkceau4d8zyv5aa0fwdj2pa2y0gz2hx0tq/uwind',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/wind.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'AFA',
+      name: 'Airdrop For All',
+      denom: 'cw20:juno1spjes0smg5yp40dl7gqyw0h8rn03tnmve06dd2m5acwgh6tlx86swha3xg',
+      decimals: 0,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/afa.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'ARENA',
+      name: 'Arena Token',
+      denom: 'factory/juno1vwmnqk0vyxc96qgffrure4nqxupjrql0zut8s02hadgp0n79r8xq5xdsxy/ARENA',
+      decimals: 6,
+      type: 'factory'
+    },
+    {
+      symbol: 'ashWIND',
+      name: 'ashWIND',
+      denom: 'factory/juno16uprl38e4ljj5ctuha9ehpvp2l93z3d5jmwj2cttt6jkhlrhscpqgglalk/wind.ash',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/wind.ash.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'WHALE',
+      name: 'Migaloo',
+      denom: 'ibc/3A6ADE78FB8169C034C29C4F2E1A61CE596EC8235366F22381D981A98F1F5A5C',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/migaloo/images/white-whale.png',
       type: 'ibc'
     },
     {
-      symbol: 'mBTC',
-      name: 'mBTC',
-      denom: 'ibc/6583B66D1450B5A0E997C85A4048749ADCBD745562D62F3CC1CEE5D41B5814D1',
-      decimals: 8,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/mbtc.png',
-      type: 'ibc'
+      symbol: 'EMPR',
+      name: 'EMPR',
+      denom: 'factory/juno1zjqsel42pj5e6wvxxw7hjs9gn06yqz4m3ffyua3x2v44m4l8trjsr92q9s/empr',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/empr.png',
+      type: 'factory'
+    }
+  ],
+  akash: [
+    {
+      symbol: 'AKT',
+      name: 'Akash Network',
+      denom: 'uakt',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/akash/images/akt.png',
+      coingeckoId: 'akash-network',
+      type: 'native'
+    }
+  ],
+  kujira: [
+    {
+      symbol: 'KUJI',
+      name: 'Kujira',
+      denom: 'ukuji',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/kuji.png',
+      coingeckoId: 'kujira',
+      type: 'native'
     },
     {
-      symbol: 'kBTC',
-      name: 'kBTC',
-      denom: 'ibc/AE65FB498AFB35CC06301BEE6EA8063DC41CE04D80A8D167258B73D7A863DA8D',
-      decimals: 18,
-      type: 'ibc'
+      symbol: 'USK',
+      name: 'USK',
+      denom: 'factory/kujira1qk00h5atutpsv900x202pxx42npjr9thg58dnqpa72f2p7m2luase444a7/uusk',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/usk.png',
+      type: 'factory'
     },
     {
-      symbol: 'eBTC',
-      name: 'eBTC',
-      denom: 'ibc/6F8F0E9D472BF053261F2DEBE521801B703372777F3923B48DAE55D4F1212B5F',
-      decimals: 8,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eBTC.png',
-      type: 'ibc'
+      symbol: 'qcKUJI',
+      name: 'qcKUJI',
+      denom: 'factory/kujira1m96ucsfpt2yy72w09z2rxjdj38y5qd8lqx5jtggnejmdua2ynpnsxyvjex/urcpt',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/qckuji.svg',
+      type: 'factory'
     },
     {
-      symbol: 'enzoBTC',
-      name: 'enzoBTC',
-      denom: 'ibc/9CB24EF57DF00EFFCE3B52FC1225EDEDF98B31DB8C792B43C7E3D4AD9B3982CF',
-      decimals: 8,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/lorenzo-wrapped-bitcoin.png',
-      type: 'ibc'
+      symbol: 'ampKUJI',
+      name: 'ampKUJI',
+      denom: 'factory/kujira1n3fr5f56r2ce0s37wdvwrk98yhhq3unnxgcqus8nzsfxvllk0yxquurqty/ampKUJI',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/ampkuji.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'MNTA',
+      name: 'MantaDAO',
+      denom: 'factory/kujira1643jxg8wasy5cfcn7xm8rd742yeazcksqlg4d7/umnta',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/mnta.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'qcMNTA',
+      name: 'qcMNTA',
+      denom: 'factory/kujira1qzu3up50auxhqyzfq56znuj8n38q2ra7daaf9ef7vg8gu66jh4fqd2wd2y/urcpt',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/qcmnta.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'ampMNTA',
+      name: 'ERIS Amplified MNTA',
+      denom: 'factory/kujira175yatpvkpgw07w0chhzuks3zrrae9z9g2y6r7u5pzqesyau4x9eqqyv0rr/ampMNTA',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/ampmnta.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'WINK',
+      name: 'WINK',
+      denom: 'factory/kujira12cjjeytrqcj25uv349thltcygnp9k0kukpct0e/uwink',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/wink.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'BLEND',
+      name: 'BLEND',
+      denom: 'factory/kujira1slueerjz7mx9jp45u3y0rjwtvhcf8a68wf2mjt/ublend',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/blend.png',
+      type: 'factory'
     },
     {
       symbol: 'USDT',
       name: 'Tether USD',
-      denom: 'ibc/E7E51FFF94A8B55BE84CEB0345E5CAF0A5DAEB374C6806CE908098B8996C7782',
+      denom: 'ibc/20014F963CC9E6488B299622F87B60C6DE71632864859EC08B4753478DAB2BB8',
       decimals: 6,
       logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png',
+      coingeckoId: 'tether',
       type: 'ibc'
     },
     {
-      symbol: 'ETH',
-      name: 'Ethereum',
-      denom: 'ibc/C0B53D3D23827AE38058BED0BDCD554229278AF530A8D265FCF6DFF7C4B2ADFF',
+      symbol: 'FUZN',
+      name: 'Fuzion',
+      denom: 'factory/kujira1sc6a0347cc5q3k890jj0pf3ylx2s38rh4sza4t/ufuzn',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/fuzion.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'rFUZN',
+      name: 'Fuzion Receipt',
+      denom: 'factory/kujira1sc6a0347cc5q3k890jj0pf3ylx2s38rh4sza4t/urfuzn',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/fuzionr.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'yFUZN',
+      name: 'Fuzion Yield',
+      denom: 'factory/kujira1sc6a0347cc5q3k890jj0pf3ylx2s38rh4sza4t/uyfuzn',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/fuziony.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'qcFUZN',
+      name: 'qcFUZN',
+      denom: 'factory/kujira1l04ged98c7a7s9tllu62ld09ztylwf442qgm4thfgmadrvngeumsz4zrh2/urcpt',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/qcfuzn.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'qcAQLA',
+      name: 'qcAQLA',
+      denom: 'factory/kujira1d9fmsgvu3yvvppvqech2s3dhrqdm5ukngcf82ghcl70edfpwcrlsu6yr0u/urcpt',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/qcaqla.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'AQLA',
+      name: 'AQLA',
+      denom: 'factory/kujira1xe0awk5planmtsmjel5xtx2hzhqdw5p8z66yqd/uaqla',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/aqla.svg',
+      coingeckoId: 'aqualibre',
+      type: 'factory'
+    },
+    {
+      symbol: 'NSTK',
+      name: 'Unstake Fi',
+      denom: 'factory/kujira1aaudpfr9y23lt9d45hrmskphpdfaq9ajxd3ukh/unstk',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/nstk.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LOCAL',
+      name: 'LOCAL',
+      denom: 'factory/kujira1swkuyt08z74n5jl7zr6hx0ru5sa2yev5v896p6/local',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/local.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'PLNK',
+      name: 'Plankton',
+      denom: 'factory/kujira166ysf07ze5suazfzj0r05tv8amk2yn8zvsfuu7/uplnk',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/PLNK_drk.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'SOL.wh',
+      name: 'Wormhole Solana',
+      denom: 'ibc/E5CA126979E2FFB4C70C072F8094D07ECF27773B37623AD2BF7582AD0726F0F3',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/solana/images/sol_circle.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'EVMOS',
+      name: 'Evmos',
+      denom: 'ibc/F3AA7EF362EC5E791FE78A0F4CCC69FEE1F9A7485EB1A8CAB3F6601C00522F10',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/evmos/images/evmos.png',
+      coingeckoId: 'evmos',
+      type: 'ibc'
+    },
+    {
+      symbol: 'wAVAX',
+      name: 'Axelar Wrapped AVAX',
+      denom: 'ibc/004EBF085BBED1029326D56BE8A2E67C08CECE670A94AC1947DF413EF5130EB2',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/avalanche/images/wavax.svg',
+      type: 'ibc'
+    },
+    {
+      symbol: 'USDC',
+      name: 'Noble USD Coin',
+      denom: 'ibc/FE98AAD68F02F03565E9FA39A5E627946699B2B07115889ED812D8BA639576A9',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png',
+      coingeckoId: 'usd-coin',
+      type: 'ibc'
+    },
+    {
+      symbol: 'OSMO',
+      name: 'Osmosis',
+      denom: 'ibc/47BD209179859CDE4A2806763D7189B6E6FE13A17880FE2B42DE1E6C1E329E23',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/osmo.png',
+      coingeckoId: 'osmosis',
+      type: 'ibc'
+    },
+    {
+      symbol: 'axlUSDC',
+      name: 'Axelar USD Coin',
+      denom: 'ibc/295548A78785A1007F232DE286149A6FF512F180AF5657780FC89C009E2C348F',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/axelar/images/usdc.png',
+      coingeckoId: 'axlusdc',
+      type: 'ibc'
+    },
+    {
+      symbol: 'CMDX',
+      name: 'Comdex',
+      denom: 'ibc/3607EB5B5E64DD1C0E12E07F077FF470D5BC4706AFCBC98FE1BA960E5AE4CE07',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/comdex/images/cmdx.png',
+      coingeckoId: 'comdex',
+      type: 'ibc'
+    },
+    {
+      symbol: 'JUNO',
+      name: 'Juno',
+      denom: 'ibc/EFF323CC632EC4F747C61BCE238A758EFDB7699C3226565F7C20DA06509D59A5',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/juno.png',
+      coingeckoId: 'juno-network',
+      type: 'ibc'
+    },
+    {
+      symbol: 'wETH.axl',
+      name: 'Axelar Wrapped Ether',
+      denom: 'ibc/1B38805B1C75352B28169284F96DF56BDEBD9E8FAC005BDCC8CF0378C82AA8E7',
       decimals: 18,
       logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eth-white.png',
+      coingeckoId: 'axlweth',
       type: 'ibc'
     },
     {
-      symbol: 'sUSDS',
-      name: 'Savings USDS',
-      denom: 'ibc/B9B561EB378C9EB8C13CAA11FCBC78E6B865A3C65707972F17B1052CFC39F473',
-      decimals: 18,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/susds.png',
-      type: 'ibc'
-    },
-    {
-      symbol: 'OPHIR',
-      name: 'Ophir DAO',
-      denom: 'ibc/B26F762ED6D20D0D5305FE1870A476EBCB95127C10199F3CB16E69D893E9F775',
+      symbol: 'ATOM',
+      name: 'Cosmos Hub Atom',
+      denom: 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2',
       decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/migaloo/images/ophir.png',
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/cosmoshub/images/atom.png',
+      coingeckoId: 'cosmos',
       type: 'ibc'
     },
     {
-      symbol: 'mBTC.midas',
-      name: 'Midas BTC Yield Token',
-      denom: 'ibc/62F1A800DCE1AA0FD47B3592DEBB7A8956A383A14A4F756E4881AEA927B21671',
-      decimals: 18,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/midas-mbtc.png',
+      symbol: 'LUNA',
+      name: 'Luna',
+      denom: 'ibc/DA59C009A0B3B95E0549E6BF7B075C8239285989FF457A8EDDBB56F10B2A6986',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/luna.png',
+      coingeckoId: 'terra-luna-2',
       type: 'ibc'
+    },
+    {
+      symbol: 'STARS',
+      name: 'Stargaze',
+      denom: 'ibc/4F393C3FCA4190C0A6756CE7F6D897D5D1BE57D6CCB80D0BC87393566A7B6602',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stargaze/images/stars.png',
+      coingeckoId: 'stargaze',
+      type: 'ibc'
+    },
+    {
+      symbol: 'SCRT',
+      name: 'Secret Network',
+      denom: 'ibc/A358D7F19237777AF6D8AD0E0F53268F8B18AE8A53ED318095C14D6D7F3B2DB5',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/secretnetwork/images/scrt.png',
+      coingeckoId: 'secret',
+      type: 'ibc'
+    },
+    {
+      symbol: 'stkATOM',
+      name: 'PSTAKE staked ATOM',
+      denom: 'ibc/086C1B2E9E611F23D3C9159C858D3F4C6A911D348DFB916A11AE306A865A77A8',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/persistence/images/stkatom.png',
+      coingeckoId: 'stkatom',
+      type: 'ibc'
+    },
+    {
+      symbol: 'bKUJI',
+      name: 'BackBone Labs Liquid Staked KUJI',
+      denom: 'factory/kujira15e8q5wzlk5k38gjxlhse3vu6vqnafysncx2ltexd6y9gx50vuj2qpt7dgv/boneKuji',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bKUJI.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'RSTK',
+      name: 'Restake DAO Token',
+      denom: 'ibc/82B298F9E74A9A211C55C67C7AB0C790836BD43672D5DD830F7AE2C5D010AD7D',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/migaloo/images/rstk.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'xUSK',
+      name: 'Ghost Vault USK',
+      denom: 'factory/kujira1w4yaama77v53fp0f9343t9w2f932z526vj970n2jv5055a7gt92sxgwypf/urcpt',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/xusk.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'xMNTA',
+      name: 'Ghost Vault MNTA',
+      denom: 'factory/kujira1ya42knfcsvy6eztegsn3hz7zpjvhzn05ge85xa2dy2zrjeul9hnspp3c06/urcpt',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/xmnta.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'stATOM',
+      name: 'stATOM',
+      denom: 'ibc/0306D6B66EAA2EDBB7EAD23C0EC9DDFC69BB43E80B398035E90FBCFEF3FD1A87',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/statom.png',
+      coingeckoId: 'stride-staked-atom',
+      type: 'ibc'
+    },
+    {
+      symbol: 'stOSMO',
+      name: 'Stride staked OSMO',
+      denom: 'ibc/F97BDCE220CCB52139C73066E36C45EC7EDCEEF1DAFF891A34F4FBA195A2E6E8',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/stosmo.png',
+      coingeckoId: 'stride-staked-osmo',
+      type: 'ibc'
+    },
+    {
+      symbol: 'LP-DOT.axl-MNTA',
+      name: 'LP Bow: DOT.axl-MNTA',
+      denom: 'factory/kujira10qyzrqaza0f593cmnl4sc3p3nhqqakn9j56d899u723pznxpn8us6cypuw/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-SHD-MNTA',
+      name: 'LP Bow: SHD-MNTA',
+      denom: 'factory/kujira12tpc335t72qtrjh64ccdydzsr9qtswkqn72cyvfj4d5hmtgynphsv4xjtu/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-DYDX-MNTA',
+      name: 'LP Bow: DYDX-MNTA',
+      denom: 'factory/kujira13g2eelkf9q4md4xx52ylqvlgpccn50f2vyu05eazufd2g4jatmhq2425pq/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-wAVAX.axl-MNTA',
+      name: 'LP Bow: wAVAX.axl-MNTA',
+      denom: 'factory/kujira15pk8c09vcsgsdq4xlh2qfqxtu2r8pgdy7nggkqj8p3h2phke80pqwnvtzk/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-CHEQ-MNTA',
+      name: 'LP Bow: CHEQ-MNTA',
+      denom: 'factory/kujira15w6jhxsv924mn9cfr0qg9z36hltmw4rzd68x40d9re6hzyhslumqjw9zqd/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-FUZN-MNTA',
+      name: 'LP Bow: FUZN-MNTA',
+      denom: 'factory/kujira1622xuv8unv22xzazljvqh8uukcdz3yzmrp6axgerh7vxg4kum5tqcwcqmv/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-SOMM-MNTA',
+      name: 'LP Bow: SOMM-MNTA',
+      denom: 'factory/kujira17djzq5x5e5zm9q9zlp6dtxdt9p8q2zvj0qtmjs0wrxm5g9e2vf5q9d6y2t/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-wETH.axl-MNTA',
+      name: 'LP Bow: wETH.axl-MNTA',
+      denom: 'factory/kujira17x2v39aut0paj5d6wc5jxvqqxrdhy9kvca4y5xn6vsfpsxkgc6gq7n4tg0/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-NTRN-MNTA',
+      name: 'LP Bow: NTRN-MNTA',
+      denom: 'factory/kujira18lhugzap20ndlqr5j2p86yk4pxpe9jjuac05z0ypxuwn3mm5vjhsjh4etr/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-wFTM.axl-MNTA',
+      name: 'LP Bow: wFTM.axl-MNTA',
+      denom: 'factory/kujira18mveas6xseaqu3fmukwv2ac6mp4hszk08lvyamedytjs0kxm42yqs9v89x/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-STARS-MNTA',
+      name: 'LP Bow: STARS-MNTA',
+      denom: 'factory/kujira1av284rnqh6s0l2lwdqgpgz8wuva3wh9lkmlsupjd9escn5v4fels6kwc7v/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-TIA-MNTA',
+      name: 'LP Bow: TIA-MNTA',
+      denom: 'factory/kujira1cpdyhrkwdnz38u45el3zq7007at9dm6h05tc36zpxvs6vrdwzrrskt0tgg/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-SOL.wh-MNTA',
+      name: 'LP Bow: SOL.wh-MNTA',
+      denom: 'factory/kujira1eqd96322ec258w7k9n9cfqkusrlvzwv38jkph3qs720egdv0epmq70j2zl/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-DYM-MNTA',
+      name: 'LP Bow: DYM-MNTA',
+      denom: 'factory/kujira1fg7wmsde7ygw3pm6hqmd29cdvp947anajmunsvk0guvjta3md25qdqk4fw/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-AKT-MNTA',
+      name: 'LP Bow: AKT-MNTA',
+      denom: 'factory/kujira1gnftck9586x0nhsqsj99k9zednl6tx4kezu9hpph0u6jtqnafpyqxha3me/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-LINK.axl-MNTA',
+      name: 'LP Bow: LINK.axl-MNTA',
+      denom: 'factory/kujira1gnvja05kkmpeh9dnxl0c2p4sde7fpsy2r44njzyqgpsf72nqs78q3gzpzc/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-wTAO.grv-MNTA',
+      name: 'LP Bow: wTAO.grv-MNTA',
+      denom: 'factory/kujira1gz2kvfw7hpds9fvygwkj64znl3a9pw697g77cspcq5y4vj3ru45s7qc0rd/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-MNTA-KUJI',
+      name: 'LP Bow: MNTA-KUJI',
+      denom: 'factory/kujira1h75predtjdm2e7u8cuvqs3usc6xs2mxlkcr20zsshvw3qap25frsr4z949/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-AXL-MNTA',
+      name: 'LP Bow: AXL-MNTA',
+      denom: 'factory/kujira1h929g9e9vxhc5y8v7uexdrncacxdatjupr67velewafwepfyfaaq6s7l3v/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-ATOM-MNTA',
+      name: 'LP Bow: ATOM-MNTA',
+      denom: 'factory/kujira1h9f3k54j060pzlnea8ep8qfymsmwl5yhwc5hqept5p2esqzve7tq2ghnm4/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-ARB-MNTA',
+      name: 'LP Bow: ARB-MNTA',
+      denom: 'factory/kujira1kc90tgn4ucvdv4c9xycktanwz2lna0nfel6244ylqjvhaetfntusnmyu3d/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-WHALE-MNTA',
+      name: 'LP Bow: WHALE-MNTA',
+      denom: 'factory/kujira1jsjygyj8hwa4f0p9wwgct4yzmzzexe5x5u6l40l7ty2qzwwwsemqavhk3x/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-SCRT-MNTA',
+      name: 'LP Bow: SCRT-MNTA',
+      denom: 'factory/kujira1p7w9ncnnme9yzzhrvzv0hnsa5u5ga06v0ckt7lq9yfap04hc5k9sn2vf6w/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-wstETH.axl-MNTA',
+      name: 'LP Bow: wstETH.axl-MNTA',
+      denom: 'factory/kujira1qx3hcr297qmgjt5f6u9peldf4phxqufvmew8d3eey3ns29e8qp3snj6jfu/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-wMATIC.axl-MNTA',
+      name: 'LP Bow: wMATIC.axl-MNTA',
+      denom: 'factory/kujira1smfdnww47xav4nn849xphku3gk3xp7a24fk533dce8masnsz4v8quklajx/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-UNI.axl-MNTA',
+      name: 'LP Bow: UNI.axl-MNTA',
+      denom: 'factory/kujira1t4mr2xt4ky4mfwcy752chzlquam3hzs44mt8vwyec8mvypmzxu5s90vamt/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-yieldETH.axl-MNTA',
+      name: 'LP Bow: yieldETH.axl-MNTA',
+      denom: 'factory/kujira1u8dluwa4a83q7anz0cgpmma605r07a06f0789ajcl8l0xjrplqss005cgn/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-wBTC.axl-MNTA',
+      name: 'LP Bow: wBTC.axl-MNTA',
+      denom: 'factory/kujira1vj39mdwekxznxxa97fv5gt957cghfdqhwju8fdv5ysu0x6vsyhps4zmqjl/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-PAXG.grv-MNTA',
+      name: 'LP Bow: PAXG.grv-MNTA',
+      denom: 'factory/kujira1vqdyup9zxxl9gqy5hwh593vvuc84lstldj7qzt7fylf3q3e3uemqlwpg9y/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-wBNB.axl-MNTA',
+      name: 'LP Bow: wBNB.axl-MNTA',
+      denom: 'factory/kujira1y24jwsv84lnuv5j78qeqz5ujjpd058qsft7wfc0nk9jvycugm32sqnq53d/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-OSMO-MNTA',
+      name: 'LP Bow: OSMO-MNTA',
+      denom: 'factory/kujira1ygperwf0dc9ng2jffj0pwnnray3rscn9el6d78qjtt25qwgqukqszmdwtv/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-INJ-MNTA',
+      name: 'LP Bow: INJ-MNTA',
+      denom: 'factory/kujira1znx048dcc6arqfw6kpckl0k4ts2h7cdx20nk22wz2cxh5vle3wxqknk238/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-stOSMO-OSMO',
+      name: 'LP Bow: stOSMO-OSMO',
+      denom: 'factory/kujira18sek950cg92gd0kvpj67dfg6p7kee6hzw92etcf2jgufr3mttvaslt5sal/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-wstETH.axl-wETH.axl',
+      name: 'LP Bow: wstETH.axl-wETH.axl',
+      denom: 'factory/kujira1lyyeyuw4qgan6nz45thw2m0nmxa457uz7cp9dqw5d9a0h7ccek7qavkm6g/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-qcMNTA-MNTA',
+      name: 'LP Bow: qcMNTA-MNTA',
+      denom: 'factory/kujira1ul00h0a2kgcg9x2yfa86wj9qguhyv7jmpjpw6ztt24j9mn9xjw3slawyc8/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-ampMNTA-MNTA',
+      name: 'LP Bow: ampMNTA-MNTA',
+      denom: 'factory/kujira1vj36ntsqd3msc69lxldcv9dd50jngknmael9e07rz4fpn5kyq0jsglvz2m/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-wETH.axl-USK',
+      name: 'LP Bow: wETH.axl-USK',
+      denom: 'factory/kujira1n648rfqqvjxm6c7zgfnfqay85rkapgg0z7da9pnmjazz5m5d7l0qxdtq90/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'NAMI',
+      name: 'NAMI',
+      denom: 'factory/kujira13x2l25mpkhwnwcwdzzd34cr8fyht9jlj7xu9g4uffe36g3fmln8qkvm3qn/unami',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/nami.png',
+      coingeckoId: 'nami-protocol',
+      type: 'factory'
+    },
+    {
+      symbol: 'NAUSD',
+      name: 'NAUSD',
+      denom: 'factory/kujira18thffdpuz8tm3mwwun4uhks8a2v7ye0jmw3fllqhklma82lqkpms20gh9c/unausd',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/nausd.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'MC01',
+      name: 'MCTEST',
+      denom: 'factory/kujira1mn2pgkggquqm2m44zqlaq29jxwtad53qkv4xy4/MCTest',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/mctest.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'AUTO',
+      name: 'AUTO',
+      denom: 'factory/kujira13x2l25mpkhwnwcwdzzd34cr8fyht9jlj7xu9g4uffe36g3fmln8qkvm3qn/uauto',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/auto.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'qcDYDX',
+      name: 'qcDYDX',
+      denom: 'factory/kujira1seqq2ekz47uqayshqkg5wqx5vcyrmtwcl9vscnwy2gjh7mz5aapsdfxsd5/urcpt',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/qcdydx.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'rKUJI',
+      name: 'rKUJI',
+      denom: 'factory/kujira1tsekaqv9vmem0zwskmf90gpf0twl6k57e8vdnq/urkuji',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/rkuji.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-ATOM-USK',
+      name: 'LP Bow: ATOM-USK',
+      denom: 'factory/kujira1yncutssgh2vj9scaymtteg949hwcft07c6qmgarxnaf04yesq3jsn6g2uv/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-wETH.axl-USK',
+      name: 'LP Bow: wETH.axl-USK',
+      denom: 'factory/kujira1xwvvjq5w0887v2vz4e83kcu38s0jq8q8lqa3z5hxm295q7y4uejqp24la7/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-SOL.wh-USK',
+      name: 'LP Bow: SOL.wh-USK',
+      denom: 'factory/kujira1vcmh95lje5dln782pxckma65eujs4sv960w22whgsp7a2ajsc6lsvnlhgd/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-wETH.axl-USDC',
+      name: 'LP Bow: wETH.axl-USDC',
+      denom: 'factory/kujira1n4jfv39hzv2dtshzv6gj4hp8rkdy5rrsr7l84lc3x9cahz4v0umq24q3lu/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-DYDX-USK',
+      name: 'LP Bow: DYDX-USK',
+      denom: 'factory/kujira1lctu7hy65466fxw3tcqf8w45zwrpwgd9chvjqpgyfgcr73k774nsv4ya6t/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-AKT-USDC',
+      name: 'LP Bow: AKT-USDC',
+      denom: 'factory/kujira1g5st8p6qdyf23zzerjcxgpr2r7a9wzdyaymu79ngg6ve3m9v3n4sdetv4e/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-wBTC-USK',
+      name: 'LP Bow: wBTC-USK',
+      denom: 'factory/kujira1d7jt9zwlnpvf7sskfm57c77pm9mtwczqre75t9k80ees0v523kasss9htj/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-wBTC.axl-wBTC',
+      name: 'LP Bow: wBTC.axl-wBTC',
+      denom: 'factory/kujira1c4e2zk4z0anrufjh64gxtse6e4s5g52fe2ja8ke3r9e0pvpd0z0qws8zsp/ulp',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-INJ-USDC',
+      name: 'LP Bow: INJ-USDC',
+      denom: 'factory/kujira14jwhlsg3az20f7keav2axxj205fyv5j8mp6rv5svqwwll3ls9slq6zwleg/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-ATOM-USDC',
+      name: 'LP Bow: ATOM-USDC',
+      denom: 'factory/kujira13my0qtm2a8jp0wg8uzg49tyn4zcea8scy3dc7ghn8z9eys08yzls49ymdm/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-MNTA-USDC',
+      name: 'LP Bow: MNTA-USDC',
+      denom: 'factory/kujira1742pe93mxm0cwqjxgxh6th9sspdrluqvw9pha9q69eeatue4x5xs0wdq2d/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'LP-MNTA-USK',
+      name: 'LP Bow: MNTA-USK',
+      denom: 'factory/kujira1xtaadmh06s8u3z5mypp8qayhrnxgga5wr88s7raram4rz8zu37hquf82wk/ulp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/bow.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'BOON',
+      name: 'Boon',
+      denom: 'factory/kujira1gewwffxhaygxe8tacd3z9h4uyvpd2h7v9qtfmaw8jjhwalxxpd7qlqld4m/boon',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/boon.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'YUM.axl',
+      name: 'Axelar Wrapped YUM',
+      denom: 'ibc/507BE7E33F06026652F519AD4D36716251F2D34DF04514A905D3B19A7D8130F7',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/yum.png',
+      type: 'ibc'
+    }
+  ],
+  neutron: [
+    {
+      symbol: 'NTRN',
+      name: 'Neutron',
+      denom: 'untrn',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/ntrn.png',
+      coingeckoId: 'neutron-3',
+      type: 'native'
+    },
+    {
+      symbol: 'ATOM',
+      name: 'IBC atom',
+      denom: 'ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/cosmoshub/images/atom.png',
+      coingeckoId: 'cosmos',
+      type: 'ibc'
+    },
+    {
+      symbol: 'axlUSDC',
+      name: 'USD Coin (Axelar)',
+      denom: 'ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/axelar/images/usdc.png',
+      coingeckoId: 'axlusdc',
+      type: 'ibc'
+    },
+    {
+      symbol: 'TIA',
+      name: 'Celestia TIA',
+      denom: 'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/celestia/images/celestia.png',
+      coingeckoId: 'celestia',
+      type: 'ibc'
+    },
+    {
+      symbol: 'ELYS',
+      name: 'ELYS',
+      denom: 'ibc/28FC965E05DB1A4C0A6DE6B720F67AFF8CAB571FE262824976DDDFF49A4BAAF7',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/elys/images/elys.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'ASTROPEPE',
+      name: 'AstroPepe',
+      denom: 'factory/neutron14henrqx9y328fjrdvz6l6d92r0t7g5hk86q5nd/uastropepe',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/astropepe.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'wstETH',
+      name: 'wstETH',
+      denom: 'factory/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry/wstETH',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/wsteth.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'DYDX',
+      name: 'DYDX',
+      denom: 'ibc/2CB87BCE0937B1D1DFCEE79BE4501AAF3C265E923509AEAC410AD85D27F35130',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/dydx/images/dydx.png',
+      coingeckoId: 'dydx-chain',
+      type: 'ibc'
+    },
+    {
+      symbol: 'NEWT',
+      name: 'Newt',
+      denom: 'factory/neutron1p8d89wvxyjcnawmgw72klknr3lg9gwwl6ypxda/newt',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/newt.png',
+      coingeckoId: 'newt',
+      type: 'factory'
+    },
+    {
+      symbol: 'ASTRO',
+      name: 'Astroport token',
+      denom: 'factory/neutron1ffus553eet978k024lmssw0czsxwr97mggyv85lpcsdkft8v9ufsz3sa07/astro',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/astro.png',
+      coingeckoId: 'astroport-fi',
+      type: 'factory'
+    },
+    {
+      symbol: 'xASTRO',
+      name: 'Staked Astroport Token',
+      denom: 'factory/neutron1zlf3hutsa4qnmue53lz2tfxrutp8y2e3rj4nkghg3rupgl4mqy8s5jgxsn/xASTRO',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/xAstro.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'ASTRO.cw20',
+      name: 'Astroport CW20 token',
+      denom: 'ibc/5751B8BCDA688FD0A8EC0B292EEF1CDEAB4B766B63EC632778B196D317C40C3A',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/astro-cw20.svg',
+      coingeckoId: 'astroport-fi',
+      type: 'ibc'
+    },
+    {
+      symbol: 'CORGI',
+      name: 'Baby Corgi',
+      denom: 'factory/neutron1tklm6cvr2wxg8k65t8gh5ewslnzdfd5fsk0w3f/corgi',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/babycorgi.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'CIRCUS',
+      name: 'AtomEconomicZone69JaeKwonInu',
+      denom: 'factory/neutron170v88vrtnedesyfytuku257cggxc79rd7lwt7q/ucircus',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/circus.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'JIMMY',
+      name: 'jimmy',
+      denom: 'factory/neutron108x7vp9zv22d6wxrs9as8dshd3pd5vsga463yd/JIMMY',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/jimmy.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'BAD',
+      name: 'Badcoin',
+      denom: 'factory/neutron143wp6g8paqasnuuey6zyapucknwy9rhnld8hkr/bad',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/bad.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'BTC',
+      name: 'Bitcosmos',
+      denom: 'neutron1fjzg7fmv770hsvahqm0nwnu6grs3rjnd2wa6fvm9unv6vedkzekqpw44qj',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/bitcosmos.png',
+      type: 'native'
+    },
+    {
+      symbol: 'WTF',
+      name: 'wtf',
+      denom: 'neutron12h09p8hq5y4xpsmcuxxzsn9juef4f6jvekp8yefc6xnlwm6uumnsdk29wf',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/WTF.png',
+      type: 'native'
+    },
+    {
+      symbol: 'NLS',
+      name: 'Nolus NLS',
+      denom: 'ibc/6C9E6701AC217C0FC7D74B0F7A6265B9B4E3C3CDA6E80AADE5F950A8F52F9972',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/nolus/images/nolus.png',
+      coingeckoId: 'nolus',
+      type: 'ibc'
+    },
+    {
+      symbol: 'GODRD',
+      name: 'Goddard',
+      denom: 'factory/neutron1t5qrjtyryh8gzt800qr5vylhh2f8cmx4wmz9mc/ugoddard',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/goddardntrn.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'APOLLO',
+      name: 'Apollo DAO',
+      denom: 'factory/neutron154gg0wtm2v4h9ur8xg32ep64e8ef0g5twlsgvfeajqwghdryvyqsqhgk8e/APOLLO',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/apollo.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'NTRL',
+      name: 'Newtroll',
+      denom: 'factory/neutron1ume2n42r5j0660gegrr28fzdze7aqf7r5cd9y6/newtroll',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/newtroll.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'RETRO',
+      name: 'Retro',
+      denom: 'factory/neutron1t24nc7whl77relnu3taxyg3p66pjyuk82png2y/uretro',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/retro.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'GODDARD',
+      name: 'Goddard',
+      denom: 'factory/neutron1yqj9vcc0y73xfxjzegaj4v8q0zefevnlpuh4rj/GODDARD',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/goddard.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'WOSMO',
+      name: 'Wosmo',
+      denom: 'ibc/7DA39F5140741177846FCF3CFAB14450EE7F57B7794E5A94BEF73825D3741958',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/wosmo.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'BOY',
+      name: 'boy',
+      denom: 'neutron1uqvse8fdrd9tam47f2jhy9m6al6xxtqpc83f9pdnz5gdle4swc0spfnctv',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/boy.png',
+      type: 'native'
+    },
+    {
+      symbol: 'BADKID',
+      name: 'Badkid',
+      denom: 'ibc/9F8417FBA11E5E01F7F85DDD48C400EB746E95084C11706041663845B4A700A8',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/badkid.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'CARTEL',
+      name: 'cartel',
+      denom: 'factory/neutron1w0pz4mjw7n96kkragj8etgfgakg5vw9lzg77wq/cartel',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/cartel.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'ATOM1KLFG',
+      name: 'ATOM1KLFG',
+      denom: 'factory/neutron13lkh47msw28yynspc5rnmty3yktk43wc3dsv0l/ATOM1KLFG',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/ATOM1KLFGc.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'USDC',
+      name: 'USD Coin',
+      denom: 'ibc/B559A80D62249C8AA07A380E2A2BEA6E5CA9A6F079C912C3A9E9B494105E4F81',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png',
+      coingeckoId: 'usd-coin',
+      type: 'ibc'
+    },
+    {
+      symbol: 'WEIRD',
+      name: 'WEIRD',
+      denom: 'factory/neutron133xakkrfksq39wxy575unve2nyehg5npx75nph/WEIRD',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/WEIRD.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'TAKUMI',
+      name: 'Takumi Asano',
+      denom: 'factory/neutron19tynwawkm2rgefqxy7weupu4hdamyhg890zep2/TAKUMI',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/takumi.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'NBZ',
+      name: 'Ninja Blaze',
+      denom: 'ibc/A79E35F2418EB26FA8D72B9AA5EDF28C0C2CF475E8CF4CAEBB25FA5C858D4D22',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/NBZ.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'MARS',
+      name: 'Mars Protocol',
+      denom: 'factory/neutron1ndu2wvkrxtane8se2tr48gv7nsm46y5gcqjhux/MARS',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/mars-token.png',
+      coingeckoId: 'mars-protocol-a7fcbcfb-fd61-4017-92f0-7ee9f9cc6da3',
+      type: 'factory'
+    },
+    {
+      symbol: 'dNTRN',
+      name: 'dNTRN',
+      denom: 'factory/neutron1frc0p5czd9uaaymdkug2njz7dc7j65jxukp9apmt9260a8egujkspms2t2/udntrn',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/dNTRN.svg',
+      coingeckoId: 'drop-staked-ntrn',
+      type: 'factory'
+    },
+    {
+      symbol: 'dATOM',
+      name: 'dATOM',
+      denom: 'factory/neutron1k6hr0f83e7un2wjf29cspk7j69jrnskk65k3ek2nj9dztrlzpj6q00rtsa/udatom',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/dATOM.svg',
+      coingeckoId: 'drop-staked-atom',
+      type: 'factory'
+    },
+    {
+      symbol: 'SIN',
+      name: 'SIN',
+      denom: 'factory/neutron133xakkrfksq39wxy575unve2nyehg5npx75nph/sin',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/sin.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'SEED',
+      name: 'SEED',
+      denom: 'factory/neutron133xakkrfksq39wxy575unve2nyehg5npx75nph/seed',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/seed.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'GOP',
+      name: 'GOP',
+      denom: 'factory/neutron133xakkrfksq39wxy575unve2nyehg5npx75nph/GOP',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/gop.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'ARENA',
+      name: 'Arena Token',
+      denom: 'factory/neutron129ukd5cwahcjkccujz87rjemjukff7jf6sau72qrhva677xgz9gs4m4jeq/uarena',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/arena_dao.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'AXV',
+      name: 'Astrovault AXV (Neutron)',
+      denom: 'cw20:neutron10dxyft3nv4vpxh5vrpn0xw8geej8dw3g39g7nqp8mrm307ypssksau29af',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/axv.png',
+      coingeckoId: 'astrovault',
+      type: 'cw20'
+    },
+    {
+      symbol: 'axlWBTC',
+      name: 'Wrapped Bitcoin (Axelar)',
+      denom: 'ibc/DF8722298D192AAB85D86D0462E8166234A6A9A572DD4A2EA7996029DF4DB363',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/wbtc.png',
+      coingeckoId: 'axlwbtc',
+      type: 'ibc'
+    },
+    {
+      symbol: 'axlWETH',
+      name: 'Wrapped Ether (Axelar)',
+      denom: 'ibc/A585C2D15DCD3B010849B453A2CFCB5E213208A5AB665691792684C26274304D',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eth-white.png',
+      coingeckoId: 'axlweth',
+      type: 'ibc'
+    },
+    {
+      symbol: 'xATOM',
+      name: 'Astrovault xATOM (Neutron)',
+      denom: 'cw20:neutron1vjl4ze7gr32lar5s4fj776v70j4ml7mlt4aqln2hwgfhqjck8xwqfhx8vj',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/xatom.png',
+      coingeckoId: 'astrovault-xatom',
+      type: 'cw20'
+    },
+    {
+      symbol: 'amATOM',
+      name: 'amATOM',
+      denom: 'factory/neutron1shwxlkpdjd8h5wdtrykypwd2v62z5glr95yp0etdcspkkjwm5meq82ndxs/amatom',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/amATOM.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'JSD',
+      name: 'Jade',
+      denom: 'factory/neutron1mdy5fhtwdjagp5eallsdhlx6gxylm8rxqk72wjzg6y5d5kt44ysqprkduw/JSD',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/jsd.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'FUEL',
+      name: 'FUEL',
+      denom: 'factory/neutron1zl2htquajn50vxu5ltz0y5hf2qzvkgnjaaza2rssef268xplq6vsjuruxm/fuel',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/fuel.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'bglUSDC',
+      name: 'bglUSDC',
+      denom: 'factory/neutron16ue9kysgneyqktmjxdfshajgvlrcx9rehxz8x9th7g8fgtnlxwuqvg9mgp/bglUSDC',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/bglUSDC.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'dTIA',
+      name: 'dTIA',
+      denom: 'factory/neutron1ut4c6pv4u6vyu97yw48y8g7mle0cat54848v6m97k977022lzxtsaqsgmq/udtia',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/dTIA.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'NEPT',
+      name: 'Neptune Finance',
+      denom: 'ibc/C084B31AB4906CD6CC65CB779B1527A66B6C98629259E3548B2F20D2753D5837',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/injective/images/nept.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'DOGE.int3',
+      name: 'Dogecoin (Int3)',
+      denom: 'ibc/F16C7C5B6F7E96ACDA73E35BCA3A3DE49DDF7164066A359C843E9709041CE6B9',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/int3face/images/doge.int3.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'BTC.int3',
+      name: 'Bitcoin (Int3)',
+      denom: 'ibc/D9E2128761E0A60C6C7C166BF30A23E9C2029576817F16CD4BD4F598A2077C04',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/int3face/images/btc.int3.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'BCH.int3',
+      name: 'Bitcoin Cash (Int3)',
+      denom: 'ibc/1D45F4770FA033E69A3A3B751263FD774952C2452F65944A1CB914E58C74A35B',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/int3face/images/bch.int3.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'LTC.int3',
+      name: 'Litecoin (Int3)',
+      denom: 'ibc/C4C791209A16419A4BB3C3177E5E8AE4477C9D7457842E7F531F91C513FA79A0',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/int3face/images/ltc.int3.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'TAB',
+      name: 'TabCoin',
+      denom: 'factory/neutron1r5qx58l3xx2y8gzjtkqjndjgx69mktmapl45vns0pa73z0zpn7fqgltnll/TAB',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/TAB.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'EHO',
+      name: 'Cognitive Echo',
+      denom: 'cw20:neutron15e56mauwr8n2cma56f78cvtnd9c2pr0y7f4mffdwda7z49sksyvqh2hke2',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/eho.svg',
+      type: 'cw20'
+    },
+    {
+      symbol: 'maxBTC',
+      name: 'maxBTC',
+      denom: 'factory/neutron17sp75wng9vl2hu3sf4ky86d7smmk3wle9gkts2gmedn9x4ut3xcqa5xp34/maxbtc',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/maxBTC.svg',
+      coingeckoId: 'maxbtc',
+      type: 'factory'
+    }
+  ],
+  archway: [
+    {
+      symbol: 'ARCH',
+      name: 'Archway',
+      denom: 'aarch',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/archway/images/arch.png',
+      coingeckoId: 'archway',
+      type: 'native'
+    },
+    {
+      symbol: 'bARCH',
+      name: 'BackBone Labs Liquid Staked Archway',
+      denom: 'archway12yurzx8zynv3ck7uh4tucre48tqsm4fac4hfk9p3l24qs2cn08dqr684cg',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/archway/images/barch.png',
+      type: 'native'
+    },
+    {
+      symbol: 'TOKN',
+      name: 'Architects Token',
+      denom: 'archway16kxu278xtwa9ql20yhgk9smk2k6ke74hsxeesf36c9dhxqc5zyksh8ykwu',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/archway/images/tokn.png',
+      type: 'native'
+    },
+    {
+      symbol: 'ampARCH',
+      name: 'ERIS Amplified ARCH',
+      denom: 'cw20:archway1fwurjg7ah4v7hhs6xsc3wutqpvmahrfhns285s0lt34tgfdhplxq6m8xg5',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/archway/images/amparch.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'VDL',
+      name: 'Vidulum',
+      denom: 'ibc/1BCF1FCAFE3568E234787EDFDA12460BD8931B17FE6A729DCD60FAD845558DA1',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/beezee/images/vdl.png',
+      coingeckoId: 'vidulum',
+      type: 'ibc'
+    },
+    {
+      symbol: 'AXV',
+      name: 'Astrovault AXV',
+      denom: 'cw20:archway1ecjefhcf8r60wtfnhwefrxhj9caeqa90fj58cqsaafqveawn6cjs5znd2n',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/archway/images/axv.png',
+      coingeckoId: 'astrovault',
+      type: 'cw20'
+    },
+    {
+      symbol: 'wARCH',
+      name: 'Wrapped ARCH',
+      denom: 'cw20:archway1msc3fa4e2mh73y760qmjd3wfkzr98nl26f36xgt2xnhuw6ay3scs42zeue',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/archway/images/wArch.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'USDC',
+      name: 'USDC (Noble)',
+      denom: 'ibc/43897B9739BD63E3A08A88191999C632E052724AB96BD4C74AE31375C991F48D',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png',
+      coingeckoId: 'usd-coin',
+      type: 'ibc'
+    },
+    {
+      symbol: 'wUSDC',
+      name: 'Wrapped USDC',
+      denom: 'cw20:archway1gaf9nw7n8v5lpjz9caxjpps006kxfcrzcuc8y5qp4clslhven2ns2g0ule',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/archway/images/wUsdc-noble.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'WHALE',
+      name: 'Migaloo',
+      denom: 'ibc/3F882513A0CCD1C4110ACB7C6C761AC7B48974C9D2D439CD6F652F9B44362518',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/migaloo/images/white-whale.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'CULT',
+      name: 'CULT',
+      denom: 'ibc/7364C29ED876F05A82628B738AA2F0D53724991FD0220858570D7A3844B67F58',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/cult.png',
+      type: 'ibc'
+    }
+  ],
+  axelar: [
+    {
+      symbol: 'AXL',
+      name: 'Axelar',
+      denom: 'uaxl',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/axelar/images/axl.png',
+      coingeckoId: 'axelar',
+      type: 'native'
+    },
+    {
+      symbol: 'USDC',
+      name: 'USD Coin',
+      denom: 'uusdc',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/axelar/images/usdc.png',
+      coingeckoId: 'axlusdc',
+      type: 'native'
+    },
+    {
+      symbol: 'FRAX',
+      name: 'Frax',
+      denom: 'frax-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/frax.svg',
+      type: 'native'
+    },
+    {
+      symbol: 'DAI',
+      name: 'Dai Stablecoin',
+      denom: 'dai-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/axelar/images/dai.png',
+      type: 'native'
+    },
+    {
+      symbol: 'USDT',
+      name: 'Tether USD',
+      denom: 'uusdt',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png',
+      coingeckoId: 'axelar-usdt',
+      type: 'native'
+    },
+    {
+      symbol: 'WETH',
+      name: 'Wrapped Ether',
+      denom: 'weth-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eth-white.png',
+      coingeckoId: 'axlweth',
+      type: 'native'
+    },
+    {
+      symbol: 'WBTC',
+      name: 'Wrapped Bitcoin',
+      denom: 'wbtc-satoshi',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/wbtc.png',
+      coingeckoId: 'axlwbtc',
+      type: 'native'
+    },
+    {
+      symbol: 'AAVE',
+      name: 'Aave',
+      denom: 'aave-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/aave.svg',
+      type: 'native'
+    },
+    {
+      symbol: 'APE',
+      name: 'ApeCoin',
+      denom: 'ape-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/ape.png',
+      type: 'native'
+    },
+    {
+      symbol: 'AXS',
+      name: 'Axie Infinity Shard',
+      denom: 'axs-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/axs.svg',
+      type: 'native'
+    },
+    {
+      symbol: 'LINK',
+      name: 'Chainlink',
+      denom: 'link-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/link.png',
+      type: 'native'
+    },
+    {
+      symbol: 'MKR',
+      name: 'Maker',
+      denom: 'mkr-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/mkr.svg',
+      type: 'native'
+    },
+    {
+      symbol: 'RAI',
+      name: 'Rai Reflex Index',
+      denom: 'rai-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/rai.png',
+      type: 'native'
+    },
+    {
+      symbol: 'SHIB',
+      name: 'Shiba Inu',
+      denom: 'shib-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/shib.svg',
+      type: 'native'
+    },
+    {
+      symbol: 'stETH',
+      name: 'Lido Staked Ether',
+      denom: 'steth-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/steth.svg',
+      type: 'native'
+    },
+    {
+      symbol: 'UNI',
+      name: 'Uniswap',
+      denom: 'uni-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/uni.svg',
+      type: 'native'
+    },
+    {
+      symbol: 'XCN',
+      name: 'Chain',
+      denom: 'xcn-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/xcn.png',
+      type: 'native'
+    },
+    {
+      symbol: 'DOT',
+      name: 'Wrapped Polkadot',
+      denom: 'dot-planck',
+      decimals: 10,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/polkadot/images/dot.png',
+      type: 'native'
+    },
+    {
+      symbol: 'WGLMR',
+      name: 'Wrapped Moonbeam',
+      denom: 'wglmr-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/moonbeam/images/glmr.png',
+      type: 'native'
+    },
+    {
+      symbol: 'WMATIC',
+      name: 'Wrapped Matic',
+      denom: 'wmatic-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/polygon/images/wmatic.png',
+      type: 'native'
+    },
+    {
+      symbol: 'WBNB',
+      name: 'Wrapped BNB',
+      denom: 'wbnb-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/binancesmartchain/images/wbnb.png',
+      type: 'native'
+    },
+    {
+      symbol: 'BUSD',
+      name: 'Binance USD',
+      denom: 'busd-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/busd.png',
+      type: 'native'
+    },
+    {
+      symbol: 'WAVAX',
+      name: 'Wrapped AVAX',
+      denom: 'wavax-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/avalanche/images/wavax.svg',
+      type: 'native'
+    },
+    {
+      symbol: 'WFTM',
+      name: 'Wrapped FTM',
+      denom: 'wftm-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/fantom/images/ftm.png',
+      type: 'native'
+    },
+    {
+      symbol: 'USDC',
+      name: 'USD Coin from Polygon',
+      denom: 'polygon-uusdc',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/axelar/images/usdc.png',
+      type: 'native'
+    },
+    {
+      symbol: 'USDC',
+      name: 'USD Coin from Avalanche',
+      denom: 'avalanche-uusdc',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/axelar/images/usdc.png',
+      type: 'native'
+    },
+    {
+      symbol: 'axlFIL',
+      name: 'Wrapped FIL from Filecoin',
+      denom: 'wfil-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/filecoin/images/wfil.png',
+      type: 'native'
+    },
+    {
+      symbol: 'ARB',
+      name: 'Arbitrum',
+      denom: 'arb-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/arbitrum/images/arb.png',
+      type: 'native'
+    },
+    {
+      symbol: 'PEPE',
+      name: 'Pepe',
+      denom: 'pepe-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/pepe.png',
+      type: 'native'
+    },
+    {
+      symbol: 'cbETH',
+      name: 'Coinbase Wrapped Staked ETH',
+      denom: 'cbeth-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/cbeth.png',
+      type: 'native'
+    },
+    {
+      symbol: 'rETH',
+      name: 'Rocket Pool Ether',
+      denom: 'reth-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/reth.png',
+      type: 'native'
+    },
+    {
+      symbol: 'sfrxETH',
+      name: 'Staked Frax Ether',
+      denom: 'sfrxeth-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/sfrxeth.svg',
+      type: 'native'
+    },
+    {
+      symbol: 'wstETH',
+      name: 'Wrapped Lido Staked Ether',
+      denom: 'wsteth-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/wsteth.svg',
+      type: 'native'
+    },
+    {
+      symbol: 'YieldETH',
+      name: 'Real Yield Eth',
+      denom: 'yieldeth-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/yieldeth.png',
+      type: 'native'
+    },
+    {
+      symbol: 'OX',
+      name: 'Open Exchange Token',
+      denom: 'ox-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/ox.png',
+      type: 'native'
+    },
+    {
+      symbol: 'YUM.axl',
+      name: 'Axelar Wrapped YUM',
+      denom: 'yum-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/yum.png',
+      type: 'native'
+    },
+    {
+      symbol: 'axlETH',
+      name: 'Arbitrum axlETH',
+      denom: 'arbitrum-weth-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eth-white.png',
+      type: 'native'
+    },
+    {
+      symbol: 'axlETH',
+      name: 'Base axlETH',
+      denom: 'base-weth-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eth-white.png',
+      type: 'native'
+    },
+    {
+      symbol: 'axlETH',
+      name: 'Polygon axlETH',
+      denom: 'polygon-weth-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eth-white.png',
+      type: 'native'
+    },
+    {
+      symbol: 'OP',
+      name: 'Optimism',
+      denom: 'op-wei',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/optimism/images/op.png',
+      type: 'native'
+    },
+    {
+      symbol: 'axlUSDT',
+      name: 'Tether USD (Arbitrum)',
+      denom: 'arbitrum-uusdt',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png',
+      type: 'native'
+    },
+    {
+      symbol: 'axlUSDT',
+      name: 'Tether USD (Optimism)',
+      denom: 'optimism-uusdt',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png',
+      type: 'native'
+    },
+    {
+      symbol: 'axlUSDT',
+      name: 'Tether USD (Polygon)',
+      denom: 'polygon-uusdt',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png',
+      type: 'native'
+    },
+    {
+      symbol: 'axl-cbBTC',
+      name: 'Coinbase Wrapped Bitcoin',
+      denom: 'cbbtc-satoshi',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/base/images/cbbtc.png',
+      type: 'native'
+    },
+    {
+      symbol: 'axlFBTC',
+      name: 'Fire Bitcoin',
+      denom: 'fbtc-satoshi',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/mantle/images/fbtc.png',
+      type: 'native'
+    },
+    {
+      symbol: 'axlLBTC',
+      name: 'Lombard Staked Bitcoin',
+      denom: 'lbtc-satoshi',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/lbtc.png',
+      type: 'native'
+    },
+    {
+      symbol: 'CROWDP',
+      name: 'Crowdpunk DAO',
+      denom: 'ibc/53046FFF6CAD109D8F9B2C7C9913853AD241928CD05CDDE419343D176025DA74',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/evmos/images/crowdp.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'axlMOVE',
+      name: 'Movement',
+      denom: 'unit-move',
+      decimals: 8,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/movement/images/move.png',
+      type: 'native'
+    },
+    {
+      symbol: 'ZigCoin',
+      name: 'ZigCoin',
+      denom: 'unit-zig',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/zigchain/images/zigchain.png',
+      type: 'native'
+    }
+  ],
+  evmos: [
+    {
+      symbol: 'EVMOS',
+      name: 'Evmos',
+      denom: 'aevmos',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/evmos/images/evmos.png',
+      coingeckoId: 'evmos',
+      type: 'native'
+    },
+    {
+      symbol: 'USDt',
+      name: 'Tether USDt',
+      denom: 'ibc/95F4898F70B1E3765715808C57E955034419200A7BB6DDECBEAA5FD3AA3DF7D5',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png',
+      coingeckoId: 'tether',
+      type: 'ibc'
+    },
+    {
+      symbol: 'NEOK',
+      name: 'Neokingdom DAO',
+      denom: 'erc20/0x655ecB57432CC1370f65e5dc2309588b71b473A9',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/evmos/images/neok.png',
+      type: 'native'
+    },
+    {
+      symbol: 'BERLIN-legacy',
+      name: 'Teledisko DAO - Legacy',
+      denom: 'erc20/0x1cFc8f1FE8D5668BAFF2724547EcDbd6f013a280',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/evmos/images/berlin.png',
+      type: 'native'
+    },
+    {
+      symbol: 'CROWDP',
+      name: 'Crowdpunk DAO',
+      denom: 'erc20/0xfbF4318d24a93753F11d365A6dcF8b830e98Ab0F',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/evmos/images/crowdp.png',
+      type: 'native'
+    }
+  ],
+  noble: [
+    {
+      symbol: 'STAKE',
+      name: 'Stake',
+      denom: 'ustake',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/noble/images/stake.png',
+      type: 'native'
+    },
+    {
+      symbol: 'FRNZ',
+      name: 'Frienzies',
+      denom: 'ufrienzies',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/noble/images/frnz.png',
+      type: 'native'
+    },
+    {
+      symbol: 'ATOM',
+      name: 'Atom Staking Coin',
+      denom: 'ibc/EF48E6B1A1A19F47ECAEA62F5670C37C0580E86A9E88498B7E393EB6F49F33C0',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/cosmoshub/images/atom.png',
+      coingeckoId: 'cosmos',
+      type: 'ibc'
+    },
+    {
+      symbol: 'USDC',
+      name: 'USDC',
+      denom: 'uusdc',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png',
+      coingeckoId: 'usd-coin',
+      type: 'native'
+    },
+    {
+      symbol: 'USDY',
+      name: 'Ondo US Dollar Yield',
+      denom: 'ausdy',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/noble/images/usdy.png',
+      coingeckoId: 'ondo-us-dollar-yield',
+      type: 'native'
+    },
+    {
+      symbol: 'EURe',
+      name: 'Monerium EUR emoney',
+      denom: 'ueure',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eure.png',
+      coingeckoId: 'monerium-eur-money',
+      type: 'native'
+    },
+    {
+      symbol: 'USDN',
+      name: 'Noble Dollar',
+      denom: 'uusdn',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/noble/images/USDN.png',
+      coingeckoId: 'noble-dollar-usdn',
+      type: 'native'
+    }
+  ],
+  stride: [
+    {
+      symbol: 'STRD',
+      name: 'Stride',
+      denom: 'ustrd',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/strd.png',
+      coingeckoId: 'stride',
+      type: 'native'
+    },
+    {
+      symbol: 'stATOM',
+      name: 'Stride Staked ATOM',
+      denom: 'stuatom',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/statom.png',
+      coingeckoId: 'stride-staked-atom',
+      type: 'native'
+    },
+    {
+      symbol: 'stSTARS',
+      name: 'Stride Staked STARS',
+      denom: 'stustars',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/ststars.png',
+      coingeckoId: 'stride-staked-stars',
+      type: 'native'
+    },
+    {
+      symbol: 'stOSMO',
+      name: 'Stride Staked OSMO',
+      denom: 'stuosmo',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/stosmo.png',
+      coingeckoId: 'stride-staked-osmo',
+      type: 'native'
+    },
+    {
+      symbol: 'stJUNO',
+      name: 'Stride Staked JUNO',
+      denom: 'stujuno',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/stjuno.png',
+      coingeckoId: 'stride-staked-juno',
+      type: 'native'
+    },
+    {
+      symbol: 'stLUNA',
+      name: 'Stride Staked LUNA',
+      denom: 'stuluna',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/stluna.png',
+      type: 'native'
+    },
+    {
+      symbol: 'stINJ',
+      name: 'Stride Staked INJ',
+      denom: 'stinj',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/stinj.png',
+      type: 'native'
+    },
+    {
+      symbol: 'stEVMOS',
+      name: 'Stride Staked EVMOS',
+      denom: 'staevmos',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/stevmos.png',
+      type: 'native'
+    },
+    {
+      symbol: 'stDYDX',
+      name: 'Stride Staked DYDX',
+      denom: 'stadydx',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/stdydx.png',
+      type: 'native'
+    },
+    {
+      symbol: 'stTIA',
+      name: 'Stride Staked TIA',
+      denom: 'stutia',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/sttia.png',
+      type: 'native'
+    },
+    {
+      symbol: 'stDYM',
+      name: 'Stride Staked DYM',
+      denom: 'stadym',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/stdym.png',
+      type: 'native'
+    },
+    {
+      symbol: 'stUMEE',
+      name: 'Stride Staked UMEE',
+      denom: 'stuumee',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/stumee.png',
+      coingeckoId: 'stride-staked-umee',
+      type: 'native'
+    },
+    {
+      symbol: 'stCMDX',
+      name: 'Stride Staked CMDX',
+      denom: 'stucmdx',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/stcmdx.png',
+      type: 'native'
+    },
+    {
+      symbol: 'stSOMM',
+      name: 'Stride Staked SOMM',
+      denom: 'stusomm',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/stsomm.png',
+      type: 'native'
+    },
+    {
+      symbol: 'stSAGA',
+      name: 'Stride Staked SAGA',
+      denom: 'stusaga',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/stsaga.png',
+      type: 'native'
+    },
+    {
+      symbol: 'TIA',
+      name: 'Celestia',
+      denom: 'ibc/BF3B4F53F3694B66E13C23107C84B6485BD2B96296BB7EC680EA77BBA75B4801',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/celestia/images/celestia.png',
+      coingeckoId: 'celestia',
+      type: 'ibc'
+    },
+    {
+      symbol: 'stISLM',
+      name: 'Stride Staked ISLM',
+      denom: 'staISLM',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/stislm.png',
+      coingeckoId: 'stride-staked-islm',
+      type: 'native'
+    },
+    {
+      symbol: 'stBAND',
+      name: 'Stride Staked BAND',
+      denom: 'stuband',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/stband.png',
+      type: 'native'
+    }
+  ],
+  terra2: [
+    {
+      symbol: 'LUNA',
+      name: 'Luna',
+      denom: 'uluna',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/luna.png',
+      coingeckoId: 'terra-luna-2',
+      type: 'native'
+    },
+    {
+      symbol: 'ASTRO.cw20',
+      name: 'Astroport CW20 Token',
+      denom: 'cw20:terra1nsuqsk6kh58ulczatwev87ttq2z6r3pusulg9r24mfj2fvtzd4uq3exn26',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/astro-cw20.svg',
+      coingeckoId: 'astroport-fi',
+      type: 'cw20'
+    },
+    {
+      symbol: 'ASTRO',
+      name: 'Astroport token',
+      denom: 'ibc/8D8A7F7253615E5F76CB6252A1E1BD921D5EDB7BBAAF8913FB1C77FF125D9995',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/astro.png',
+      coingeckoId: 'astroport-fi',
+      type: 'ibc'
+    },
+    {
+      symbol: 'DINHEIROS',
+      name: 'dinheiro',
+      denom: 'cw20:terra1spkm49wd9dqkranhrks4cupecl3rtgeqqljq3qrvrrts2ev2gw6sy5vz3k',
+      decimals: 0,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/Dinheiros.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'REIS',
+      name: 'real',
+      denom: 'cw20:terra1sdglum2dt4f3fmq7jrt2phf2tegmnudc7qqqqujkpqcm9ujuxxkqakv5u8',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/Reis.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'ESCUDOS',
+      name: 'escudo',
+      denom: 'cw20:terra1qj5hs3e86qn4vm9dvtgtlkdp550r0rayk9wpay44mfw3gn3tr8nq5jw3dg',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/Escudos.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'ALEM',
+      name: 'alentejo.money',
+      denom: 'cw20:terra1cmf8ytutcwrjrv08zskj9phuh46a3w3nkjax7en4hxezsrdr58lqvzy05q',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/Alem.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'AMG',
+      name: 'almagem',
+      denom: 'cw20:terra1en42e2vsvtdsvrcqg5s5e5e4djejjaed6fxmvtpweg3tu33h6k5qkg9c40',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/almagem.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'ARK',
+      name: 'arika',
+      denom: 'cw20:terra1ysd87nayjuelxj4wvp4wnp9as0mwszzkje6a9z6f3xx2903ghnsq4hm50y',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/arika.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'DANU',
+      name: 'danu',
+      denom: 'cw20:terra1vj68f2ntauaj5dfvy5z4tq4we3hsyg363k63js5sae2t7th9aacqan89sr',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/danu.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'TRS',
+      name: 'torus',
+      denom: 'cw20:terra1swzpenwh39f8aa7qht34r05f8ew6k2vehvqt2aw4fjy0fgghhheqs9l6h7',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/trs.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'PLASMA',
+      name: 'plasma',
+      denom: 'cw20:terra1mqs6mdx0ak7qvjzs6efhg65g4j5pzwpdkcgdsv5tpekln3qhggrq3qzvdp',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/plasma.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'DMT',
+      name: 'dmt',
+      denom: 'cw20:terra1xfkkgwxychgrnq0vcp82u32mecrzj8s64s03cxtmf46k6j2n2wssc7rzjf',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/dmt.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'ampLUNA',
+      name: 'ERIS Amplified LUNA',
+      denom: 'cw20:terra1ecgazyd0waaj3g7l9cmy5gulhxkps2gmxu9ghducvuypjq68mq2s5lvsct',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/ampluna.svg',
+      coingeckoId: 'eris-amplified-luna',
+      type: 'cw20'
+    },
+    {
+      symbol: 'ROAR',
+      name: 'Lion DAO',
+      denom: 'cw20:terra1lxx40s29qvkrcj8fsa3yzyehy7w50umdvvnls2r830rys6lu2zns63eelv',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/roar.png',
+      coingeckoId: 'lion-dao',
+      type: 'cw20'
+    },
+    {
+      symbol: 'GEM',
+      name: 'GEM DAO',
+      denom: 'cw20:terra1ynvsz80w9xmhdxucv96gkwpxlwvjgsq75xh2f3pf825c4wfmkfxskq6pqv',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/gem.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'CUB',
+      name: 'Lion Cub DAO',
+      denom: 'cw20:terra1lalvk0r6nhruel7fvzdppk3tup3mh5j4d4eadrqzfhle4zrf52as58hh9t',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/cub.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'BLUE',
+      name: 'BLUE CUB DAO',
+      denom: 'cw20:terra1gwrz9xzhqsygyr5asrgyq3pu0ewpn00mv2zenu86yvx2nlwpe8lqppv584',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/blue.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'xxx',
+      name: 'TheOnlyOne',
+      denom: 'cw20:terra10se906awphtccf4vd83m0ulpmpt9v4msuakmpy0pwvmtxmup3kdq25rayn',
+      decimals: 10,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/xxx3.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'GUGU',
+      name: 'GUGU',
+      denom: 'cw20:terra19nu4q2y0xe3vza6ve5ymup33uzm049pnrqq5ddeuulmrg279t57qstcces',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/gugu.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'bLUNA',
+      name: 'BackBone Labs Liquid Staked LUNA',
+      denom: 'cw20:terra17aj4ty4sz4yhgm08na8drc0v03v2jwr3waxcqrwhajj729zhl7zqnpc0ml',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/bLUNA.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'SAYVE',
+      name: 'sayve',
+      denom: 'cw20:terra1xp9hrhthzddnl7j5du83gqqr4wmdjm5t0guzg9jp6jwrtpukwfjsjgy4f3',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/sayve.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'ampWHALEt',
+      name: 'ERIS Alliance Staked ampWHALE',
+      denom: 'factory/terra1j35ta0llaxcf55auv2cjqau5a7aee6g8fz7md7my7005cvh23jfsaw83dy/ampWHALEt',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/ampwhalet.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'boneWHALEt',
+      name: 'ERIS Alliance Staked boneWHALE',
+      denom: 'factory/terra10j3zrymfrkta2pxe0gklc79gu06tqyuy8c3kh6tqdsrrprsjqkrqzfl4df/boneWHALEt',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/bonewhalet.svg',
+      type: 'factory'
+    },
+    {
+      symbol: 'ampROAR',
+      name: 'ERIS Amplified ROAR',
+      denom: 'factory/terra1vklefn7n6cchn0u962w3gaszr4vf52wjvd4y95t2sydwpmpdtszsqvk9wy/ampROAR',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/amproar.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'NICO',
+      name: 'nico',
+      denom: 'cw20:terra1e0efrrrj8d55pflme3dmtyuj7klzcef5cfmz6r2jyqz77kk2jz3qa6drg3',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/nicodao.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'SEAS',
+      name: 'Sailing The SeaS DAO',
+      denom: 'cw20:terra1rc6ssp5rym7a0hg29xpj4cc9e67tl56kg5jyzgl9qrhfxxc2ugvsnrkala',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/SEAS.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'BITZ',
+      name: 'BitzDAO',
+      denom: 'cw20:terra18vp5s0r7keezm35hdxsgw8zgfnyn8wejdkk893ag2kqncgpqxhjqwjpc0v',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/BITZ.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'wstETH',
+      name: 'Wrapped Lido Staked Ether',
+      denom: 'ibc/A356EC90DC3AE43D485514DA7260EDC7ABB5CFAA0654CE2524C739392975AD3C',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/wsteth.svg',
+      type: 'ibc'
+    },
+    {
+      symbol: 'SEUL',
+      name: 'seul',
+      denom: 'cw20:terra13s5pxw5j2p4ssvzwvxd8l7h30vke8vjgtng75vqgv6p9vddfk3hskfka0l',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/seul.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'xSEUL',
+      name: 'xseul',
+      denom: 'cw20:terra1q328gl40az3cf9x67cgudn8e8w2az9vsmhtkwsgdu7a43rhy5caqc82yr5',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/xseul.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'ITO',
+      name: 'ito',
+      denom: 'cw20:terra1c77xqv746m7ghxayrge79dxr4kcezev8g6cnrfled4f3n4ufj0vs5gz28s',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/I.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'ARMANI',
+      name: 'ARMANI',
+      denom: 'cw20:terra1aa7stl3fytvave9xtcexgv0kne4k7ks068dcljkrfj37hy8q270sjadav8',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/armani.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'DROGO',
+      name: 'DROGO',
+      denom: 'cw20:terra1cl273523kmr2uwjhhznq54je69mted2u3ljffm8kp2ap4z3drdksftwqun',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/drogo.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'ADO',
+      name: 'ADO',
+      denom: 'cw20:terra1w8xk6rtu40st6lvl3yv7ynw5urm2n686u9cchvrzltmnktzwdesqcwy0nu',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/ADO.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'DNA',
+      name: 'DNA',
+      denom: 'cw20:terra1epka8wevu90rxlvt6g5x9veevd800a760vtuftc5kqdfmrh47qds9f0m8h',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/DNA.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'BMOS',
+      name: 'Bitmos',
+      denom: 'cw20:terra1sxe8u2hjczlekwfkcq0rs28egt38pg3wqzfx4zcrese4fnvzzupsk9gjkq',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/bitmos.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'LADS',
+      name: 'LADS',
+      denom: 'cw20:terra1eh8eq60cjy997w5dc3a6exfzanlaurupav8klx7m9u9ddfgh25mqjwl5vj',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/LADS.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'RSTK',
+      name: 'Restake DAO Token',
+      denom: 'ibc/F709DF4969CD26174C1A53AA95F3D98BE643C1A52C9981487766F96A1811F6A4',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/migaloo/images/rstk.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'CLON',
+      name: 'CLON',
+      denom: 'cw20:terra164ssz60yvsxey0ku9mtcaegdeyxwzuwwqyrp238nvflwqve0pvxsra7fa2',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/clon1.png',
+      type: 'cw20'
+    },
+    {
+      symbol: 'MOAR',
+      name: 'ERIS MOAR',
+      denom: 'factory/terra1dndhtdr2v7ca8rrn67chlqw3cl3xhm3m2uxls62vghcg3fsh5tpss5xmcu/MOAR',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/moar.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'USDt',
+      name: 'Tether USDt',
+      denom: 'ibc/9B19062D46CAB50361CE9B0A3E6D0A7A53AC9E7CB361F32A73CC733144A9A9E5',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png',
+      coingeckoId: 'tether',
+      type: 'ibc'
+    },
+    {
+      symbol: 'ashLUNA',
+      name: 'ashLUNA',
+      denom: 'factory/terra1f5cfm48gcezl3cx25l64ngc4yktnmx7rcpj3kggu6v273742sqqs5yn5ks/luna.ash',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/luna.ash.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'USDC',
+      name: 'USDC',
+      denom: 'ibc/2C962DAB9F57FE0921435426AE75196009FAA1981BF86991203C8411F8980FDB',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png',
+      coingeckoId: 'usd-coin',
+      type: 'ibc'
+    },
+    {
+      symbol: 'DGN',
+      name: 'Dragon',
+      denom: 'ibc/B2AA4C3CD19954859C3B537EC0705640AFC01075F52993D9AC5E73F07F0386CC',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/dungeon/images/DGN.png',
+      coingeckoId: 'dragon-coin-2',
+      type: 'ibc'
+    },
+    {
+      symbol: 'WHALE',
+      name: 'Migaloo',
+      denom: 'ibc/36A02FFC4E74DF4F64305130C3DFA1B06BEAC775648927AA44467C76A77AB8DB',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/migaloo/images/white-whale.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'arbLUNA',
+      name: 'ERIS Arb LUNA',
+      denom: 'cw20:terra1se7rvuerys4kd2snt6vqswh9wugu49vhyzls8ymc02wl37g2p2ms5yz490',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/arbluna.svg',
+      coingeckoId: 'eris-arbitrage-luna',
+      type: 'cw20'
+    },
+    {
+      symbol: 'ampWHALE-ampLP',
+      name: 'Eris Protocol ampWHALE/WHALE ampLP',
+      denom: 'factory/terra1zly98gvcec54m3caxlqexce7rus6rzgplz7eketsdz7nh750h2rqvu8uzx/21/single/amplp',
+      decimals: 6,
+      type: 'factory'
+    },
+    {
+      symbol: 'bWHALE-ampLP',
+      name: 'Eris Protocol bWHALE/WHALE ampLP',
+      denom: 'factory/terra1zly98gvcec54m3caxlqexce7rus6rzgplz7eketsdz7nh750h2rqvu8uzx/30/single/amplp',
+      decimals: 6,
+      type: 'factory'
+    },
+    {
+      symbol: 'RISE',
+      name: 'Rise',
+      denom: 'factory/terra1dvvduq0uegn9juch9v0fc97fff3c85nu9f9gveu83dldej07jxysyrrg7m/rise',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/RISE.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'LUNA-USDC-ampLP',
+      name: 'Eris Protocol LUNA/USDC ampLP',
+      denom: 'factory/terra1zly98gvcec54m3caxlqexce7rus6rzgplz7eketsdz7nh750h2rqvu8uzx/1/stable/amplp',
+      decimals: 6,
+      type: 'factory'
+    },
+    {
+      symbol: 'EURe',
+      name: 'Monerium EUR emoney',
+      denom: 'ibc/8D52B251B447B7160421ACFBD50F6B0ABE5F98D2C404B03701130F12044439A1',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eure.png',
+      coingeckoId: 'monerium-eur-money',
+      type: 'ibc'
+    },
+    {
+      symbol: 'SOLID',
+      name: 'Solid',
+      denom: 'cw20:terra10aa3zdkrc7jwuf8ekl3zq7e7m42vmzqehcmu74e4egc7xkm5kr2s0muyst',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/solid.png',
+      coingeckoId: 'solid-2',
+      type: 'cw20'
+    },
+    {
+      symbol: 'CAPA',
+      name: 'Capa',
+      denom: 'cw20:terra1t4p3u8khpd7f8qzurwyafxt648dya6mp6vur3vaapswt6m24gkuqrfdhar',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/Capapult.png',
+      coingeckoId: 'capapult',
+      type: 'cw20'
+    },
+    {
+      symbol: 'ampCAPA',
+      name: 'ERIS Amplified CAPA',
+      denom: 'factory/terra186rpfczl7l2kugdsqqedegl4es4hp624phfc7ddy8my02a4e8lgq5rlx7y/ampCAPA',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/terra2/images/ampCapa.png',
+      type: 'factory'
     },
     {
       symbol: 'PAXG',
-      name: 'Pax Gold',
-      denom: 'ibc/09E95F57939E344EE36109AC41780B8A51F1FE0548A5203C5957674FF64C0F26',
+      name: 'Eureka Bridged PAX Gold (Terra)',
+      denom: 'ibc/0EF5630576C66968EF0787868CF09FD866FAD131BC148D24A148358A85F0EB62',
       decimals: 18,
       logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/paxg.png',
-      type: 'ibc'
-    },
-    {
-      symbol: 'QUARK',
-      name: 'Quark',
-      denom: 'ibc/7B6EBFC446E50DFF981C994E207BFB398889706C2B0DF8A14D8B87F6C0E33A1A',
-      decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/quark.png',
-      type: 'ibc'
-    },
-    {
-      symbol: 'INTO',
-      name: 'Intento',
-      denom: 'ibc/DC1EF3EA03CD7F2226981D610335C3E62E3DD868A1B83EB017CE294E29C8D473',
-      decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/intento/images/into.png',
+      coingeckoId: 'eureka-bridged-pax-gold-terra',
       type: 'ibc'
     },
     {
       symbol: 'XAUt',
-      name: 'Eureka Bridged Tether Gold (ATOM)',
-      denom: 'ibc/A96C4DBCB7E36F8D265E92240510DB0F29F39CE4AAF52DBDE686E448BA447886',
+      name: 'Eureka Bridged Tether Gold (Terra)',
+      denom: 'ibc/F20FE45BF7122CF10559EDEA032E37956D3314774EA6D8D1D46B87D138290C45',
       decimals: 6,
       logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/xaut.png',
       type: 'ibc'
     },
     {
-      symbol: 'NEIRO',
-      name: 'Eureka Bridged Neiro (NEIRO)',
-      denom: 'ibc/F7C4726BF9F1B1872C48BA39688A1AC741E9D77B3182662CF6D42A149C86B758',
-      decimals: 9,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/neiro.png',
+      symbol: 'LUNA-ampLUNA-ampLP',
+      name: 'Eris Protocol LUNA/ampLUNA ampLP',
+      denom: 'factory/terra1zly98gvcec54m3caxlqexce7rus6rzgplz7eketsdz7nh750h2rqvu8uzx/32/project/amplp',
+      decimals: 6,
+      type: 'factory'
+    }
+  ],
+  beezee: [
+    {
+      symbol: 'BZE',
+      name: 'BeeZee',
+      denom: 'ubze',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/beezee/images/bze.png',
+      coingeckoId: 'bzedge',
+      type: 'native'
+    },
+    {
+      symbol: 'VDL',
+      name: 'Vidulum',
+      denom: 'factory/bze13gzq40che93tgfm9kzmkpjamah5nj0j73pyhqk/uvdl',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/beezee/images/vdl.png',
+      coingeckoId: 'vidulum',
+      type: 'factory'
+    },
+    {
+      symbol: 'OSMO',
+      name: 'Osmosis',
+      denom: 'ibc/ED07A3391A112B175915CD8FAF43A2DA8E4790EDE12566649D0C2F97716B8518',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/osmo.png',
+      coingeckoId: 'osmosis',
       type: 'ibc'
     },
     {
-      symbol: 'stATOM',
-      name: 'Stride Staked ATOM',
-      denom: 'ibc/B05539B66B72E2739B986B86391E5D08F12B8D5D2C2A7F8F8CF9ADF674DFA231',
+      symbol: 'C2M',
+      name: 'Crypto2Mars',
+      denom: 'factory/bze15pqjgk4la0mfphwddce00d05n3th3u66n3ptcv/2MARS',
       decimals: 6,
-      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/images/statom.png',
-      coingeckoId: 'stride-staked-atom',
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/beezee/images/c2m.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'ARCH',
+      name: 'Archway',
+      denom: 'ibc/C00D101A3572A5374E23F11944463D1325319E255D7C824B33AF2F927F532348',
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/archway/images/arch.png',
+      coingeckoId: 'archway',
+      type: 'ibc'
+    },
+    {
+      symbol: 'USDC',
+      name: 'USDC',
+      denom: 'ibc/6490A7EAB61059BFC1CDDEB05917DD70BDF3A611654162A1A47DB930D40D8AF4',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png',
+      coingeckoId: 'usd-coin',
+      type: 'ibc'
+    },
+    {
+      symbol: 'SPICE',
+      name: 'Spice',
+      denom: 'ibc/08EAEAB525E59C611D5BD8FAC4BE65DF65A69E62874377F6889BBD01A33F385F',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/spice.png',
+      coingeckoId: 'spice-2',
+      type: 'ibc'
+    },
+    {
+      symbol: 'JKL',
+      name: 'Jackal',
+      denom: 'ibc/4AA3B163580B4377250CD4486FB6AD098EB27822EE056949EC4A39B09C5E3B4E',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/jackal/images/jkl.png',
+      coingeckoId: 'jackal-protocol',
+      type: 'ibc'
+    },
+    {
+      symbol: 'FLIX',
+      name: 'Flix',
+      denom: 'ibc/FF39851E73089ACBD0B09BDF62FA3C67FBD77A2CD97CD159DBCE9C770561F8AF',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/omniflixhub/images/flix.png',
+      coingeckoId: 'omniflix-network',
+      type: 'ibc'
+    },
+    {
+      symbol: 'SHERPA',
+      name: 'Sherpa',
+      denom: 'ibc/02EE50AB3A4B7540FA001B24CB75E688016F65547CABE885EA184338440080B2',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/osmosis/images/sherpa.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'ATONE',
+      name: 'Atone',
+      denom: 'ibc/B2219CA05421EA988F83E5E824BF69362E80A6A87503EFD18B92C91C9E03763D',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/atomone/images/atomone.png',
+      type: 'ibc'
+    },
+    {
+      symbol: 'PHMN',
+      name: 'POSTHUMAN',
+      denom: 'ibc/12C0B8B561AFCFDA3C73DEE0F7F84AA2B860D48493C27E8E81A5D14724FAB08B',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/phmn.png',
+      coingeckoId: 'posthuman',
+      type: 'ibc'
+    },
+    {
+      symbol: 'GGE',
+      name: 'GEEGEE',
+      denom: 'factory/bze12gyp30f29zg26nuqrwdhl26ej4q066pt572fhm/GGE',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/beezee/images/gge.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'CTL',
+      name: 'CryptoTrtl',
+      denom: 'factory/bze1972aqfzdg29ugjln74edx0xvcg4ehvysjptk77/CTL',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/beezee/images/ctl.png',
+      type: 'factory'
+    },
+    {
+      symbol: 'PHOTON',
+      name: 'Photon',
+      denom: 'ibc/82931180F0962712BFABB189083A94C77EA90E269ABFC6D310AF922B2B14E011',
+      decimals: 6,
+      logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/atomone/images/photon.png',
+      coingeckoId: 'photon-2',
       type: 'ibc'
     }
   ],

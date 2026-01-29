@@ -221,6 +221,36 @@ function transformChain(chain: ChainRegistryChain): WalletChainConfig | null {
   // Get explorer info
   const explorer = chain.explorers?.find((e) => e.kind === 'mintscan') || chain.explorers?.[0];
 
+  // Extract relative paths from explorer URLs if they are absolute
+  let explorerAccountPath = explorer?.account_page?.replace('${accountAddress}', '{address}');
+  let explorerTxPath = explorer?.tx_page?.replace('${txHash}', '{txHash}');
+  
+  // If the paths are absolute URLs and match the base explorerUrl, extract the relative part
+  // This standardizes configs to use relative paths for consistency
+  // If the absolute URL has a different domain than explorerUrl, leave it as-is (the helper
+  // functions in registry.ts will detect it's absolute and return it directly)
+  if (explorer?.url && explorerAccountPath) {
+    const isAbsoluteUrl = explorerAccountPath.startsWith('http://') || explorerAccountPath.startsWith('https://');
+    if (isAbsoluteUrl) {
+      const baseUrl = explorer.url.replace(/\/$/, ''); // Remove trailing slash
+      if (explorerAccountPath.startsWith(baseUrl)) {
+        explorerAccountPath = explorerAccountPath.substring(baseUrl.length);
+      }
+      // else: Different domain - leave as absolute URL, will be handled by helper functions
+    }
+  }
+  
+  if (explorer?.url && explorerTxPath) {
+    const isAbsoluteUrl = explorerTxPath.startsWith('http://') || explorerTxPath.startsWith('https://');
+    if (isAbsoluteUrl) {
+      const baseUrl = explorer.url.replace(/\/$/, '');
+      if (explorerTxPath.startsWith(baseUrl)) {
+        explorerTxPath = explorerTxPath.substring(baseUrl.length);
+      }
+      // else: Different domain - leave as absolute URL, will be handled by helper functions
+    }
+  }
+
   // Get logo
   const logoUrl = chain.images?.[0]?.png || chain.images?.[0]?.svg;
 
@@ -241,8 +271,8 @@ function transformChain(chain: ChainRegistryChain): WalletChainConfig | null {
     features,
     logoUrl,
     explorerUrl: explorer?.url,
-    explorerAccountPath: explorer?.account_page?.replace('${accountAddress}', '{address}'),
-    explorerTxPath: explorer?.tx_page?.replace('${txHash}', '{txHash}'),
+    explorerAccountPath,
+    explorerTxPath,
   };
 }
 

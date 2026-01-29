@@ -200,6 +200,74 @@ describe('Network Registry', () => {
       expect(getExplorerAccountUrl('unknown', 'addr')).toBeNull();
       expect(getExplorerTxUrl('unknown', 'hash')).toBeNull();
     });
+
+    it('should handle absolute URLs in explorerAccountPath', () => {
+      // Create a mock network with absolute URL
+      const mockNetwork = {
+        id: 'test-absolute',
+        name: 'Test Absolute',
+        type: 'cosmos' as const,
+        enabled: true,
+        symbol: 'TEST',
+        decimals: 6,
+        coinType: 118,
+        rpc: ['https://rpc.test.com'],
+        rest: ['https://rest.test.com'],
+        bech32Prefix: 'test',
+        feeDenom: 'utest',
+        gasPrice: '0.025',
+        features: [],
+        explorerUrl: 'https://explorer-base.com',
+        explorerAccountPath: 'https://mintscan.io/test/accounts/{address}',
+      };
+      
+      networkRegistry.register(mockNetwork);
+      const url = getExplorerAccountUrl('test-absolute', 'test1abc123');
+      
+      expect(url).toBe('https://mintscan.io/test/accounts/test1abc123');
+      expect(url).toMatch(/^https:\/\//);
+      // Should not have double host
+      expect(url.split('https://').length - 1).toBe(1);
+    });
+
+    it('should handle absolute URLs in explorerTxPath', () => {
+      // Create a mock network with absolute URL
+      const mockNetwork = {
+        id: 'test-absolute-tx',
+        name: 'Test Absolute TX',
+        type: 'cosmos' as const,
+        enabled: true,
+        symbol: 'TEST',
+        decimals: 6,
+        coinType: 118,
+        rpc: ['https://rpc.test.com'],
+        rest: ['https://rest.test.com'],
+        bech32Prefix: 'test',
+        feeDenom: 'utest',
+        gasPrice: '0.025',
+        features: [],
+        explorerUrl: 'https://explorer-base.com',
+        explorerTxPath: 'https://mintscan.io/test/transactions/{txHash}',
+      };
+      
+      networkRegistry.register(mockNetwork);
+      const url = getExplorerTxUrl('test-absolute-tx', 'ABCD1234TXHASH');
+      
+      expect(url).toBe('https://mintscan.io/test/transactions/ABCD1234TXHASH');
+      expect(url).toMatch(/^https:\/\//);
+      // Should not have double host
+      expect(url.split('https://').length - 1).toBe(1);
+    });
+
+    it('should handle relative paths with explorerUrl', () => {
+      // Test with Ethereum which uses relative paths
+      const url = getExplorerAccountUrl('ethereum-mainnet', '0xtest');
+      expect(url).toContain('etherscan.io');
+      expect(url).toContain('/address/0xtest');
+      expect(url).toMatch(/^https:\/\//);
+      // Should not have double host
+      expect(url.split('https://').length - 1).toBe(1);
+    });
   });
 
   describe('Network Type Guards', () => {
