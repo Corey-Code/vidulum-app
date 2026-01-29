@@ -105,7 +105,7 @@ function isTestnet(chain: ChainRegistryEntry): boolean {
  */
 function generateChainId(chain: ChainRegistryEntry): string {
   const shortName = chain.shortName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-  const suffix = isTestnet(chain) ? '' : '-mainnet';
+  const suffix = isTestnet(chain) ? '-testnet' : '-mainnet';
   if (shortName.endsWith('-mainnet') || shortName.endsWith('-testnet')) {
     return shortName;
   }
