@@ -37,3 +37,6 @@ coverage/
 *.zip
 *.crx
 *.pem
+
+# Project context (local planning docs)
+context/
