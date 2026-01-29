@@ -12,7 +12,9 @@
     "test": "jest",
     "lint": "eslint src --ext ts,tsx",
     "sync:chains": "npx ts-node --esm scripts/sync-chain-registry.ts",
-    "sync:chains:all": "npx ts-node --esm scripts/sync-chain-registry.ts --all"
+    "sync:chains:all": "npx ts-node --esm scripts/sync-chain-registry.ts --all",
+    "sync:evm": "npx ts-node --esm scripts/sync-evm-registry.ts",
+    "sync:evm:all": "npx ts-node --esm scripts/sync-evm-registry.ts --all"
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.2.4",

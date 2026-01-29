@@ -2,6 +2,32 @@
 
 This guide explains how to add a new EVM-compatible blockchain to The Extension Wallet.
 
+## Source of Truth
+
+The wallet uses **[ethereum-lists/chains](https://github.com/ethereum-lists/chains)** as the primary source of truth for EVM chain configurations, available at [chainid.network](https://chainid.network/chains.json).
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    ethereum-lists/chains                            │
+│              https://chainid.network/chains.json                    │
+└─────────────────────────────┬───────────────────────────────────────┘
+                              │
+         ┌────────────────────┴────────────────────┐
+         │                                         │
+         ▼                                         ▼
+┌─────────────────────┐                ┌─────────────────────────────┐
+│   BUILD TIME        │                │   RUNTIME                   │
+│   sync-evm-         │                │   evm-registry-client.ts    │
+│   registry.ts       │                │                             │
+└─────────┬───────────┘                │   • Fetch on-demand         │
+          │                            │   • Cache in chrome.storage │
+          ▼                            │   • 24-hour TTL             │
+┌─────────────────────┐                └─────────────────────────────┘
+│ evm-registry.ts     │
+│ (pre-bundled)       │
+└─────────────────────┘
+```
+
 ## Current EVM Support
 
 The wallet has **partial EVM support** - read operations work, but sending is not yet implemented:
@@ -23,25 +49,48 @@ The wallet has **partial EVM support** - read operations work, but sending is no
 - **Receive tokens** - Addresses are valid and can receive tokens
 - **Network switching** - Multiple EVM networks supported
 
-### What's Missing for Transfers
+---
 
-To enable EVM transfers, the following would need to be implemented:
+## Method 1: Add Chain to ethereum-lists/chains (Recommended)
 
-1. **Transaction building** - RLP encoding of transaction data
-2. **Transaction signing** - ECDSA signing with the derived private key
-3. **Nonce management** - Track and increment transaction nonces
-4. **Gas estimation** - Estimate gas limits for transactions
+If the chain is not already in the registry, contribute to the upstream source:
 
-## Prerequisites
+1. **Fork** [ethereum-lists/chains](https://github.com/ethereum-lists/chains)
+2. **Add chain data** following their [schema](https://github.com/ethereum-lists/chains#schema)
+3. **Submit PR** to the main repository
+4. **Wait for merge** and data propagation to chainid.network
+5. **Update wallet** by running `npm run sync:evm`
 
-Before adding a chain, gather the following information:
+This approach ensures the chain is available to the entire ecosystem.
 
-- EVM Chain ID (unique numeric identifier)
-- RPC endpoint URLs (multiple for failover)
-- Native currency details (name, symbol, decimals)
-- Block explorer URL
+## Method 2: Dynamic Runtime Fetching
 
-## Step 1: Define Network Configuration
+For chains already in the registry but not pre-bundled:
+
+```typescript
+import { evmRegistryClient } from '@/lib/networks';
+
+// Fetch a specific chain by ID
+const chain = await evmRegistryClient.fetchChain(137); // Polygon
+
+// Search for chains
+const results = await evmRegistryClient.searchChains('polygon');
+
+// Get popular chains
+const popular = await evmRegistryClient.getPopularChains();
+```
+
+The runtime client:
+
+- Fetches chain data from chainid.network
+- Caches results in `chrome.storage.local` for 24 hours
+- Filters out deprecated chains and invalid RPC endpoints
+
+## Method 3: Manual Configuration (Legacy)
+
+For chains not in the registry, or when you need full control:
+
+### Step 1: Define Network Configuration
 
 Add the network configuration in `src/lib/networks/evm.ts`:
 
@@ -72,31 +121,9 @@ export const NEWCHAIN_MAINNET: EvmNetworkConfig = {
 };
 ```
 
-### Configuration Fields
+### Step 2: Register the Network
 
-| Field      | Description                             | Example                             |
-| ---------- | --------------------------------------- | ----------------------------------- |
-| `id`       | Unique internal identifier              | `ethereum-mainnet`                  |
-| `name`     | Human-readable name                     | `Ethereum`                          |
-| `chainId`  | EVM chain ID                            | `1`                                 |
-| `rpcUrls`  | JSON-RPC endpoints (array for failover) | `['https://eth.llamarpc.com', ...]` |
-| `symbol`   | Native token ticker                     | `ETH`                               |
-| `decimals` | Token decimal places                    | `18`                                |
-| `coinType` | BIP44 coin type                         | `60` (always for EVM)               |
-
-### Native Currency Object
-
-```typescript
-nativeCurrency: {
-  name: 'Ether',        // Full name of native token
-  symbol: 'ETH',        // Token symbol
-  decimals: 18,         // Always 18 for native EVM tokens
-}
-```
-
-## Step 2: Register the Network
-
-Add to the `EVM_NETWORKS` array in `src/lib/networks/evm.ts`:
+Add to the `EVM_NETWORKS` array:
 
 ```typescript
 export const EVM_NETWORKS: EvmNetworkConfig[] = [
@@ -107,7 +134,7 @@ export const EVM_NETWORKS: EvmNetworkConfig[] = [
 ];
 ```
 
-## Step 3: Add Asset Definition
+### Step 3: Add Asset Definition
 
 In `src/lib/assets/chainRegistry.ts`, add to `evmAssets`:
 
@@ -126,219 +153,124 @@ const evmAssets: Record<string, RegistryAsset[]> = {
 };
 ```
 
-## Step 4: Add Token Color
+---
+
+## Configuration Reference
+
+### EvmNetworkConfig Interface
 
 ```typescript
-const tokenColors: Record<string, string> = {
-  // ... existing colors
-  NEW: '#627EEA', // Use a distinctive hex color
-};
+interface EvmNetworkConfig {
+  id: string; // Unique internal identifier
+  name: string; // Human-readable name
+  type: 'evm'; // Network type
+  enabled: boolean; // Whether enabled by default
+  symbol: string; // Native token symbol
+  decimals: number; // Native token decimals (usually 18)
+  coinType: number; // BIP44 coin type (always 60 for EVM)
+  chainId: number; // EVM chain ID
+  rpcUrls: string[]; // JSON-RPC endpoints (array for failover)
+  nativeCurrency: {
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
+  explorerUrl?: string; // Block explorer base URL
+  explorerAccountPath?: string; // Path for addresses (use {address})
+  explorerTxPath?: string; // Path for transactions (use {txHash})
+}
 ```
 
-## Finding EVM Chain IDs
+### EvmRegistryConfig (Extended)
 
-Official resources:
+The registry adds extra fields:
 
-- ChainList: https://chainlist.org/
-- Chainid.network: https://chainid.network/
+```typescript
+interface EvmRegistryConfig extends EvmNetworkConfig {
+  shortName: string; // Registry short name for lookups
+  infoUrl?: string; // Chain info URL
+  isTestnet?: boolean; // Whether this is a testnet
+}
+```
 
-Common chain IDs:
+---
 
-| Chain             | Chain ID |
-| ----------------- | -------- |
-| Ethereum          | 1        |
-| BNB Smart Chain   | 56       |
-| Polygon           | 137      |
-| Arbitrum One      | 42161    |
-| Optimism          | 10       |
-| Avalanche C-Chain | 43114    |
-| Base              | 8453     |
-| zkSync Era        | 324      |
+## Syncing from Chain Registry
 
-## RPC Providers
+### Update Pre-bundled Chains
 
-### Public RPC Endpoints
+```bash
+# Sync default popular chains (~25 chains)
+npm run sync:evm
 
-Many chains offer public RPC endpoints. Check:
+# Sync all chains with valid RPC endpoints
+npm run sync:evm:all
 
-- Chain's official documentation
-- https://chainlist.org/ (lists public RPCs)
+# Sync specific chains by ID
+npx ts-node --esm scripts/sync-evm-registry.ts --chains 1,56,137,8453
+```
+
+### Pre-bundled Chains
+
+The following chains are pre-bundled by default:
+
+| Chain             | Chain ID | Enabled |
+| ----------------- | -------- | ------- |
+| Ethereum          | 1        | ✅      |
+| OP Mainnet        | 10       | ✅      |
+| BNB Smart Chain   | 56       | ✅      |
+| Polygon           | 137      | ✅      |
+| Base              | 8453     | ✅      |
+| Arbitrum One      | 42161    | ✅      |
+| Cronos            | 25       | ☐       |
+| Gnosis            | 100      | ☐       |
+| Fantom            | 250      | ☐       |
+| zkSync Era        | 324      | ☐       |
+| Polygon zkEVM     | 1101     | ☐       |
+| Moonbeam          | 1284     | ☐       |
+| Mantle            | 5000     | ☐       |
+| Avalanche C-Chain | 43114    | ☐       |
+| Linea             | 59144    | ☐       |
+| Blast             | 81457    | ☐       |
+| Scroll            | 534352   | ☐       |
+| Zora              | 7777777  | ☐       |
+| Sepolia (testnet) | 11155111 | ☐       |
+| Base Sepolia      | 84532    | ☐       |
+
+---
+
+## Finding EVM Chain Information
+
+### Official Resources
+
+- **ChainList**: https://chainlist.org/
+- **Chainid.network**: https://chainid.network/
+- **Chain Registry**: https://github.com/ethereum-lists/chains
 
 ### RPC Providers
 
-For production use, consider:
+For production use, consider these providers:
 
 - Alchemy (https://www.alchemy.com/)
 - Infura (https://infura.io/)
 - QuickNode (https://www.quicknode.com/)
 - Ankr (https://www.ankr.com/)
 
-## Adding MoonPay Support (Optional)
-
-If MoonPay supports the chain, add to the mapping in `src/popup/pages/Deposit.tsx`:
-
-```typescript
-const MOONPAY_CRYPTO_CODES: Record<string, string> = {
-  // ... existing codes
-  'newchain-mainnet': 'new_newchain', // Check MoonPay docs for correct code
-};
-```
-
-## Testing
-
-After adding the chain:
-
-1. Build: `npm run build`
-2. Load extension in Chrome
-3. Verify network appears in EVM tab
-4. Check address derivation (should be same as Ethereum)
-5. Test balance fetching
-6. Test sending transactions (use testnet first)
-
-## Common Issues
-
-### Wrong Chain ID
-
-If transactions fail or show wrong network in wallets like MetaMask, verify the chain ID is correct.
-
-### RPC Connection Errors
-
-Check that:
-
-- RPC URL is accessible
-- RPC supports required methods (eth_getBalance, eth_sendRawTransaction, etc.)
-- Rate limits are not exceeded
-
-### Address Format
-
-All EVM chains use the same address format (0x...). If addresses look wrong, check the BIP44 derivation.
-
-## ERC-20 Token Support (Future)
-
-ERC-20 tokens are **not currently supported**. The wallet only displays and transfers native EVM tokens (ETH, BNB, etc.).
-
-### What Would Be Needed
-
-To implement ERC-20 support, the following would be required:
-
-#### 1. Token Registry
-
-Add token contract addresses to `src/lib/assets/chainRegistry.ts`:
-
-```typescript
-const evmAssets: Record<string, RegistryAsset[]> = {
-  'ethereum-mainnet': [
-    {
-      symbol: 'ETH',
-      name: 'Ethereum',
-      denom: 'wei',
-      decimals: 18,
-      coingeckoId: 'ethereum',
-    },
-    // ERC-20 tokens would need contract address
-    {
-      symbol: 'USDC',
-      name: 'USD Coin',
-      denom: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // Contract address as denom
-      decimals: 6,
-      coingeckoId: 'usd-coin',
-      contractAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-    },
-  ],
-};
-```
-
-#### 2. Balance Fetching
-
-Add to `src/lib/evm/client.ts`:
-
-```typescript
-// ERC-20 ABI for balanceOf
-const ERC20_BALANCE_OF = '0x70a08231';
-
-async getERC20Balance(tokenAddress: string, walletAddress: string): Promise<bigint> {
-  // Encode: balanceOf(address)
-  const data = ERC20_BALANCE_OF + walletAddress.slice(2).padStart(64, '0');
-
-  const result = await this.rpcCall<string>('eth_call', [
-    { to: tokenAddress, data },
-    'latest'
-  ]);
-
-  return BigInt(result);
-}
-```
-
-#### 3. Token Transfers
-
-```typescript
-// ERC-20 ABI for transfer
-const ERC20_TRANSFER = '0xa9059cbb';
-
-buildERC20TransferData(recipient: string, amount: bigint): string {
-  return ERC20_TRANSFER +
-    recipient.slice(2).padStart(64, '0') +
-    amount.toString(16).padStart(64, '0');
-}
-```
-
-#### 4. Transaction Signing
-
-The wallet would need to build and sign transactions with contract call data instead of simple value transfers.
-
-### Implementation Complexity
-
-| Component           | Effort | Notes                                      |
-| ------------------- | ------ | ------------------------------------------ |
-| Balance fetching    | Low    | Simple `eth_call`                          |
-| Token registry      | Medium | Need curated token lists                   |
-| Transfer UI         | Medium | Token selection, approval flows            |
-| Transaction signing | High   | ABI encoding, gas estimation for contracts |
-| Token approvals     | High   | ERC-20 approve/allowance pattern           |
-
-### Recommended Approach
-
-1. Start with a curated list of popular tokens per chain
-2. Implement read-only balance display first
-3. Add transfer functionality after balance display works
-4. Consider using a token list standard (e.g., Uniswap token lists)
-
-## Testnet Configuration
-
-For testnets, create a separate configuration:
-
-```typescript
-export const NEWCHAIN_TESTNET: EvmNetworkConfig = {
-  id: 'newchain-testnet',
-  name: 'New Chain Testnet',
-  type: 'evm',
-  enabled: false, // Testnets disabled by default
-  symbol: 'tNEW',
-  decimals: 18,
-  coinType: 60,
-  chainId: 12346, // Testnet chain ID
-  rpcUrls: ['https://testnet-rpc.newchain.io', 'https://testnet.publicnode.com/newchain'],
-  nativeCurrency: {
-    name: 'Test New Token',
-    symbol: 'tNEW',
-    decimals: 18,
-  },
-  explorerUrl: 'https://testnet-explorer.newchain.io',
-  explorerAccountPath: '/address/{address}',
-  explorerTxPath: '/tx/{txHash}',
-};
-```
+---
 
 ## Architecture Overview
 
 The EVM implementation consists of:
 
-| File                              | Purpose                                              |
-| --------------------------------- | ---------------------------------------------------- |
-| `src/lib/networks/evm.ts`         | Network configurations                               |
-| `src/lib/evm/client.ts`           | JSON-RPC client (read operations + raw tx broadcast) |
-| `src/lib/crypto/evm.ts`           | Key derivation and address generation                |
-| `src/lib/assets/chainRegistry.ts` | Asset definitions (native tokens only)               |
+| File                                      | Purpose                                    |
+| ----------------------------------------- | ------------------------------------------ |
+| `src/lib/networks/evm.ts`                 | Manual network configurations              |
+| `src/lib/networks/evm-registry.ts`        | Auto-generated from chain registry         |
+| `src/lib/networks/evm-registry-client.ts` | Runtime client for dynamic fetching        |
+| `src/lib/evm/client.ts`                   | JSON-RPC client (read ops + raw broadcast) |
+| `src/lib/crypto/evm.ts`                   | Key derivation and address generation      |
+| `src/lib/assets/chainRegistry.ts`         | Asset definitions (native tokens only)     |
+| `scripts/sync-evm-registry.ts`            | Build-time sync script                     |
 
 ### EVM Client Capabilities
 
@@ -372,3 +304,55 @@ This means the same private key/address works across all EVM chains. The wallet 
 2. BIP32 derivation with coin type 60
 3. Keccak256 hash of public key → address
 4. EIP-55 checksum formatting
+
+---
+
+## ERC-20 Token Support (Future)
+
+ERC-20 tokens are **not currently supported**. The wallet only displays native EVM tokens (ETH, BNB, etc.).
+
+### What Would Be Needed
+
+To implement ERC-20 support, the following would be required:
+
+1. **Token Registry** - Contract addresses per chain
+2. **Balance Fetching** - `eth_call` with `balanceOf` selector
+3. **Token Transfers** - ABI encoding for `transfer` function
+4. **Transaction Signing** - Full transaction building/signing
+
+### Implementation Complexity
+
+| Component           | Effort | Notes                                      |
+| ------------------- | ------ | ------------------------------------------ |
+| Balance fetching    | Low    | Simple `eth_call`                          |
+| Token registry      | Medium | Need curated token lists                   |
+| Transfer UI         | Medium | Token selection, approval flows            |
+| Transaction signing | High   | ABI encoding, gas estimation for contracts |
+| Token approvals     | High   | ERC-20 approve/allowance pattern           |
+
+---
+
+## Troubleshooting
+
+### RPC Connection Errors
+
+- Verify RPC URL is accessible
+- Check that RPC supports required methods
+- Ensure rate limits are not exceeded
+- Try alternative endpoints from the failover list
+
+### Wrong Chain ID
+
+If transactions fail or show wrong network, verify the chain ID matches the registry.
+
+### Address Format
+
+All EVM chains use the same address format (0x...). If addresses look wrong, check the BIP44 derivation.
+
+### Missing from Registry
+
+If a chain isn't in ethereum-lists/chains:
+
+1. Check if it's a new chain (may take time to be added)
+2. Submit a PR to add it
+3. Use manual configuration as a temporary workaround

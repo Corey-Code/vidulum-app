@@ -28,6 +28,18 @@ export { BITCOIN_MAINNET, BITCOIN_TESTNET, BITCOIN_NETWORKS } from './bitcoin';
 
 export { ETHEREUM_MAINNET, BNB_MAINNET, BASE_MAINNET, BASE_SEPOLIA, EVM_NETWORKS } from './evm';
 
+// EVM Registry (auto-generated from ethereum-lists/chains)
+export {
+  EVM_REGISTRY_CHAINS,
+  getEvmChainById,
+  getEvmChainByShortName,
+  getEvmChainByInternalId,
+  getEnabledEvmChains,
+  getMainnetEvmChains,
+  getTestnetEvmChains,
+  type EvmRegistryConfig,
+} from './evm-registry';
+
 // Registry and helpers
 export {
   networkRegistry,
@@ -51,5 +63,6 @@ export {
   type FailoverConfig,
 } from './failover';
 
-// Chain Registry Client (dynamic chain fetching)
+// Chain Registry Clients (dynamic chain fetching)
 export { chainRegistryClient } from './chain-registry-client';
+export { evmRegistryClient } from './evm-registry-client';
