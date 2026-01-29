@@ -216,14 +216,60 @@ class ChainRegistryClient {
       return null;
     }
 
+    // Helper: only allow public HTTPS endpoints
+    const isPublicHttpsEndpoint = (url: string): boolean => {
+      let parsed: URL;
+      try {
+        parsed = new URL(url);
+      } catch {
+        // Reject malformed URLs
+        return false;
+      }
+
+      if (parsed.protocol !== 'https:') {
+        return false;
+      }
+
+      const hostname = parsed.hostname;
+
+      // Block obvious local/loopback hosts
+      if (
+        hostname === 'localhost' ||
+        hostname === '::1' ||
+        hostname === '0:0:0:0:0:0:0:1'
+      ) {
+        return false;
+      }
+
+      // Block IPv4 loopback 127.0.0.0/8
+      if (hostname.startsWith('127.')) {
+        return false;
+      }
+
+      // Block RFC1918 private ranges:
+      // 10.0.0.0/8
+      if (hostname.startsWith('10.')) {
+        return false;
+      }
+
+      // 172.16.0.0/12 (172.16.* - 172.31.*)
+      if (/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname)) {
+        return false;
+      }
+
+      // 192.168.0.0/16
+      if (hostname.startsWith('192.168.')) {
+        return false;
+      }
+
+      return true;
+    };
+
     // Filter endpoints
     const filterEndpoints = (endpoints?: { address: string }[]) =>
       (endpoints || [])
         .map((e) => e.address)
-        .filter(
-          (url) =>
-            !url.includes('localhost') && !url.includes('127.0.0.1') && !url.includes('192.168.')
-        )
+        .filter((url) => isPublicHttpsEndpoint(url))
         .slice(0, 5);
 
     const rpc = filterEndpoints(chain.apis?.rpc);
