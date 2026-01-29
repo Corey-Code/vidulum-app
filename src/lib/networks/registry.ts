@@ -16,6 +16,10 @@ import { COSMOS_NETWORKS } from './cosmos';
 import { BITCOIN_NETWORKS } from './bitcoin';
 import { EVM_NETWORKS } from './evm';
 
+// Import registry chains (auto-generated from chain registries)
+import { COSMOS_REGISTRY_CHAINS } from './cosmos-registry';
+import { EVM_REGISTRY_CHAINS } from './evm-registry';
+
 /**
  * Network Registry Class
  * Manages all network configurations with type-safe access
@@ -76,9 +80,27 @@ export const networkRegistry = new NetworkRegistry();
 // ============================================================================
 // Register all networks
 // ============================================================================
+
+// Register manual configs first (these take priority if duplicates exist)
 COSMOS_NETWORKS.forEach((network) => networkRegistry.register(network));
 BITCOIN_NETWORKS.forEach((network) => networkRegistry.register(network));
 EVM_NETWORKS.forEach((network) => networkRegistry.register(network));
+
+// Register chains from auto-generated registries (skip duplicates)
+// These provide additional chains from cosmos/chain-registry and ethereum-lists/chains
+COSMOS_REGISTRY_CHAINS.forEach((network) => {
+  // Only register if not already registered (manual configs take priority)
+  if (!networkRegistry.get(network.id)) {
+    networkRegistry.register(network);
+  }
+});
+
+EVM_REGISTRY_CHAINS.forEach((network) => {
+  // Only register if not already registered (manual configs take priority)
+  if (!networkRegistry.get(network.id)) {
+    networkRegistry.register(network);
+  }
+});
 
 // ============================================================================
 // Helper functions
@@ -90,14 +112,14 @@ EVM_NETWORKS.forEach((network) => networkRegistry.register(network));
 export function getExplorerAccountUrl(networkId: string, address: string): string | null {
   const network = networkRegistry.get(networkId);
   if (!network?.explorerAccountPath) return null;
-  
+
   const accountPath = network.explorerAccountPath.replace('{address}', address);
-  
+
   // If the path is already an absolute URL, return it directly
   if (accountPath.startsWith('http://') || accountPath.startsWith('https://')) {
     return accountPath;
   }
-  
+
   // Otherwise, concatenate with explorerUrl
   if (!network.explorerUrl) return null;
   return network.explorerUrl + accountPath;
@@ -109,14 +131,14 @@ export function getExplorerAccountUrl(networkId: string, address: string): strin
 export function getExplorerTxUrl(networkId: string, txHash: string): string | null {
   const network = networkRegistry.get(networkId);
   if (!network?.explorerTxPath) return null;
-  
+
   const txPath = network.explorerTxPath.replace('{txHash}', txHash);
-  
+
   // If the path is already an absolute URL, return it directly
   if (txPath.startsWith('http://') || txPath.startsWith('https://')) {
     return txPath;
   }
-  
+
   // Otherwise, concatenate with explorerUrl
   if (!network.explorerUrl) return null;
   return network.explorerUrl + txPath;
@@ -144,7 +166,9 @@ export function isEvmNetwork(network: NetworkConfig): network is EvmNetworkConfi
 }
 
 /**
- * Get networks for UI display (enabled networks only)
+ * Get all networks for UI display
+ * Note: Filtering by user preferences should be done at the component level
+ * using isNetworkEnabled() from the network store
  */
 export function getUINetworks(): Array<{
   id: string;
@@ -153,7 +177,7 @@ export function getUINetworks(): Array<{
   type: NetworkType;
   prefix?: string; // For Cosmos chains
 }> {
-  return networkRegistry.getEnabled().map((network) => ({
+  return networkRegistry.getAll().map((network) => ({
     id: network.id,
     name: network.name,
     symbol: network.symbol,

@@ -332,9 +332,9 @@ async function handleUnlock(payload: any): Promise<MessageResponse> {
   }
 }
 
-function handleLock(): MessageResponse {
+async function handleLock(): Promise<MessageResponse> {
   sessionManager.clearKeyring();
-  EncryptedStorage.clearSession();
+  await EncryptedStorage.clearSession();
   return { success: true, data: null };
 }
 

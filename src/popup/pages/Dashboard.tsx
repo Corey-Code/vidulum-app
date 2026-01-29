@@ -39,6 +39,8 @@ import { fetchChainAssets, RegistryAsset, getTokenColor } from '@/lib/assets/cha
 import { getExplorerAccountUrl } from '@/lib/networks';
 import SendModal from '../components/SendModal';
 import SwapModal from '../components/SwapModal';
+import NetworkManagerModal from '../components/NetworkManagerModal';
+import { useNetworkStore } from '@/store/networkStore';
 
 interface DashboardProps {
   onNavigateToStaking?: () => void;
@@ -98,22 +100,22 @@ const Dashboard: React.FC<DashboardProps> = ({
   const handleNetworkTabChange = (tabIndex: number) => {
     setNetworkTab(tabIndex);
 
-    // Auto-select first network of the selected type
+    // Auto-select first enabled network of the selected type
     if (tabIndex === 1) {
-      // Cosmos tab - select first Cosmos network
-      const cosmosNetwork = UI_CHAINS.find((n) => n.type === 'cosmos');
+      // Cosmos tab - select first enabled Cosmos network
+      const cosmosNetwork = enabledUIChains.find((n) => n.type === 'cosmos');
       if (cosmosNetwork) {
         selectChain(cosmosNetwork.id);
       }
     } else if (tabIndex === 2) {
-      // UTXO tab - select first Bitcoin network
-      const bitcoinNetwork = UI_CHAINS.find((n) => n.type === 'bitcoin');
+      // UTXO tab - select first enabled Bitcoin network
+      const bitcoinNetwork = enabledUIChains.find((n) => n.type === 'bitcoin');
       if (bitcoinNetwork) {
         selectChain(bitcoinNetwork.id);
       }
     } else if (tabIndex === 3) {
-      // EVM tab - select first EVM network
-      const evmNetwork = UI_CHAINS.find((n) => n.type === 'evm');
+      // EVM tab - select first enabled EVM network
+      const evmNetwork = enabledUIChains.find((n) => n.type === 'evm');
       if (evmNetwork) {
         selectChain(evmNetwork.id);
       }
@@ -124,6 +126,14 @@ const Dashboard: React.FC<DashboardProps> = ({
   const toast = useToast();
   const { isOpen: isSendOpen, onOpen: onSendOpen, onClose: onSendClose } = useDisclosure();
   const { isOpen: isSwapOpen, onOpen: onSwapOpen, onClose: onSwapClose } = useDisclosure();
+  const {
+    isOpen: isNetworkManagerOpen,
+    onOpen: onNetworkManagerOpen,
+    onClose: onNetworkManagerClose,
+  } = useDisclosure();
+
+  // Network store for preferences
+  const { loadPreferences, isLoaded: networkPrefsLoaded, isNetworkEnabled } = useNetworkStore();
 
   // Get selected chain info
   const selectedChain = UI_CHAINS.find((c) => c.id === selectedChainId) || UI_CHAINS[0];
@@ -319,6 +329,16 @@ const Dashboard: React.FC<DashboardProps> = ({
   useEffect(() => {
     updateActivity();
   }, []);
+
+  // Load network preferences on mount
+  useEffect(() => {
+    if (!networkPrefsLoaded) {
+      loadPreferences();
+    }
+  }, [networkPrefsLoaded, loadPreferences]);
+
+  // Filter UI_CHAINS based on network preferences
+  const enabledUIChains = UI_CHAINS.filter((chain) => isNetworkEnabled(chain.id));
 
   // Track activity on any click
   useEffect(() => {
@@ -854,9 +874,20 @@ const Dashboard: React.FC<DashboardProps> = ({
           {/* Network Selector */}
           <Box>
             <HStack justify="space-between" align="center" mb={3}>
-              <Text color="gray.400" fontWeight="medium">
-                Network
-              </Text>
+              <HStack spacing={2}>
+                <IconButton
+                  aria-label="Manage networks"
+                  icon={<AddIcon />}
+                  size="xs"
+                  variant="ghost"
+                  color="gray.500"
+                  _hover={{ color: 'cyan.400', bg: 'whiteAlpha.100' }}
+                  onClick={onNetworkManagerOpen}
+                />
+                <Text color="gray.400" fontWeight="medium">
+                  Network
+                </Text>
+              </HStack>
               <Tabs
                 size="sm"
                 variant="soft-rounded"
@@ -950,50 +981,52 @@ const Dashboard: React.FC<DashboardProps> = ({
                   gap={2}
                   minW="max-content"
                 >
-                  {UI_CHAINS.filter((network) => {
-                    // Filter based on selected tab
-                    if (networkTab === 0) return true; // All: show all
-                    if (networkTab === 1) return network.type === 'cosmos'; // Cosmos only
-                    if (networkTab === 2) return network.type === 'bitcoin'; // UTXO only
-                    if (networkTab === 3) return network.type === 'evm'; // EVM only
-                    return true;
-                  }).map((network) => {
-                    const isActive = selectedChainId === network.id;
-                    const isBitcoin = network.type === 'bitcoin';
-                    const isEvm = network.type === 'evm';
-                    const borderActiveColor = isBitcoin
-                      ? 'orange.500'
-                      : isEvm
-                      ? 'blue.500'
-                      : 'cyan.500';
-                    const borderHoverColor = isBitcoin
-                      ? 'orange.400'
-                      : isEvm
-                      ? 'blue.400'
-                      : 'cyan.400';
-                    return (
-                      <Button
-                        key={network.id}
-                        size="sm"
-                        variant="outline"
-                        bg={isActive ? '#141414' : 'transparent'}
-                        color={isActive ? 'white' : 'gray.400'}
-                        borderColor={isActive ? borderActiveColor : '#3a3a3a'}
-                        borderWidth={isActive ? '2px' : '1px'}
-                        borderRadius="xl"
-                        opacity={isActive ? 1 : 0.8}
-                        whiteSpace="nowrap"
-                        _hover={{
-                          opacity: 1,
-                          borderColor: isActive ? borderHoverColor : '#4a4a4a',
-                          color: 'white',
-                        }}
-                        onClick={() => selectChain(network.id)}
-                      >
-                        <Text>{network.name}</Text>
-                      </Button>
-                    );
-                  })}
+                  {enabledUIChains
+                    .filter((network) => {
+                      // Filter based on selected tab
+                      if (networkTab === 0) return true; // All: show all
+                      if (networkTab === 1) return network.type === 'cosmos'; // Cosmos only
+                      if (networkTab === 2) return network.type === 'bitcoin'; // UTXO only
+                      if (networkTab === 3) return network.type === 'evm'; // EVM only
+                      return true;
+                    })
+                    .map((network) => {
+                      const isActive = selectedChainId === network.id;
+                      const isBitcoin = network.type === 'bitcoin';
+                      const isEvm = network.type === 'evm';
+                      const borderActiveColor = isBitcoin
+                        ? 'orange.500'
+                        : isEvm
+                          ? 'blue.500'
+                          : 'cyan.500';
+                      const borderHoverColor = isBitcoin
+                        ? 'orange.400'
+                        : isEvm
+                          ? 'blue.400'
+                          : 'cyan.400';
+                      return (
+                        <Button
+                          key={network.id}
+                          size="sm"
+                          variant="outline"
+                          bg={isActive ? '#141414' : 'transparent'}
+                          color={isActive ? 'white' : 'gray.400'}
+                          borderColor={isActive ? borderActiveColor : '#3a3a3a'}
+                          borderWidth={isActive ? '2px' : '1px'}
+                          borderRadius="xl"
+                          opacity={isActive ? 1 : 0.8}
+                          whiteSpace="nowrap"
+                          _hover={{
+                            opacity: 1,
+                            borderColor: isActive ? borderHoverColor : '#4a4a4a',
+                            color: 'white',
+                          }}
+                          onClick={() => selectChain(network.id)}
+                        >
+                          <Text>{network.name}</Text>
+                        </Button>
+                      );
+                    })}
                 </Box>
               </Box>
             </Box>
@@ -1068,10 +1101,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                           selectedChainId === 'beezee-1'
                             ? 'https://explorer.getbze.com/beezee/gov'
                             : selectedChainId === 'atomone-1'
-                            ? 'https://explorer.govgen.io/atomone/gov'
-                            : selectedChainId === 'cosmoshub-4'
-                            ? 'https://www.mintscan.io/cosmos/proposals'
-                            : 'https://www.mintscan.io/osmosis/proposals'
+                              ? 'https://explorer.govgen.io/atomone/gov'
+                              : selectedChainId === 'cosmoshub-4'
+                                ? 'https://www.mintscan.io/cosmos/proposals'
+                                : 'https://www.mintscan.io/osmosis/proposals'
                         }
                         target="_blank"
                       >
@@ -1089,10 +1122,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                         {selectedChainId === 'beezee-1'
                           ? 'BZE'
                           : selectedChainId === 'atomone-1'
-                          ? 'ATONE'
-                          : selectedChainId === 'cosmoshub-4'
-                          ? 'ATOM'
-                          : 'OSMO'}
+                            ? 'ATONE'
+                            : selectedChainId === 'cosmoshub-4'
+                              ? 'ATOM'
+                              : 'OSMO'}
                       </MenuItem>
                       {selectedChainId === 'beezee-1' && (
                         <MenuItem
@@ -1188,12 +1221,12 @@ const Dashboard: React.FC<DashboardProps> = ({
                     chainAssets.length > 0
                       ? chainAssets[0].denom
                       : selectedChainId === 'beezee-1'
-                      ? 'ubze'
-                      : selectedChainId === 'atomone-1'
-                      ? 'uatone'
-                      : selectedChainId.startsWith('bitcoin')
-                      ? 'sat'
-                      : 'wei';
+                        ? 'ubze'
+                        : selectedChainId === 'atomone-1'
+                          ? 'uatone'
+                          : selectedChainId.startsWith('bitcoin')
+                            ? 'sat'
+                            : 'wei';
                   const vdlDenom = 'factory/bze13gzq40che93tgfm9kzmkpjamah5nj0j73pyhqk/uvdl';
 
                   const sortedAssets = [...assetsWithBalances].sort((a, b) => {
@@ -1334,6 +1367,16 @@ const Dashboard: React.FC<DashboardProps> = ({
         chainId={selectedChainId}
         chainConfig={selectedChainConfig}
         onSwapSuccess={handleSwapSuccess}
+      />
+
+      {/* Network Manager Modal */}
+      <NetworkManagerModal
+        isOpen={isNetworkManagerOpen}
+        onClose={onNetworkManagerClose}
+        onNetworkChange={() => {
+          // Force re-render when networks change
+          loadPreferences();
+        }}
       />
     </Box>
   );
