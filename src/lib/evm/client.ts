@@ -335,22 +335,5 @@ export function parseGwei(gwei: string): bigint {
   return parseEther(gwei, 9);
 }
 
-/**
- * Validate EVM address
- */
-export function isValidEvmAddress(address: string): boolean {
-  return /^0x[a-fA-F0-9]{40}$/.test(address);
-}
-
-/**
- * Checksum an EVM address (EIP-55)
- */
-export function checksumAddress(address: string): string {
-  if (!isValidEvmAddress(address)) {
-    throw new Error('Invalid address');
-  }
-
-  // For now, just lowercase it - full checksum requires keccak256
-  // We'll implement proper checksumming when we add transaction signing
-  return address.toLowerCase();
-}
+// Note: isValidEvmAddress and toChecksumAddress are exported from @/lib/crypto/evm
+// Use those for proper EIP-55 checksum validation

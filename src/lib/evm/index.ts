@@ -20,6 +20,7 @@ export {
   parseEther,
   formatGwei,
   parseGwei,
-  isValidEvmAddress,
-  checksumAddress,
 } from './client';
+
+// Re-export address utilities from crypto module (proper EIP-55 implementation)
+export { isValidEvmAddress, toChecksumAddress } from '@/lib/crypto/evm';
