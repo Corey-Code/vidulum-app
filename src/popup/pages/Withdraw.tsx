@@ -47,7 +47,7 @@ interface WithdrawProps {
 const Withdraw: React.FC<WithdrawProps> = ({ onBack }) => {
   const { selectedAccount, getAddressForChain, getBitcoinAddress, getEvmAddress } =
     useWalletStore();
-  const { getEnabledNetworks } = useNetworkStore();
+  const enabledNetworks = useNetworkStore((state) => state.getEnabledNetworks());
   const toast = useToast();
 
   const [selectedNetwork, setSelectedNetwork] = useState(DEFAULT_WITHDRAW_NETWORK);
@@ -55,7 +55,7 @@ const Withdraw: React.FC<WithdrawProps> = ({ onBack }) => {
   const [loadingAddress, setLoadingAddress] = useState(false);
 
   // Get supported networks for MoonPay sell
-  const supportedNetworks = getEnabledNetworks()
+  const supportedNetworks = enabledNetworks
     .filter((n) => MOONPAY_SELL_CODES[n.id] && MOONPAY_SELL_CODES[n.id] !== '');
 
   // Get current network config

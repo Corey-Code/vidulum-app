@@ -65,6 +65,7 @@ const DEFAULT_DEPOSIT_NETWORK = 'base-mainnet';
 
 // MoonPay API Key (must be provided via VITE_MOONPAY_API_KEY; empty string disables MoonPay)
 const MOONPAY_API_KEY = import.meta.env.VITE_MOONPAY_API_KEY ?? '';
+
 interface DepositProps {
   onBack: () => void;
 }
@@ -72,7 +73,7 @@ interface DepositProps {
 const Deposit: React.FC<DepositProps> = ({ onBack }) => {
   const { selectedAccount, getAddressForChain, getBitcoinAddress, getEvmAddress } =
     useWalletStore();
-  const { getEnabledNetworks } = useNetworkStore();
+  const enabledNetworks = useNetworkStore((state) => state.getEnabledNetworks());
   const toast = useToast();
 
   const [selectedNetwork, setSelectedNetwork] = useState(DEFAULT_DEPOSIT_NETWORK);
@@ -80,7 +81,7 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
   const [loadingAddress, setLoadingAddress] = useState(false);
 
   // Get supported networks for MoonPay
-  const supportedNetworks = getEnabledNetworks()
+  const supportedNetworks = enabledNetworks
     .filter((n) => MOONPAY_CRYPTO_CODES[n.id] && MOONPAY_CRYPTO_CODES[n.id] !== '');
 
   // Get current network config
