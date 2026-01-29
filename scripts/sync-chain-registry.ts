@@ -225,19 +225,29 @@ function transformChain(chain: ChainRegistryChain): WalletChainConfig | null {
   let explorerAccountPath = explorer?.account_page?.replace('${accountAddress}', '{address}');
   let explorerTxPath = explorer?.tx_page?.replace('${txHash}', '{txHash}');
   
-  // If the paths are absolute URLs and we have an explorerUrl, extract the relative part
-  if (explorer?.url && explorerAccountPath?.startsWith('http')) {
-    // Remove the base URL to get just the path
-    const baseUrl = explorer.url.replace(/\/$/, ''); // Remove trailing slash
-    if (explorerAccountPath.startsWith(baseUrl)) {
-      explorerAccountPath = explorerAccountPath.substring(baseUrl.length);
+  // If the paths are absolute URLs and match the base explorerUrl, extract the relative part
+  // This standardizes configs to use relative paths for consistency
+  // If the absolute URL has a different domain than explorerUrl, leave it as-is (the helper
+  // functions in registry.ts will detect it's absolute and return it directly)
+  if (explorer?.url && explorerAccountPath) {
+    const isAbsoluteUrl = explorerAccountPath.startsWith('http://') || explorerAccountPath.startsWith('https://');
+    if (isAbsoluteUrl) {
+      const baseUrl = explorer.url.replace(/\/$/, ''); // Remove trailing slash
+      if (explorerAccountPath.startsWith(baseUrl)) {
+        explorerAccountPath = explorerAccountPath.substring(baseUrl.length);
+      }
+      // else: Different domain - leave as absolute URL, will be handled by helper functions
     }
   }
   
-  if (explorer?.url && explorerTxPath?.startsWith('http')) {
-    const baseUrl = explorer.url.replace(/\/$/, '');
-    if (explorerTxPath.startsWith(baseUrl)) {
-      explorerTxPath = explorerTxPath.substring(baseUrl.length);
+  if (explorer?.url && explorerTxPath) {
+    const isAbsoluteUrl = explorerTxPath.startsWith('http://') || explorerTxPath.startsWith('https://');
+    if (isAbsoluteUrl) {
+      const baseUrl = explorer.url.replace(/\/$/, '');
+      if (explorerTxPath.startsWith(baseUrl)) {
+        explorerTxPath = explorerTxPath.substring(baseUrl.length);
+      }
+      // else: Different domain - leave as absolute URL, will be handled by helper functions
     }
   }
 
