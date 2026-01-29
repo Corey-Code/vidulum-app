@@ -15,7 +15,7 @@ function cosmosConfigToChainInfo(config: CosmosNetworkConfig): ChainInfo {
   // Get the first healthy endpoint or fall back to first in array
   const rpc = getHealthyEndpoint(config.rpc) || config.rpc[0];
   const rest = getHealthyEndpoint(config.rest) || config.rest[0];
-  
+
   return {
     chainId: config.id,
     chainName: config.name,
@@ -70,12 +70,10 @@ export const OSMOSIS_MAINNET: ChainInfo = cosmosConfigToChainInfo(
   networkRegistry.getCosmos('osmosis-1')!
 );
 
-// Build SUPPORTED_CHAINS from enabled Cosmos networks only
+// Build SUPPORTED_CHAINS from all Cosmos networks
+// User preferences (enabled/disabled) are handled by the network store
 export const SUPPORTED_CHAINS = new Map<string, ChainInfo>(
-  networkRegistry
-    .getByType('cosmos')
-    .filter(c => c.enabled)
-    .map(config => [config.id, cosmosConfigToChainInfo(config)])
+  networkRegistry.getByType('cosmos').map((config) => [config.id, cosmosConfigToChainInfo(config)])
 );
 
 // UI_CHAINS now includes all enabled networks (Cosmos and non-Cosmos)
@@ -86,7 +84,7 @@ export const getChainInfo = (chainId: string): ChainInfo | undefined => {
   // First check the enabled chains
   const enabled = SUPPORTED_CHAINS.get(chainId);
   if (enabled) return enabled;
-  
+
   // Fall back to registry for disabled chains (for reference)
   const config = networkRegistry.getCosmos(chainId);
   return config ? cosmosConfigToChainInfo(config) : undefined;
