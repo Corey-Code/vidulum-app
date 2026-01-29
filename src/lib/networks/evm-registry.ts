@@ -628,7 +628,7 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     isTestnet: false
   },
   {
-    id: 'basesep',
+    id: 'basesep-testnet',
     name: 'Base Sepolia Testnet',
     shortName: 'basesep',
     type: 'evm',
@@ -653,7 +653,7 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     isTestnet: true
   },
   {
-    id: 'sep',
+    id: 'sep-testnet',
     name: 'Ethereum Sepolia',
     shortName: 'sep',
     type: 'evm',

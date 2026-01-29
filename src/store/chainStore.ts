@@ -91,7 +91,7 @@ export const useChainStore = create<ChainState>((set, get) => ({
       if (!chain) {
         throw new Error(`Chain ${networkId} not found`);
       }
-      balances = await cosmosClient.getBalance(chain.rpc, address, chain.rest);
+      balances = await cosmosClient.getBalance([chain.rpc], address, [chain.rest]);
     }
 
     const { balances: currentBalances } = get();
