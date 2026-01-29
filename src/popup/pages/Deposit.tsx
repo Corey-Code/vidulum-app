@@ -15,6 +15,7 @@ import {
 import { ArrowBackIcon, ExternalLinkIcon, CopyIcon } from '@chakra-ui/icons';
 import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
+import { useNetworkStore } from '@/store/networkStore';
 import { networkRegistry } from '@/lib/networks';
 import { useNetworkStore } from '@/store/networkStore';
 
@@ -65,6 +66,7 @@ const DEFAULT_DEPOSIT_NETWORK = 'base-mainnet';
 
 // MoonPay API Key (must be provided via VITE_MOONPAY_API_KEY; empty string disables MoonPay)
 const MOONPAY_API_KEY = import.meta.env.VITE_MOONPAY_API_KEY ?? '';
+
 interface DepositProps {
   onBack: () => void;
 }
@@ -72,7 +74,7 @@ interface DepositProps {
 const Deposit: React.FC<DepositProps> = ({ onBack }) => {
   const { selectedAccount, getAddressForChain, getBitcoinAddress, getEvmAddress } =
     useWalletStore();
-  const { getEnabledNetworks, loadPreferences, isLoaded } = useNetworkStore();
+  const { loadPreferences, isLoaded: networkPrefsLoaded, isNetworkEnabled } = useNetworkStore();
   const toast = useToast();
 
   const [selectedNetwork, setSelectedNetwork] = useState(DEFAULT_DEPOSIT_NETWORK);
@@ -81,30 +83,27 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
 
   // Load network preferences on mount
   useEffect(() => {
-    if (!isLoaded) {
+    if (!networkPrefsLoaded) {
       loadPreferences();
     }
-  }, [isLoaded, loadPreferences]);
+  }, [networkPrefsLoaded, loadPreferences]);
 
-  // Get supported networks for MoonPay from user's enabled networks
-  const supportedNetworks = useMemo(
-    () =>
-      getEnabledNetworks().filter(
-        (n) => MOONPAY_CRYPTO_CODES[n.id] && MOONPAY_CRYPTO_CODES[n.id] !== ''
-      ),
-    [isLoaded, getEnabledNetworks]
-  );
+  // Get supported networks for MoonPay - filter by user preferences
+  const supportedNetworks = networkRegistry
+    .getAll()
+    .filter((n) => isNetworkEnabled(n.id))
+    .filter((n) => MOONPAY_CRYPTO_CODES[n.id] && MOONPAY_CRYPTO_CODES[n.id] !== '');
 
-  // Ensure selected network is valid when preferences load or supportedNetworks changes
+  // Ensure selected network is valid; if disabled, select the first available
   useEffect(() => {
     if (
-      isLoaded &&
+      networkPrefsLoaded &&
       supportedNetworks.length > 0 &&
       !supportedNetworks.some((n) => n.id === selectedNetwork)
     ) {
       setSelectedNetwork(supportedNetworks[0].id);
     }
-  }, [isLoaded, supportedNetworks, selectedNetwork]);
+  }, [networkPrefsLoaded, supportedNetworks]);
 
   // Get current network config
   const networkConfig = networkRegistry.get(selectedNetwork);
