@@ -42,13 +42,28 @@ const MOONPAY_CRYPTO_CODES: Record<string, string> = {
   'bitcoinz-mainnet': '', // Not supported
 };
 
+// Display names for MoonPay assets (what users are actually buying)
+const MOONPAY_DISPLAY_NAMES: Record<string, string> = {
+  'base-mainnet': 'USDC (Base)',
+  'ethereum-mainnet': 'ETH (Ethereum)',
+  'bnb-mainnet': 'BNB (BSC)',
+  'polygon-mainnet': 'MATIC (Polygon)',
+  'arbitrum-mainnet': 'ETH (Arbitrum)',
+  'optimism-mainnet': 'ETH (Optimism)',
+  'avalanche-mainnet': 'AVAX (C-Chain)',
+  'cosmoshub-4': 'ATOM (Cosmos Hub)',
+  'osmosis-1': 'OSMO (Osmosis)',
+  'bitcoin-mainnet': 'BTC (Bitcoin)',
+  'litecoin-mainnet': 'LTC (Litecoin)',
+  'dogecoin-mainnet': 'DOGE (Dogecoin)',
+  'zcash-mainnet': 'ZEC (Zcash)',
+};
+
 // Default network for deposits
 const DEFAULT_DEPOSIT_NETWORK = 'base-mainnet';
 
-// MoonPay API Key
-const MOONPAY_API_KEY =
-  import.meta.env.VITE_MOONPAY_API_KEY || 'pk_test_pKULLlqQbOAEd7usXz7yUiVCc8yNBNGY';
-
+// MoonPay API Key (must be provided via VITE_MOONPAY_API_KEY; empty string disables MoonPay)
+const MOONPAY_API_KEY = import.meta.env.VITE_MOONPAY_API_KEY ?? '';
 interface DepositProps {
   onBack: () => void;
 }
@@ -71,6 +86,8 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
   const networkConfig = networkRegistry.get(selectedNetwork);
   const cryptoCode = MOONPAY_CRYPTO_CODES[selectedNetwork] || '';
   const isSupported = cryptoCode !== '';
+  const displayAsset = MOONPAY_DISPLAY_NAMES[selectedNetwork] || 
+    (networkConfig ? `${networkConfig.symbol} (${networkConfig.name})` : 'crypto');
 
   // Fetch wallet address when network changes
   useEffect(() => {
@@ -227,7 +244,7 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
           <VStack spacing={4} align="stretch">
             <Box bg="#141414" borderRadius="xl" p={4} borderWidth="1px" borderColor="#2a2a2a">
               <Text fontSize="sm" color="gray.400" mb={2}>
-                Buy {networkConfig?.symbol || 'crypto'} with credit card, debit card, or bank
+                Buy {displayAsset} with credit card, debit card, or bank
                 transfer.
               </Text>
               <Text fontSize="xs" color="gray.500">

@@ -5,12 +5,13 @@ import { cosmosClient } from '@/lib/cosmos/client';
 import { getChainWebSocket, disconnectAllWebSockets } from '@/lib/cosmos/websocket';
 import { getBitcoinClient } from '@/lib/bitcoin/client';
 import { getEvmClient } from '@/lib/evm/client';
+import { networkRegistry } from '@/lib/networks';
 
 interface ChainState {
   chains: Map<string, ChainInfo>;
   balances: Map<string, Map<string, Balance[]>>; // chainId -> address -> balances
   subscriptions: Map<string, string>; // "chainId:address" -> subscriptionId
-  debounceTimeouts: Map<string, NodeJS.Timeout>; // "chainId:address" -> timeout handle
+  debounceTimeouts: Map<string, ReturnType<typeof setTimeout>>; // "chainId:address" -> timeout handle
   isSubscribed: boolean;
 
   getChain: (chainId: string) => ChainInfo | undefined;
@@ -87,11 +88,11 @@ export const useChainStore = create<ChainState>((set, get) => ({
       }
     } else {
       // Fetch Cosmos balance
-      const chain = get().getChain(networkId);
-      if (!chain) {
+      const cosmosConfig = networkRegistry.getCosmos(networkId);
+      if (!cosmosConfig) {
         throw new Error(`Chain ${networkId} not found`);
       }
-      balances = await cosmosClient.getBalance(chain.rpc, address, chain.rest);
+      balances = await cosmosClient.getBalance(cosmosConfig.rpc, address, cosmosConfig.rest);
     }
 
     const { balances: currentBalances } = get();
