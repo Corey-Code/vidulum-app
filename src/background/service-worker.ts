@@ -125,7 +125,7 @@ browser.runtime.onMessage.addListener(async (message: Message, sender): Promise<
 });
 
 // Handler functions
-async function handleEnable(origin: string, payload: any): Promise<MessageResponse> {
+async function handleEnable(origin: string, payload: any = {}): Promise<MessageResponse> {
   const { chainId } = payload;
 
   if (!chainId) {
@@ -154,7 +154,7 @@ async function handleEnable(origin: string, payload: any): Promise<MessageRespon
   return { success: false, error: 'User rejected the connection' };
 }
 
-async function handleGetKey(origin: string, payload: any): Promise<MessageResponse> {
+async function handleGetKey(origin: string, payload: any = {}): Promise<MessageResponse> {
   const { chainId } = payload;
 
   if (!sessionManager.isConnected(origin, chainId)) {
@@ -186,7 +186,7 @@ async function handleGetKey(origin: string, payload: any): Promise<MessageRespon
   return { success: true, data: key };
 }
 
-async function handleSignAmino(origin: string, payload: any): Promise<MessageResponse> {
+async function handleSignAmino(origin: string, payload: any = {}): Promise<MessageResponse> {
   const { chainId, signer, signDoc } = payload;
 
   if (!sessionManager.isConnected(origin, chainId)) {
@@ -222,7 +222,7 @@ async function handleSignAmino(origin: string, payload: any): Promise<MessageRes
   };
 }
 
-async function handleSignDirect(origin: string, payload: any): Promise<MessageResponse> {
+async function handleSignDirect(origin: string, payload: any = {}): Promise<MessageResponse> {
   const { chainId, signer, signDoc } = payload;
 
   if (!sessionManager.isConnected(origin, chainId)) {
@@ -271,7 +271,7 @@ async function handleSignDirect(origin: string, payload: any): Promise<MessageRe
   };
 }
 
-async function handleSignArbitrary(origin: string, payload: any): Promise<MessageResponse> {
+async function handleSignArbitrary(origin: string, payload: any = {}): Promise<MessageResponse> {
   const { chainId, signer, data } = payload;
 
   if (!sessionManager.isConnected(origin, chainId)) {
@@ -295,13 +295,13 @@ async function handleSignArbitrary(origin: string, payload: any): Promise<Messag
   return { success: true, data: result };
 }
 
-function handleDisconnect(origin: string, payload: any): MessageResponse {
+function handleDisconnect(origin: string, payload: any = {}): MessageResponse {
   const { chainId } = payload;
   sessionManager.disconnect(origin, chainId);
   return { success: true, data: null };
 }
 
-async function handleUnlock(payload: any): Promise<MessageResponse> {
+async function handleUnlock(payload: any = {}): Promise<MessageResponse> {
   const { password } = payload;
 
   if (!password) {
