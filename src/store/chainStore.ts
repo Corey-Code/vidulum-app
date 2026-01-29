@@ -140,8 +140,8 @@ export const useChainStore = create<ChainState>((set, get) => ({
       console.log('Transaction detected for', address, txResult);
       
       // Clear existing timeout for this chainId:address to prevent queue buildup
-      const { timeoutHandles } = get();
-      const existingTimeout = timeoutHandles.get(key);
+      const state = get();
+      const existingTimeout = state.timeoutHandles.get(key);
       if (existingTimeout) {
         clearTimeout(existingTimeout);
       }
@@ -150,13 +150,19 @@ export const useChainStore = create<ChainState>((set, get) => ({
       const timeoutHandle = setTimeout(() => {
         get().fetchBalance(chainId, address).catch(console.error);
         // Clean up the timeout handle after execution
-        const { timeoutHandles: currentHandles } = get();
-        currentHandles.delete(key);
-        set({ timeoutHandles: new Map(currentHandles) });
+        set((currentState) => {
+          const newHandles = new Map(currentState.timeoutHandles);
+          newHandles.delete(key);
+          return { timeoutHandles: newHandles };
+        });
       }, 1000);
       
-      timeoutHandles.set(key, timeoutHandle);
-      set({ timeoutHandles: new Map(timeoutHandles) });
+      // Update state with the new timeout handle
+      set((currentState) => {
+        const newHandles = new Map(currentState.timeoutHandles);
+        newHandles.set(key, timeoutHandle);
+        return { timeoutHandles: newHandles };
+      });
     });
 
     subscriptions.set(key, subscriptionId);
