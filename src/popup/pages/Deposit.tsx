@@ -16,6 +16,7 @@ import { ArrowBackIcon, ExternalLinkIcon, CopyIcon } from '@chakra-ui/icons';
 import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
 import { networkRegistry } from '@/lib/networks';
+import { useNetworkStore } from '@/store/networkStore';
 
 // MoonPay supported cryptocurrencies mapping
 const MOONPAY_CRYPTO_CODES: Record<string, string> = {
@@ -71,16 +72,24 @@ interface DepositProps {
 const Deposit: React.FC<DepositProps> = ({ onBack }) => {
   const { selectedAccount, getAddressForChain, getBitcoinAddress, getEvmAddress } =
     useWalletStore();
+  const { getEnabledNetworks, loadPreferences, isLoaded } = useNetworkStore();
   const toast = useToast();
 
   const [selectedNetwork, setSelectedNetwork] = useState(DEFAULT_DEPOSIT_NETWORK);
   const [walletAddress, setWalletAddress] = useState<string>('');
   const [loadingAddress, setLoadingAddress] = useState(false);
 
-  // Get supported networks for MoonPay
-  const supportedNetworks = networkRegistry
-    .getEnabled()
-    .filter((n) => MOONPAY_CRYPTO_CODES[n.id] && MOONPAY_CRYPTO_CODES[n.id] !== '');
+  // Load network preferences on mount
+  useEffect(() => {
+    if (!isLoaded) {
+      loadPreferences();
+    }
+  }, [isLoaded, loadPreferences]);
+
+  // Get supported networks for MoonPay from user's enabled networks
+  const supportedNetworks = getEnabledNetworks().filter(
+    (n) => MOONPAY_CRYPTO_CODES[n.id] && MOONPAY_CRYPTO_CODES[n.id] !== ''
+  );
 
   // Get current network config
   const networkConfig = networkRegistry.get(selectedNetwork);
