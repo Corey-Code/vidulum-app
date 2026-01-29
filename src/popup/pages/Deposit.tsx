@@ -88,7 +88,8 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
   const networkConfig = networkRegistry.get(selectedNetwork);
   const cryptoCode = MOONPAY_CRYPTO_CODES[selectedNetwork] || '';
   const isSupported = cryptoCode !== '';
-  const displayAsset = MOONPAY_DISPLAY_NAMES[selectedNetwork] || networkConfig?.symbol || 'crypto';
+  const displayAsset = MOONPAY_DISPLAY_NAMES[selectedNetwork] || 
+    (networkConfig ? `${networkConfig.symbol} (${networkConfig.name})` : 'crypto');
 
   // Fetch wallet address when network changes
   useEffect(() => {
