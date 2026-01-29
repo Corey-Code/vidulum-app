@@ -166,7 +166,7 @@ const NetworkItem: React.FC<NetworkItemProps> = ({
                       e.stopPropagation();
                       setEnabledAssets(
                         network.id,
-                        assets.map((asset) => asset.denom)
+                        assets.map((asset) => asset.denom),
                       );
                     }}
                   >
