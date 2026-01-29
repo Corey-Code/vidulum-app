@@ -15,18 +15,12 @@ export type {
   EndpointHealth,
 } from './types';
 
-// Network configurations
-export {
-  BEEZEE_MAINNET,
-  BEEZEE_TESTNET,
-  OSMOSIS_MAINNET,
-  ATOMONE_MAINNET,
-  COSMOS_NETWORKS,
-} from './cosmos';
+// Network configurations (manual overrides only - most come from auto-generated registries)
+export { BEEZEE_TESTNET, COSMOS_NETWORKS } from './cosmos';
 
 export { BITCOIN_MAINNET, BITCOIN_TESTNET, BITCOIN_NETWORKS } from './bitcoin';
 
-export { ETHEREUM_MAINNET, BNB_MAINNET, BASE_MAINNET, BASE_SEPOLIA, EVM_NETWORKS } from './evm';
+export { EVM_NETWORKS } from './evm';
 
 // EVM Registry (auto-generated from ethereum-lists/chains)
 export {

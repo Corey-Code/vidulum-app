@@ -97,8 +97,14 @@ COSMOS_REGISTRY_CHAINS.forEach((network) => {
 
 EVM_REGISTRY_CHAINS.forEach((network) => {
   // Only register if not already registered (manual configs take priority)
+  // For EVM, also check chainId to avoid duplicates like 'ethereum-mainnet' vs 'eth-mainnet'
   if (!networkRegistry.get(network.id)) {
-    networkRegistry.register(network);
+    const existingWithChainId = networkRegistry
+      .getByType('evm')
+      .find((n) => n.chainId === network.chainId);
+    if (!existingWithChainId) {
+      networkRegistry.register(network);
+    }
   }
 });
 
@@ -177,11 +183,31 @@ export function getUINetworks(): Array<{
   type: NetworkType;
   prefix?: string; // For Cosmos chains
 }> {
-  return networkRegistry.getAll().map((network) => ({
+  // Priority networks that should appear first (in order)
+  const priorityNetworks = ['beezee-1', 'atomone-1', 'cosmoshub-4', 'osmosis-1'];
+
+  const networks = networkRegistry.getAll().map((network) => ({
     id: network.id,
     name: network.name,
     symbol: network.symbol,
     type: network.type,
     prefix: isCosmosNetwork(network) ? network.bech32Prefix : undefined,
   }));
+
+  // Sort: priority networks first (in specified order), then alphabetically by name
+  return networks.sort((a, b) => {
+    const aIndex = priorityNetworks.indexOf(a.id);
+    const bIndex = priorityNetworks.indexOf(b.id);
+
+    // Both are priority networks - sort by priority order
+    if (aIndex !== -1 && bIndex !== -1) {
+      return aIndex - bIndex;
+    }
+    // Only a is priority - a comes first
+    if (aIndex !== -1) return -1;
+    // Only b is priority - b comes first
+    if (bIndex !== -1) return 1;
+    // Neither is priority - sort alphabetically
+    return a.name.localeCompare(b.name);
+  });
 }
