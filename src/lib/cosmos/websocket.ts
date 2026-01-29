@@ -28,10 +28,9 @@ export class ChainWebSocket {
 
   constructor(rpcUrl: string) {
     // Convert HTTP RPC URL to WebSocket URL
-    this.wsUrl = rpcUrl
-      .replace('https://', 'wss://')
-      .replace('http://', 'ws://')
-      .replace(/\/$/, '') + '/websocket';
+    this.wsUrl =
+      rpcUrl.replace('https://', 'wss://').replace('http://', 'ws://').replace(/\/$/, '') +
+      '/websocket';
   }
 
   /**
@@ -98,13 +97,11 @@ export class ChainWebSocket {
           this.isConnecting = false;
           this.reconnectAttempts = 0;
 
-          // Resubscribe to any pending subscriptions
-          this.pendingSubscriptions.forEach((sub, id) => {
-            this.sendSubscribe(id, sub.query);
-          });
+          // Clear pending subscriptions - they're already in subscriptions map
+          // (subscribeToAddress/subscribeToNewBlocks add to both maps when disconnected)
           this.pendingSubscriptions.clear();
 
-          // Resubscribe to existing subscriptions after reconnect
+          // Resubscribe to all existing subscriptions after connect/reconnect
           this.subscriptions.forEach((sub, id) => {
             this.sendSubscribe(id, sub.query);
           });

@@ -277,12 +277,28 @@ describe('EVM Utility Functions', () => {
   });
 
   describe('isValidEvmAddress', () => {
-    it('should validate correct addresses', () => {
+    it('should accept all lowercase addresses', () => {
+      expect(isValidEvmAddress('0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed')).toBe(true);
       expect(isValidEvmAddress('0x1234567890abcdef1234567890abcdef12345678')).toBe(true);
-      expect(isValidEvmAddress('0xABCDEF1234567890ABCDEF1234567890ABCDEF12')).toBe(true);
     });
 
-    it('should reject invalid addresses', () => {
+    it('should accept all uppercase addresses', () => {
+      expect(isValidEvmAddress('0xABCDEF1234567890ABCDEF1234567890ABCDEF12')).toBe(true);
+      expect(isValidEvmAddress('0x5AAEB6053F3E94C9B9A09F33669435E7EF1BEAED')).toBe(true);
+    });
+
+    it('should accept valid checksummed addresses (mixed case)', () => {
+      // Valid EIP-55 checksum
+      expect(isValidEvmAddress('0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed')).toBe(true);
+    });
+
+    it('should reject invalid checksummed addresses (mixed case with wrong checksum)', () => {
+      // Invalid checksum - mixed case but not matching EIP-55
+      expect(isValidEvmAddress('0x5aAeb6053f3E94C9b9A09f33669435E7Ef1BeAed')).toBe(false);
+      expect(isValidEvmAddress('0x5AAEB6053f3e94c9b9a09f33669435e7ef1beaed')).toBe(false);
+    });
+
+    it('should reject invalid format addresses', () => {
       expect(isValidEvmAddress('0x1234')).toBe(false);
       expect(isValidEvmAddress('1234567890abcdef1234567890abcdef12345678')).toBe(false);
       expect(isValidEvmAddress('0x1234567890abcdef1234567890abcdef1234567g')).toBe(false);

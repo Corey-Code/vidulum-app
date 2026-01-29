@@ -28,8 +28,9 @@ interface NetworkState {
   // Asset management
   isAssetEnabled: (networkId: string, denom: string) => boolean;
   setAssetEnabled: (networkId: string, denom: string, enabled: boolean) => Promise<void>;
-  getEnabledAssets: (networkId: string) => string[];
+  getEnabledAssets: (networkId: string) => string[] | null; // null = all enabled by default
   setEnabledAssets: (networkId: string, denoms: string[]) => Promise<void>;
+  hasAssetPreferences: (networkId: string) => boolean; // true if explicit preferences exist
 }
 
 // Get default enabled state from network config
@@ -163,7 +164,9 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
 
   getEnabledAssets: (networkId: string) => {
     const { preferences } = get();
-    return preferences.enabledAssets[networkId] || [];
+    // Return null if no explicit preference (meaning all assets enabled by default)
+    // Return the array if explicit preferences exist (even if empty = none enabled)
+    return networkId in preferences.enabledAssets ? preferences.enabledAssets[networkId] : null;
   },
 
   setEnabledAssets: async (networkId: string, denoms: string[]) => {
@@ -180,5 +183,10 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
     });
 
     await savePreferences();
+  },
+
+  hasAssetPreferences: (networkId: string) => {
+    const { preferences } = get();
+    return networkId in preferences.enabledAssets;
   },
 }));

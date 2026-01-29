@@ -208,11 +208,17 @@ describe('Network Store', () => {
       expect(result.current.isAssetEnabled('beezee-1', 'any-random-denom')).toBe(true);
     });
 
-    it('should return empty array for getEnabledAssets when no preference set', () => {
+    it('should return null for getEnabledAssets when no preference set', () => {
       const { result } = renderHook(() => useNetworkStore());
 
-      // getEnabledAssets returns the explicit list, empty means "all enabled by default"
-      expect(result.current.getEnabledAssets('beezee-1')).toEqual([]);
+      // getEnabledAssets returns null when no explicit preference (meaning all enabled by default)
+      expect(result.current.getEnabledAssets('beezee-1')).toBeNull();
+    });
+
+    it('should return false for hasAssetPreferences when no preference set', () => {
+      const { result } = renderHook(() => useNetworkStore());
+
+      expect(result.current.hasAssetPreferences('beezee-1')).toBe(false);
     });
   });
 
@@ -288,7 +294,8 @@ describe('Network Store', () => {
       });
 
       const assets = result.current.getEnabledAssets('beezee-1');
-      const ubzeCount = assets.filter((a) => a === 'ubze').length;
+      expect(assets).not.toBeNull();
+      const ubzeCount = assets!.filter((a) => a === 'ubze').length;
       expect(ubzeCount).toBe(1);
     });
   });

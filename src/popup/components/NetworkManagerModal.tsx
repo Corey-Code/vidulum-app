@@ -39,15 +39,9 @@ interface NetworkItemProps {
   network: NetworkConfig;
   isEnabled: boolean;
   onToggle: (enabled: boolean) => void;
-  showAssets?: boolean;
 }
 
-const NetworkItem: React.FC<NetworkItemProps> = ({
-  network,
-  isEnabled,
-  onToggle,
-  showAssets = false,
-}) => {
+const NetworkItem: React.FC<NetworkItemProps> = ({ network, isEnabled, onToggle }) => {
   const [assets, setAssets] = useState<RegistryAsset[]>([]);
   const [loadingAssets, setLoadingAssets] = useState(false);
   const [expandedForAssets, setExpandedForAssets] = useState(false);
@@ -166,7 +160,7 @@ const NetworkItem: React.FC<NetworkItemProps> = ({
                       e.stopPropagation();
                       setEnabledAssets(
                         network.id,
-                        assets.map((asset) => asset.denom),
+                        assets.map((asset) => asset.denom)
                       );
                     }}
                   >
@@ -299,7 +293,6 @@ const NetworkManagerModal: React.FC<NetworkManagerModalProps> = ({
                         network={network}
                         isEnabled={isNetworkEnabled(network.id)}
                         onToggle={(enabled) => handleToggle(network.id, enabled)}
-                        showAssets
                       />
                     ))
                   )}

@@ -69,60 +69,62 @@ const sessionManager = new SessionManager();
 sessionManager.initialize();
 
 // Message handler
-browser.runtime.onMessage.addListener(async (message: Message, sender): Promise<MessageResponse> => {
-  let origin = '';
-  if (sender && typeof sender === 'object') {
-    if (typeof (sender as any).origin === 'string' && (sender as any).origin) {
-      origin = (sender as any).origin;
-    } else if ((sender as any).tab && typeof (sender as any).tab.url === 'string') {
-      try {
-        const url = new URL((sender as any).tab.url);
-        origin = url.origin;
-      } catch {
-        origin = '';
+browser.runtime.onMessage.addListener(
+  async (message: Message, sender): Promise<MessageResponse> => {
+    let origin = '';
+    if (sender && typeof sender === 'object') {
+      if (typeof (sender as any).origin === 'string' && (sender as any).origin) {
+        origin = (sender as any).origin;
+      } else if ((sender as any).tab && typeof (sender as any).tab.url === 'string') {
+        try {
+          const url = new URL((sender as any).tab.url);
+          origin = url.origin;
+        } catch {
+          origin = '';
+        }
       }
     }
-  }
 
-  try {
-    switch (message.type) {
-      case MessageType.ENABLE:
-        return await handleEnable(origin, message.payload);
+    try {
+      switch (message.type) {
+        case MessageType.ENABLE:
+          return await handleEnable(origin, message.payload);
 
-      case MessageType.GET_KEY:
-        return await handleGetKey(origin, message.payload);
+        case MessageType.GET_KEY:
+          return await handleGetKey(origin, message.payload);
 
-      case MessageType.SIGN_AMINO:
-        return await handleSignAmino(origin, message.payload);
+        case MessageType.SIGN_AMINO:
+          return await handleSignAmino(origin, message.payload);
 
-      case MessageType.SIGN_DIRECT:
-        return await handleSignDirect(origin, message.payload);
+        case MessageType.SIGN_DIRECT:
+          return await handleSignDirect(origin, message.payload);
 
-      case MessageType.SIGN_ARBITRARY:
-        return await handleSignArbitrary(origin, message.payload);
+        case MessageType.SIGN_ARBITRARY:
+          return await handleSignArbitrary(origin, message.payload);
 
-      case MessageType.DISCONNECT:
-        return handleDisconnect(origin, message.payload);
+        case MessageType.DISCONNECT:
+          return handleDisconnect(origin, message.payload);
 
-      case MessageType.UNLOCK_WALLET:
-        return await handleUnlock(message.payload);
+        case MessageType.UNLOCK_WALLET:
+          return await handleUnlock(message.payload);
 
-      case MessageType.LOCK_WALLET:
-        return handleLock();
+        case MessageType.LOCK_WALLET:
+          return handleLock();
 
-      default:
-        return {
-          success: false,
-          error: `Unknown message type: ${message.type}`,
-        };
+        default:
+          return {
+            success: false,
+            error: `Unknown message type: ${message.type}`,
+          };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
     }
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    };
   }
-});
+);
 
 // Handler functions
 async function handleEnable(origin: string, payload: any = {}): Promise<MessageResponse> {
@@ -176,7 +178,9 @@ async function handleGetKey(origin: string, payload: any = {}): Promise<MessageR
   const key = {
     name: account.name,
     algo: account.algo,
-    pubKey: btoa(String.fromCharCode(...account.pubKey)),
+    // Serialize pubKey as array for consistency with signDirect bytes handling
+    // Consumer can convert back: new Uint8Array(pubKey)
+    pubKey: Array.from(account.pubKey),
     address: account.address,
     bech32Address: account.address,
     isNanoLedger: false,
