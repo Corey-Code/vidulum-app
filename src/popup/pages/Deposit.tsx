@@ -45,18 +45,18 @@ const MOONPAY_CRYPTO_CODES: Record<string, string> = {
 // Display names for MoonPay assets (what users are actually buying)
 const MOONPAY_DISPLAY_NAMES: Record<string, string> = {
   'base-mainnet': 'USDC (Base)',
-  'ethereum-mainnet': 'ETH',
-  'bnb-mainnet': 'BNB',
-  'polygon-mainnet': 'MATIC',
+  'ethereum-mainnet': 'ETH (Ethereum)',
+  'bnb-mainnet': 'BNB (BSC)',
+  'polygon-mainnet': 'MATIC (Polygon)',
   'arbitrum-mainnet': 'ETH (Arbitrum)',
   'optimism-mainnet': 'ETH (Optimism)',
-  'avalanche-mainnet': 'AVAX',
-  'cosmoshub-4': 'ATOM',
-  'osmosis-1': 'OSMO',
-  'bitcoin-mainnet': 'BTC',
-  'litecoin-mainnet': 'LTC',
-  'dogecoin-mainnet': 'DOGE',
-  'zcash-mainnet': 'ZEC',
+  'avalanche-mainnet': 'AVAX (C-Chain)',
+  'cosmoshub-4': 'ATOM (Cosmos Hub)',
+  'osmosis-1': 'OSMO (Osmosis)',
+  'bitcoin-mainnet': 'BTC (Bitcoin)',
+  'litecoin-mainnet': 'LTC (Litecoin)',
+  'dogecoin-mainnet': 'DOGE (Dogecoin)',
+  'zcash-mainnet': 'ZEC (Zcash)',
 };
 
 // Default network for deposits
