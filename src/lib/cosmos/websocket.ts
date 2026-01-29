@@ -24,6 +24,7 @@ export class ChainWebSocket {
   private connectReject: ((error: Error) => void) | null = null;
   private connectionTimeout: NodeJS.Timeout | null = null;
   private readonly CONNECTION_TIMEOUT_MS = 10000; // 10 second timeout
+  private intentionalDisconnect = false;
 
   constructor(rpcUrl: string) {
     // Convert HTTP RPC URL to WebSocket URL
@@ -46,13 +47,17 @@ export class ChainWebSocket {
       if (this.isConnecting) {
         // Wait for existing connection attempt to complete
         // Store resolve/reject to be called when current attempt finishes
+        let settled = false;
         const checkInterval = setInterval(() => {
           if (!this.isConnecting) {
             clearInterval(checkInterval);
-            if (this.ws?.readyState === WebSocket.OPEN) {
-              resolve();
-            } else {
-              reject(new Error('Connection attempt failed'));
+            if (!settled) {
+              settled = true;
+              if (this.ws?.readyState === WebSocket.OPEN) {
+                resolve();
+              } else {
+                reject(new Error('Connection attempt failed'));
+              }
             }
           }
         }, 100);
@@ -60,7 +65,8 @@ export class ChainWebSocket {
         // Add timeout for the polling to prevent indefinite waiting
         setTimeout(() => {
           clearInterval(checkInterval);
-          if (this.isConnecting) {
+          if (!settled) {
+            settled = true;
             reject(new Error('Connection timeout while waiting for existing attempt'));
           }
         }, this.CONNECTION_TIMEOUT_MS);
@@ -70,6 +76,7 @@ export class ChainWebSocket {
       this.isConnecting = true;
       this.connectResolve = resolve;
       this.connectReject = reject;
+      this.intentionalDisconnect = false; // Reset flag on new connection attempt
 
       // Set up connection timeout
       this.connectionTimeout = setTimeout(() => {
@@ -147,7 +154,10 @@ export class ChainWebSocket {
             rejectFn(new Error('WebSocket connection closed before opening'));
           }
 
-          this.attemptReconnect();
+          // Only attempt reconnection if this was not an intentional disconnect
+          if (!this.intentionalDisconnect) {
+            this.attemptReconnect();
+          }
         };
       } catch (error) {
         this.clearConnectionTimeout();
@@ -180,11 +190,15 @@ export class ChainWebSocket {
   private cleanupConnection(): void {
     this.clearConnectionTimeout();
     this.isConnecting = false;
-    if (this.ws && this.ws.readyState !== WebSocket.OPEN && this.ws.readyState !== WebSocket.CLOSED) {
-      try {
-        this.ws.close();
-      } catch (error) {
-        console.error('Error closing WebSocket during cleanup:', error);
+    if (this.ws) {
+      const state = this.ws.readyState;
+      // Only attempt to close if WebSocket is CONNECTING or OPEN
+      if (state === WebSocket.CONNECTING || state === WebSocket.OPEN) {
+        try {
+          this.ws.close();
+        } catch (error) {
+          console.error('Error closing WebSocket during cleanup:', error);
+        }
       }
     }
   }
@@ -328,6 +342,7 @@ export class ChainWebSocket {
    * Disconnect the WebSocket
    */
   disconnect(): void {
+    this.intentionalDisconnect = true;
     this.unsubscribeAll();
     this.clearConnectionTimeout();
     this.connectResolve = null;
