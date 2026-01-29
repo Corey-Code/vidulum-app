@@ -62,10 +62,8 @@ const MOONPAY_DISPLAY_NAMES: Record<string, string> = {
 // Default network for deposits
 const DEFAULT_DEPOSIT_NETWORK = 'base-mainnet';
 
-// MoonPay API Key
-const MOONPAY_API_KEY =
-  import.meta.env.VITE_MOONPAY_API_KEY || 'pk_test_pKULLlqQbOAEd7usXz7yUiVCc8yNBNGY';
-
+// MoonPay API Key (must be provided via VITE_MOONPAY_API_KEY; empty string disables MoonPay)
+const MOONPAY_API_KEY = import.meta.env.VITE_MOONPAY_API_KEY ?? '';
 interface DepositProps {
   onBack: () => void;
 }
