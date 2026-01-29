@@ -7,8 +7,8 @@ This guide explains how to add a new Cosmos SDK-based blockchain to The Extensio
 Before adding a chain, gather the following information:
 
 - Chain ID (e.g., `cosmoshub-4`)
-- RPC endpoint URL
-- REST/LCD endpoint URL
+- RPC endpoint URLs (multiple for failover)
+- REST/LCD endpoint URLs (multiple for failover)
 - Bech32 address prefix (e.g., `cosmos`)
 - Native token symbol and denomination
 - Block explorer URL
@@ -19,18 +19,28 @@ Add the network configuration in `src/lib/networks/cosmos.ts`:
 
 ```typescript
 export const NEW_CHAIN_MAINNET: CosmosNetworkConfig = {
-  id: 'newchain-1',           // Chain ID
-  name: 'New Chain',          // Display name
+  id: 'newchain-1', // Chain ID
+  name: 'New Chain', // Display name
   type: 'cosmos',
   enabled: true,
-  symbol: 'NEW',              // Native token symbol
-  decimals: 6,                // Native token decimals (usually 6)
-  coinType: 118,              // BIP44 coin type (118 for most Cosmos chains)
-  rpc: 'https://rpc.newchain.io',
-  rest: 'https://api.newchain.io',
-  bech32Prefix: 'new',        // Address prefix
-  feeDenom: 'unew',           // Fee denomination (micro-denom)
-  gasPrice: '0.025',          // Default gas price
+  symbol: 'NEW', // Native token symbol
+  decimals: 6, // Native token decimals (usually 6)
+  coinType: 118, // BIP44 coin type (118 for most Cosmos chains)
+  rpc: [
+    // Array of RPC endpoints (in failover order)
+    'https://rpc.newchain.io',
+    'https://rpc-2.newchain.io',
+    'https://newchain-rpc.polkachu.com',
+  ],
+  rest: [
+    // Array of REST/LCD endpoints (in failover order)
+    'https://api.newchain.io',
+    'https://api-2.newchain.io',
+    'https://newchain-api.polkachu.com',
+  ],
+  bech32Prefix: 'new', // Address prefix
+  feeDenom: 'unew', // Fee denomination (micro-denom)
+  gasPrice: '0.025', // Default gas price
   features: ['stargate', 'ibc-transfer', 'no-legacy-stdTx'],
   explorerUrl: 'https://explorer.newchain.io',
   explorerAccountPath: '/account/{address}',
@@ -40,19 +50,19 @@ export const NEW_CHAIN_MAINNET: CosmosNetworkConfig = {
 
 ### Configuration Fields
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| `id` | Unique chain identifier | `cosmoshub-4` |
-| `name` | Human-readable name | `Cosmos Hub` |
-| `symbol` | Native token ticker | `ATOM` |
-| `decimals` | Token decimal places | `6` |
-| `coinType` | BIP44 coin type | `118` |
-| `rpc` | Tendermint RPC endpoint | `https://rpc.cosmos.network` |
-| `rest` | REST/LCD API endpoint | `https://api.cosmos.network` |
-| `bech32Prefix` | Address prefix | `cosmos` |
-| `feeDenom` | Fee token denomination | `uatom` |
-| `gasPrice` | Default gas price | `0.025` |
-| `features` | Supported features array | See below |
+| Field          | Description                                   | Example                               |
+| -------------- | --------------------------------------------- | ------------------------------------- |
+| `id`           | Unique chain identifier                       | `cosmoshub-4`                         |
+| `name`         | Human-readable name                           | `Cosmos Hub`                          |
+| `symbol`       | Native token ticker                           | `ATOM`                                |
+| `decimals`     | Token decimal places                          | `6`                                   |
+| `coinType`     | BIP44 coin type                               | `118`                                 |
+| `rpc`          | Tendermint RPC endpoints (array for failover) | `['https://rpc.cosmos.network', ...]` |
+| `rest`         | REST/LCD API endpoints (array for failover)   | `['https://api.cosmos.network', ...]` |
+| `bech32Prefix` | Address prefix                                | `cosmos`                              |
+| `feeDenom`     | Fee token denomination                        | `uatom`                               |
+| `gasPrice`     | Default gas price                             | `0.025`                               |
+| `features`     | Supported features array                      | See below                             |
 
 ### Features Array
 
@@ -63,6 +73,22 @@ Common features to include:
 - `no-legacy-stdTx` - Uses new transaction format
 - `cosmwasm` - CosmWasm smart contracts (if supported)
 
+### Endpoint Failover
+
+The wallet automatically handles endpoint failover:
+
+- Endpoints are tried in order of preference (first in array = highest priority)
+- Failed endpoints are temporarily marked unhealthy
+- Healthy endpoints are preferred for subsequent requests
+- Include at least 2-3 endpoints for reliability
+
+**Recommended RPC providers:**
+
+- [Polkachu](https://polkachu.com/public_rpc)
+- [Notional](https://notional.ventures/)
+- [Lavender.Five](https://www.lavenderfive.com/)
+- Chain's official endpoints
+
 ## Step 2: Register the Network
 
 Add the new network to the `COSMOS_NETWORKS` array in `src/lib/networks/cosmos.ts`:
@@ -72,7 +98,7 @@ export const COSMOS_NETWORKS: CosmosNetworkConfig[] = [
   BEEZEE_MAINNET,
   OSMOSIS_MAINNET,
   // ... existing networks
-  NEW_CHAIN_MAINNET,  // Add your new chain
+  NEW_CHAIN_MAINNET, // Add your new chain
 ];
 ```
 
@@ -85,7 +111,7 @@ const chainNameMap: Record<string, string> = {
   'beezee-1': 'beezee',
   'osmosis-1': 'osmosis',
   // ... existing mappings
-  'newchain-1': 'newchain',  // Maps to cosmos/chain-registry folder name
+  'newchain-1': 'newchain', // Maps to cosmos/chain-registry folder name
 };
 ```
 
@@ -99,12 +125,12 @@ If the chain is not in the Cosmos Chain Registry, or you want to ensure specific
 const fallbackAssets: Record<string, RegistryAsset[]> = {
   // ... existing assets
   'newchain-1': [
-    { 
-      symbol: 'NEW', 
-      name: 'New Chain', 
-      denom: 'unew', 
+    {
+      symbol: 'NEW',
+      name: 'New Chain',
+      denom: 'unew',
       decimals: 6,
-      coingeckoId: 'newchain'  // Optional, for price data
+      coingeckoId: 'newchain', // Optional, for price data
     },
     // Add IBC tokens if needed
     {
@@ -124,7 +150,7 @@ Add a color for the token in the `tokenColors` map:
 ```typescript
 const tokenColors: Record<string, string> = {
   // ... existing colors
-  NEW: '#3B82F6',  // Use a distinctive hex color
+  NEW: '#3B82F6', // Use a distinctive hex color
 };
 ```
 
