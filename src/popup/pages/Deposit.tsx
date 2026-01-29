@@ -200,26 +200,36 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
       </HStack>
 
       <VStack spacing={4} align="stretch">
-        {/* Network Selection */}
-        <Box>
-          <Text fontSize="sm" color="gray.400" mb={2}>
-            Select Network
-          </Text>
-          <Select
-            value={selectedNetwork}
-            onChange={(e) => setSelectedNetwork(e.target.value)}
-            bg="#141414"
-            borderColor="#2a2a2a"
-            size="sm"
-            _hover={{ borderColor: '#3a3a3a' }}
-          >
-            {supportedNetworks.map((network) => (
-              <option key={network.id} value={network.id} style={{ background: '#141414' }}>
-                {network.name} ({network.symbol})
-              </option>
-            ))}
-          </Select>
-        </Box>
+        {/* Loading State */}
+        {!networkPrefsLoaded ? (
+          <Box textAlign="center" py={8}>
+            <Spinner size="lg" color="teal.400" />
+            <Text fontSize="sm" color="gray.400" mt={2}>
+              Loading network preferences...
+            </Text>
+          </Box>
+        ) : (
+          <>
+            {/* Network Selection */}
+            <Box>
+              <Text fontSize="sm" color="gray.400" mb={2}>
+                Select Network
+              </Text>
+              <Select
+                value={selectedNetwork}
+                onChange={(e) => setSelectedNetwork(e.target.value)}
+                bg="#141414"
+                borderColor="#2a2a2a"
+                size="sm"
+                _hover={{ borderColor: '#3a3a3a' }}
+              >
+                {supportedNetworks.map((network) => (
+                  <option key={network.id} value={network.id} style={{ background: '#141414' }}>
+                    {network.name} ({network.symbol})
+                  </option>
+                ))}
+              </Select>
+            </Box>
 
         {/* Wallet Address Display */}
         <Box>
@@ -287,15 +297,17 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
           </VStack>
         )}
 
-        {/* Footer */}
-        <Box textAlign="center" pt={2}>
-          <Text fontSize="xs" color="gray.500">
-            Powered by{' '}
-            <Link href="https://www.moonpay.com" isExternal color="teal.400">
-              MoonPay
-            </Link>
-          </Text>
-        </Box>
+            {/* Footer */}
+            <Box textAlign="center" pt={2}>
+              <Text fontSize="xs" color="gray.500">
+                Powered by{' '}
+                <Link href="https://www.moonpay.com" isExternal color="teal.400">
+                  MoonPay
+                </Link>
+              </Text>
+            </Box>
+          </>
+        )}
       </VStack>
     </Box>
   );
