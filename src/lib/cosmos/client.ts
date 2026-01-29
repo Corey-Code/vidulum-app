@@ -120,12 +120,18 @@ export class CosmosClient {
     rpcEndpoints: string[]
   ): Promise<{ client: StargateClient; endpoint: string }> {
     const { result: client, endpoint } = await withFailover(rpcEndpoints, async (rpcEndpoint) => {
-      // Don't reuse cached clients for failover - create fresh connections
-      const client = await StargateClient.connect(rpcEndpoint);
-      return client;
+      // Prefer a cached client for this endpoint if available
+      const cachedClient = this.clients.get(rpcEndpoint);
+      if (cachedClient) {
+        return cachedClient;
+      }
+
+      const newClient = await StargateClient.connect(rpcEndpoint);
+      this.clients.set(rpcEndpoint, newClient);
+      return newClient;
     });
 
-    // Cache the successful client
+    // Ensure the successful client is cached
     this.clients.set(endpoint, client);
 
     return { client, endpoint };
