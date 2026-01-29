@@ -4,17 +4,33 @@ This guide explains how to add a new EVM-compatible blockchain to The Extension 
 
 ## Current EVM Support
 
-The wallet currently supports **native EVM tokens only** (ETH, BNB, etc.):
+The wallet has **partial EVM support** - read operations work, but sending is not yet implemented:
 
-| Feature | Status |
-|---------|--------|
-| Native token balance | ✅ Supported |
-| Native token transfers | ✅ Supported |
-| EIP-1559 gas estimation | ✅ Supported |
-| Key derivation (BIP44) | ✅ Supported |
-| ERC-20 tokens | ❌ Not implemented |
-| ERC-721/1155 NFTs | ❌ Not implemented |
-| Contract interactions | ❌ Not implemented |
+| Feature                 | Status             | Notes                               |
+| ----------------------- | ------------------ | ----------------------------------- |
+| Key derivation (BIP44)  | ✅ Supported       | `m/44'/60'/0'/0/index` path         |
+| Address generation      | ✅ Supported       | EIP-55 checksummed addresses        |
+| Native token balance    | ✅ Supported       | Via `eth_getBalance`                |
+| EIP-1559 gas estimation | ✅ Supported       | Via `eth_gasPrice` + block base fee |
+| Native token transfers  | ⏳ Planned         | Transaction signing not implemented |
+| Transaction signing     | ❌ Not implemented | Required for any send operation     |
+| ERC-20 tokens           | ❌ Not implemented | No contract interaction support     |
+| ERC-721/1155 NFTs       | ❌ Not implemented | No contract interaction support     |
+
+### What Works Now
+
+- **View balances** - Native token balances display correctly
+- **Receive tokens** - Addresses are valid and can receive tokens
+- **Network switching** - Multiple EVM networks supported
+
+### What's Missing for Transfers
+
+To enable EVM transfers, the following would need to be implemented:
+
+1. **Transaction building** - RLP encoding of transaction data
+2. **Transaction signing** - ECDSA signing with the derived private key
+3. **Nonce management** - Track and increment transaction nonces
+4. **Gas estimation** - Estimate gas limits for transactions
 
 ## Prerequisites
 
@@ -36,10 +52,11 @@ export const NEWCHAIN_MAINNET: EvmNetworkConfig = {
   type: 'evm',
   enabled: true,
   symbol: 'NEW',
-  decimals: 18,               // Usually 18 for EVM chains
-  coinType: 60,               // Always 60 for EVM (Ethereum derivation)
-  chainId: 12345,             // EVM chain ID
-  rpcUrls: [                  // Multiple URLs for failover (in order of preference)
+  decimals: 18, // Usually 18 for EVM chains
+  coinType: 60, // Always 60 for EVM (Ethereum derivation)
+  chainId: 12345, // EVM chain ID
+  rpcUrls: [
+    // Multiple URLs for failover (in order of preference)
     'https://rpc.newchain.io',
     'https://rpc2.newchain.io',
     'https://rpc.ankr.com/newchain',
@@ -57,15 +74,15 @@ export const NEWCHAIN_MAINNET: EvmNetworkConfig = {
 
 ### Configuration Fields
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| `id` | Unique internal identifier | `ethereum-mainnet` |
-| `name` | Human-readable name | `Ethereum` |
-| `chainId` | EVM chain ID | `1` |
-| `rpcUrls` | JSON-RPC endpoints (array for failover) | `['https://eth.llamarpc.com', ...]` |
-| `symbol` | Native token ticker | `ETH` |
-| `decimals` | Token decimal places | `18` |
-| `coinType` | BIP44 coin type | `60` (always for EVM) |
+| Field      | Description                             | Example                             |
+| ---------- | --------------------------------------- | ----------------------------------- |
+| `id`       | Unique internal identifier              | `ethereum-mainnet`                  |
+| `name`     | Human-readable name                     | `Ethereum`                          |
+| `chainId`  | EVM chain ID                            | `1`                                 |
+| `rpcUrls`  | JSON-RPC endpoints (array for failover) | `['https://eth.llamarpc.com', ...]` |
+| `symbol`   | Native token ticker                     | `ETH`                               |
+| `decimals` | Token decimal places                    | `18`                                |
+| `coinType` | BIP44 coin type                         | `60` (always for EVM)               |
 
 ### Native Currency Object
 
@@ -101,7 +118,7 @@ const evmAssets: Record<string, RegistryAsset[]> = {
     {
       symbol: 'NEW',
       name: 'New Token',
-      denom: 'wei',           // Base unit (always 'wei' for EVM)
+      denom: 'wei', // Base unit (always 'wei' for EVM)
       decimals: 18,
       coingeckoId: 'newtoken', // For price data
     },
@@ -114,40 +131,43 @@ const evmAssets: Record<string, RegistryAsset[]> = {
 ```typescript
 const tokenColors: Record<string, string> = {
   // ... existing colors
-  NEW: '#627EEA',  // Use a distinctive hex color
+  NEW: '#627EEA', // Use a distinctive hex color
 };
 ```
 
 ## Finding EVM Chain IDs
 
 Official resources:
+
 - ChainList: https://chainlist.org/
 - Chainid.network: https://chainid.network/
 
 Common chain IDs:
 
-| Chain | Chain ID |
-|-------|----------|
-| Ethereum | 1 |
-| BNB Smart Chain | 56 |
-| Polygon | 137 |
-| Arbitrum One | 42161 |
-| Optimism | 10 |
-| Avalanche C-Chain | 43114 |
-| Base | 8453 |
-| zkSync Era | 324 |
+| Chain             | Chain ID |
+| ----------------- | -------- |
+| Ethereum          | 1        |
+| BNB Smart Chain   | 56       |
+| Polygon           | 137      |
+| Arbitrum One      | 42161    |
+| Optimism          | 10       |
+| Avalanche C-Chain | 43114    |
+| Base              | 8453     |
+| zkSync Era        | 324      |
 
 ## RPC Providers
 
 ### Public RPC Endpoints
 
 Many chains offer public RPC endpoints. Check:
+
 - Chain's official documentation
 - https://chainlist.org/ (lists public RPCs)
 
 ### RPC Providers
 
 For production use, consider:
+
 - Alchemy (https://www.alchemy.com/)
 - Infura (https://infura.io/)
 - QuickNode (https://www.quicknode.com/)
@@ -160,7 +180,7 @@ If MoonPay supports the chain, add to the mapping in `src/popup/pages/Deposit.ts
 ```typescript
 const MOONPAY_CRYPTO_CODES: Record<string, string> = {
   // ... existing codes
-  'newchain-mainnet': 'new_newchain',  // Check MoonPay docs for correct code
+  'newchain-mainnet': 'new_newchain', // Check MoonPay docs for correct code
 };
 ```
 
@@ -184,6 +204,7 @@ If transactions fail or show wrong network in wallets like MetaMask, verify the 
 ### RPC Connection Errors
 
 Check that:
+
 - RPC URL is accessible
 - RPC supports required methods (eth_getBalance, eth_sendRawTransaction, etc.)
 - Rate limits are not exceeded
@@ -238,12 +259,12 @@ const ERC20_BALANCE_OF = '0x70a08231';
 async getERC20Balance(tokenAddress: string, walletAddress: string): Promise<bigint> {
   // Encode: balanceOf(address)
   const data = ERC20_BALANCE_OF + walletAddress.slice(2).padStart(64, '0');
-  
+
   const result = await this.rpcCall<string>('eth_call', [
     { to: tokenAddress, data },
     'latest'
   ]);
-  
+
   return BigInt(result);
 }
 ```
@@ -267,13 +288,13 @@ The wallet would need to build and sign transactions with contract call data ins
 
 ### Implementation Complexity
 
-| Component | Effort | Notes |
-|-----------|--------|-------|
-| Balance fetching | Low | Simple `eth_call` |
-| Token registry | Medium | Need curated token lists |
-| Transfer UI | Medium | Token selection, approval flows |
-| Transaction signing | High | ABI encoding, gas estimation for contracts |
-| Token approvals | High | ERC-20 approve/allowance pattern |
+| Component           | Effort | Notes                                      |
+| ------------------- | ------ | ------------------------------------------ |
+| Balance fetching    | Low    | Simple `eth_call`                          |
+| Token registry      | Medium | Need curated token lists                   |
+| Transfer UI         | Medium | Token selection, approval flows            |
+| Transaction signing | High   | ABI encoding, gas estimation for contracts |
+| Token approvals     | High   | ERC-20 approve/allowance pattern           |
 
 ### Recommended Approach
 
@@ -291,15 +312,12 @@ export const NEWCHAIN_TESTNET: EvmNetworkConfig = {
   id: 'newchain-testnet',
   name: 'New Chain Testnet',
   type: 'evm',
-  enabled: false,             // Testnets disabled by default
+  enabled: false, // Testnets disabled by default
   symbol: 'tNEW',
   decimals: 18,
   coinType: 60,
-  chainId: 12346,             // Testnet chain ID
-  rpcUrls: [
-    'https://testnet-rpc.newchain.io',
-    'https://testnet.publicnode.com/newchain',
-  ],
+  chainId: 12346, // Testnet chain ID
+  rpcUrls: ['https://testnet-rpc.newchain.io', 'https://testnet.publicnode.com/newchain'],
   nativeCurrency: {
     name: 'Test New Token',
     symbol: 'tNEW',
@@ -315,12 +333,34 @@ export const NEWCHAIN_TESTNET: EvmNetworkConfig = {
 
 The EVM implementation consists of:
 
-| File | Purpose |
-|------|---------|
-| `src/lib/networks/evm.ts` | Network configurations |
-| `src/lib/evm/client.ts` | JSON-RPC client with failover |
-| `src/lib/crypto/evm.ts` | Key derivation and address generation |
-| `src/lib/assets/chainRegistry.ts` | Asset definitions (native tokens only) |
+| File                              | Purpose                                              |
+| --------------------------------- | ---------------------------------------------------- |
+| `src/lib/networks/evm.ts`         | Network configurations                               |
+| `src/lib/evm/client.ts`           | JSON-RPC client (read operations + raw tx broadcast) |
+| `src/lib/crypto/evm.ts`           | Key derivation and address generation                |
+| `src/lib/assets/chainRegistry.ts` | Asset definitions (native tokens only)               |
+
+### EVM Client Capabilities
+
+The `EvmClient` class provides:
+
+```typescript
+// Read operations (implemented)
+getBalance(address); // Get native token balance
+getGasPrice(); // Get current gas price
+getFeeData(); // Get EIP-1559 fee data
+getTransactionCount(address); // Get nonce
+estimateGas(tx); // Estimate gas for transaction
+getTransaction(txHash); // Get transaction by hash
+getTransactionReceipt(txHash); // Get transaction receipt
+getBlockNumber(); // Get current block number
+getChainId(); // Get chain ID
+
+// Write operations (partially implemented)
+sendRawTransaction(signedTx); // Broadcast pre-signed transaction
+```
+
+**Note:** `sendRawTransaction` requires an already-signed transaction. Transaction building and signing are not yet implemented.
 
 ### Key Derivation
 
