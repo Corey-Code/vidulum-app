@@ -581,6 +581,9 @@ async function handleSyncKeyring(payload: any = {}): Promise<MessageResponse> {
 // Storage key for pending approvals
 const PENDING_APPROVALS_KEY = 'pending_approvals';
 
+// Track popup window ID to prevent duplicates
+let popupWindowId: number | null = null;
+
 // Pending approval structure for storage
 interface StoredApproval {
   id: string;
@@ -602,6 +605,63 @@ function generateApprovalId(): string {
   return `approval_${Date.now()}_${++approvalIdCounter}`;
 }
 
+// Open the extension popup when action is required
+async function openExtensionPopup(): Promise<void> {
+  try {
+    if (typeof chrome === 'undefined' || !chrome.action) {
+      return;
+    }
+
+    // Try chrome.action.openPopup() first (Chrome 99+)
+    if (chrome.action.openPopup) {
+      try {
+        await chrome.action.openPopup();
+        return;
+      } catch (error) {
+        // Fallback to window creation if openPopup fails
+        console.debug('openPopup failed, using window fallback:', error);
+      }
+    }
+
+    // Check if popup window already exists and focus it
+    if (popupWindowId !== null) {
+      try {
+        const existingWindow = await chrome.windows.get(popupWindowId);
+        if (existingWindow) {
+          // Window exists, bring it to focus
+          await chrome.windows.update(popupWindowId, { focused: true });
+          return;
+        }
+      } catch {
+        // Window doesn't exist anymore, create a new one
+        popupWindowId = null;
+      }
+    }
+
+    // Create new popup window
+    const window = await chrome.windows.create({
+      url: chrome.runtime.getURL('popup.html'),
+      type: 'popup',
+      width: 375,
+      height: 600,
+      focused: true,
+    });
+
+    if (window.id) {
+      popupWindowId = window.id;
+
+      // Clean up window ID when window is closed
+      chrome.windows.onRemoved.addListener((windowId) => {
+        if (windowId === popupWindowId) {
+          popupWindowId = null;
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Failed to open extension popup:', error);
+  }
+}
+
 // Save pending approval to storage (so popup can access it)
 async function savePendingApproval(approval: StoredApproval): Promise<void> {
   if (typeof chrome !== 'undefined' && chrome.storage?.local) {
@@ -611,6 +671,8 @@ async function savePendingApproval(approval: StoredApproval): Promise<void> {
     await chrome.storage.local.set({ [PENDING_APPROVALS_KEY]: approvals });
     // Update badge to show pending count
     await updateBadge(approvals.length);
+    // Open the extension popup to notify user of pending approval
+    await openExtensionPopup();
   }
 }
 
