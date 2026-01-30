@@ -101,7 +101,8 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
         status: 'info',
         duration: 4000,
       });
-    } catch {
+    } catch (error) {
+      console.error('Failed to save Keplr injection setting:', error);
       toast({
         title: 'Failed to save setting',
         status: 'error',
@@ -125,7 +126,8 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
         status: 'info',
         duration: 4000,
       });
-    } catch {
+    } catch (error) {
+      console.error('Failed to save Metamask injection setting:', error);
       toast({
         title: 'Failed to save setting',
         status: 'error',
@@ -149,7 +151,8 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
         status: 'info',
         duration: 4000,
       });
-    } catch {
+    } catch (error) {
+      console.error('Failed to save Phantom injection setting:', error);
       toast({
         title: 'Failed to save setting',
         status: 'error',
@@ -173,7 +176,8 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
         status: 'info',
         duration: 4000,
       });
-    } catch {
+    } catch (error) {
+      console.error('Failed to save Coinbase injection setting:', error);
       toast({
         title: 'Failed to save setting',
         status: 'error',
@@ -197,7 +201,8 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
         status: 'success',
         duration: 2000,
       });
-    } catch {
+    } catch (error) {
+      console.error('Failed to save feature setting:', error);
       toast({
         title: 'Failed to save setting',
         status: 'error',
@@ -259,6 +264,7 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
 
       setRevealStep('revealed');
     } catch (error) {
+      console.error('Failed to reveal keys:', error);
       toast({
         title: 'Failed to reveal',
         description: 'Invalid password',
