@@ -356,13 +356,17 @@ if (FEATURE_FLAGS.KEPLR_INJECTION) {
   });
 }
 
-// Always expose as window.vidulum for apps that want to specifically use Vidulum
+// Expose as window.vidulum for apps that want to specifically use Vidulum
+// Controlled by VIDULUM_INJECTION feature flag
 if (FEATURE_FLAGS.VIDULUM_INJECTION) {
   Object.defineProperty(window, 'vidulum', {
     value: keplr,
     writable: false,
     configurable: false,
   });
+
+  // Dispatch event to notify dApps that Vidulum wallet is ready
+  window.dispatchEvent(new Event('vidulum_keystorechange'));
 }
 
 // Conditionally expose getOfflineSigner globally (some dApps expect this)
