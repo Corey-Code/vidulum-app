@@ -77,8 +77,9 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
           AUTO_OPEN_POPUP: settings.features?.AUTO_OPEN_POPUP ?? FEATURES.AUTO_OPEN_POPUP,
           TX_TRANSLATION: settings.features?.TX_TRANSLATION ?? FEATURES.TX_TRANSLATION,
         });
-      } catch {
+      } catch (error) {
         // Storage access failed, use default
+        console.error('Failed to load settings from chrome.storage.local', error);
       } finally {
         setLoadingSettings(false);
       }
