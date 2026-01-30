@@ -96,7 +96,7 @@ function calculateSwapOutput(
   }
 
   // Apply fee (fee is taken from input)
-  const feeMultiplier = BigInt(Math.floor((1 - feePercent) * 10000));
+  const feeMultiplier = BigInt(Math.round((1 - feePercent) * 10000));
   const inputWithFee = (inputAmount * feeMultiplier) / 10000n;
 
   // Constant product formula
