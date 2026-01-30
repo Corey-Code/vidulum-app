@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Box, VStack, HStack, Text, Button, Spinner, Badge, Code, Divider } from '@chakra-ui/react';
-import { CheckIcon, CloseIcon } from '@chakra-ui/icons';
+import { CheckIcon, CloseIcon, ViewIcon, ViewOffIcon } from '@chakra-ui/icons';
 import browser from 'webextension-polyfill';
 import { MessageType } from '@/types/messages';
+import { parseTransaction } from '@/lib/cosmos/tx-parser';
 
 interface ApprovalData {
   id: string;
@@ -21,6 +22,7 @@ const Approval: React.FC<ApprovalProps> = ({ approvalId, onComplete }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [responding, setResponding] = useState(false);
+  const [showRawTransaction, setShowRawTransaction] = useState(false);
 
   // Fetch approval details
   useEffect(() => {
@@ -158,28 +160,141 @@ const Approval: React.FC<ApprovalProps> = ({ approvalId, onComplete }) => {
               Review and approve this transaction
             </Text>
 
-            <Box
-              bg="#141414"
-              borderRadius="lg"
-              p={3}
-              borderWidth="1px"
-              borderColor="#2a2a2a"
-              maxH="200px"
-              overflow="auto"
-            >
-              <Text fontSize="xs" color="gray.500" mb={2}>
-                Transaction Details
-              </Text>
-              <Code
-                fontSize="xs"
-                bg="transparent"
-                color="gray.300"
-                whiteSpace="pre-wrap"
-                display="block"
+            {!showRawTransaction ? (
+              /* Parsed Transaction View */
+              <>
+                {(() => {
+                  try {
+                    const parsed = parseTransaction(approval.data?.signDoc);
+                    return (
+                      <>
+                        {/* Messages */}
+                        <VStack spacing={2} align="stretch">
+                          {parsed.messages.map((msg, index) => (
+                            <Box
+                              key={index}
+                              bg="#141414"
+                              borderRadius="lg"
+                              p={3}
+                              borderWidth="1px"
+                              borderColor="#2a2a2a"
+                            >
+                              <HStack justify="space-between" align="start">
+                                <VStack align="start" spacing={1} flex={1}>
+                                  <Badge colorScheme="blue" fontSize="xs">
+                                    {msg.type}
+                                  </Badge>
+                                  <Text fontSize="sm" color="gray.200">
+                                    {msg.summary}
+                                  </Text>
+                                </VStack>
+                              </HStack>
+                            </Box>
+                          ))}
+                        </VStack>
+
+                        {/* Fee */}
+                        <Box
+                          bg="#141414"
+                          borderRadius="lg"
+                          p={3}
+                          borderWidth="1px"
+                          borderColor="#2a2a2a"
+                        >
+                          <HStack justify="space-between">
+                            <Text fontSize="sm" color="gray.400">
+                              Transaction Fee
+                            </Text>
+                            <Text fontSize="sm" color="orange.400" fontWeight="medium">
+                              {parsed.fee}
+                            </Text>
+                          </HStack>
+                        </Box>
+
+                        {/* Memo (if present) */}
+                        {parsed.memo && (
+                          <Box
+                            bg="#141414"
+                            borderRadius="lg"
+                            p={3}
+                            borderWidth="1px"
+                            borderColor="#2a2a2a"
+                          >
+                            <Text fontSize="xs" color="gray.500" mb={1}>
+                              Memo
+                            </Text>
+                            <Text fontSize="sm" color="gray.300" wordBreak="break-word">
+                              {parsed.memo}
+                            </Text>
+                          </Box>
+                        )}
+                      </>
+                    );
+                  } catch (err) {
+                    // Fallback to raw view if parsing fails
+                    return (
+                      <Box
+                        bg="#141414"
+                        borderRadius="lg"
+                        p={3}
+                        borderWidth="1px"
+                        borderColor="#2a2a2a"
+                        maxH="200px"
+                        overflow="auto"
+                      >
+                        <Text fontSize="xs" color="gray.500" mb={2}>
+                          Transaction Details (parsing error)
+                        </Text>
+                        <Code
+                          fontSize="xs"
+                          bg="transparent"
+                          color="gray.300"
+                          whiteSpace="pre-wrap"
+                          display="block"
+                        >
+                          {JSON.stringify(approval.data?.signDoc, null, 2)}
+                        </Code>
+                      </Box>
+                    );
+                  }
+                })()}
+              </>
+            ) : (
+              /* Raw Transaction View */
+              <Box
+                bg="#141414"
+                borderRadius="lg"
+                p={3}
+                borderWidth="1px"
+                borderColor="#2a2a2a"
+                maxH="200px"
+                overflow="auto"
               >
-                {JSON.stringify(approval.data?.signDoc, null, 2)}
-              </Code>
-            </Box>
+                <Text fontSize="xs" color="gray.500" mb={2}>
+                  Transaction Details
+                </Text>
+                <Code
+                  fontSize="xs"
+                  bg="transparent"
+                  color="gray.300"
+                  whiteSpace="pre-wrap"
+                  display="block"
+                >
+                  {JSON.stringify(approval.data?.signDoc, null, 2)}
+                </Code>
+              </Box>
+            )}
+
+            {/* Toggle Button */}
+            <Button
+              size="sm"
+              variant="ghost"
+              color="gray.400"
+              leftIcon={showRawTransaction ? <ViewOffIcon /> : <ViewIcon />}
+              onClick={() => setShowRawTransaction(!showRawTransaction)}
+            >
+              {showRawTransaction ? 'Show Parsed Transaction' : 'Show Raw Transaction'}
+            </Button>
 
             <Box bg="red.900" borderRadius="lg" p={3} borderWidth="1px" borderColor="red.700">
               <Text fontSize="xs" color="red.200">
