@@ -13,6 +13,8 @@ import {
 } from '@cosmjs/amino';
 import { DirectSignResponse } from '@cosmjs/proto-signing';
 import { toBech32, fromBech32 } from '@cosmjs/encoding';
+import { sha256 } from '@noble/hashes/sha256';
+import * as secp256k1 from '@noble/secp256k1';
 import * as bip39 from 'bip39';
 import {
   deriveBitcoinKeyPairFromSeed,
@@ -24,11 +26,7 @@ import {
   UtxoNetworkId,
   UTXO_NETWORKS,
 } from './bitcoin';
-import {
-  deriveEvmKeyPair,
-  getEvmDerivationPath,
-  EvmKeyPair,
-} from './evm';
+import { deriveEvmKeyPair, getEvmDerivationPath, EvmKeyPair } from './evm';
 
 export interface KeyringAccount {
   id: string;
@@ -244,6 +242,55 @@ export class Keyring {
     };
   }
 
+  /**
+   * Verify an arbitrary message signature (ADR-036)
+   * This verifies that the signature was created by the public key in the signature
+   */
+  async verifyArbitrary(
+    signerAddress: string,
+    data: string | Uint8Array,
+    signature: { signature: string; pub_key: { type: string; value: string } }
+  ): Promise<boolean> {
+    try {
+      // Decode the signature and public key from base64
+      const signatureBytes = Buffer.from(signature.signature, 'base64');
+      const pubKeyBytes = Buffer.from(signature.pub_key.value, 'base64');
+
+      // Verify the public key matches the signer address
+      // Derive address from public key and compare
+      const account = this.accounts.find((acc) => acc.address === signerAddress);
+      if (account) {
+        // If we have the account, verify the pubkey matches
+        const storedPubKeyBase64 = Buffer.from(account.pubKey).toString('base64');
+        if (storedPubKeyBase64 !== signature.pub_key.value) {
+          return false;
+        }
+      }
+
+      // Create the same sign doc that was used for signing
+      const dataBytes = typeof data === 'string' ? new TextEncoder().encode(data) : data;
+      const signDoc = makeAminoSignDoc(
+        [],
+        { gas: '0', amount: [] },
+        '',
+        new TextEncoder().encode(dataBytes.toString()).toString(),
+        0,
+        0
+      );
+
+      // Serialize and hash the sign doc (same as what was signed)
+      const signDocBytes = new TextEncoder().encode(JSON.stringify(signDoc));
+      const messageHash = sha256(signDocBytes);
+
+      // Verify the signature using secp256k1
+      const isValid = secp256k1.verify(signatureBytes, messageHash, pubKeyBytes);
+
+      return isValid;
+    } catch (error) {
+      return false;
+    }
+  }
+
   getAccounts(): KeyringAccount[] {
     return [...this.accounts];
   }
@@ -311,7 +358,7 @@ export class Keyring {
 
     // Derive keys
     const seed = await bip39.mnemonicToSeed(this.mnemonic);
-    
+
     let path: string;
     let address: string;
 
@@ -339,9 +386,19 @@ export class Keyring {
       return account;
     } else {
       // Fallback to Bitcoin-style derivation for unknown networks
-      path = getBitcoinDerivationPath(accountIndex, 0, false, addressType === 'transparent' ? 'p2pkh' : addressType, network);
+      path = getBitcoinDerivationPath(
+        accountIndex,
+        0,
+        false,
+        addressType === 'transparent' ? 'p2pkh' : addressType,
+        network
+      );
       const keyPair = await deriveBitcoinKeyPairFromSeed(seed, path);
-      address = getBitcoinAddress(keyPair.publicKey, addressType === 'transparent' ? 'p2pkh' : addressType, network);
+      address = getBitcoinAddress(
+        keyPair.publicKey,
+        addressType === 'transparent' ? 'p2pkh' : addressType,
+        network
+      );
 
       const account: BitcoinKeyringAccount = {
         id: `bitcoin-${networkId}-${accountIndex}`,
@@ -363,7 +420,10 @@ export class Keyring {
   /**
    * Get Bitcoin account for a network and account index
    */
-  getBitcoinAccount(networkId: string, accountIndex: number = 0): BitcoinKeyringAccount | undefined {
+  getBitcoinAccount(
+    networkId: string,
+    accountIndex: number = 0
+  ): BitcoinKeyringAccount | undefined {
     const accountKey = this.getAccountKey(networkId, accountIndex);
     return this.bitcoinAccounts.get(accountKey);
   }
@@ -498,7 +558,7 @@ export class Keyring {
       addressType: 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh';
       accountIndex: number;
     }> = [];
-    
+
     for (const [accountKey, account] of this.bitcoinAccounts) {
       bitcoinAccountsData.push({
         accountKey,
@@ -516,7 +576,7 @@ export class Keyring {
       chainId: number;
       accountIndex: number;
     }> = [];
-    
+
     for (const [accountKey, account] of this.evmAccounts) {
       evmAccountsData.push({
         accountKey,

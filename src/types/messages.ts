@@ -12,6 +12,7 @@ export enum MessageType {
   IMPORT_WALLET = 'importWallet',
   UNLOCK_WALLET = 'unlockWallet',
   LOCK_WALLET = 'lockWallet',
+  SYNC_KEYRING = 'syncKeyring', // Sync serialized keyring from popup to background
   GET_ACCOUNTS = 'getAccounts',
   GET_BALANCE = 'getBalance',
 
@@ -19,6 +20,10 @@ export enum MessageType {
   REQUEST_CONNECTION = 'requestConnection',
   DISCONNECT = 'disconnect',
   GET_CONNECTION_STATUS = 'getConnectionStatus',
+
+  // Approval system
+  GET_APPROVAL = 'getApproval',
+  RESOLVE_APPROVAL = 'resolveApproval',
 }
 
 export interface Message {

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import browser from 'webextension-polyfill';
 import {
   Keyring,
   KeyringAccount,
@@ -12,6 +13,41 @@ import { SUPPORTED_CHAINS } from '@/lib/cosmos/chains';
 import { coin } from '@cosmjs/stargate';
 import { simulateSendFee } from '@/lib/cosmos/fees';
 import { networkRegistry } from '@/lib/networks';
+import { MessageType } from '@/types/messages';
+
+/**
+ * Sync keyring state with background service worker
+ * This ensures dApps can use the wallet when popup has unlocked
+ */
+async function syncKeyringWithBackground(serializedKeyring: string): Promise<void> {
+  try {
+    const response = await browser.runtime.sendMessage({
+      type: MessageType.SYNC_KEYRING,
+      payload: { serializedKeyring },
+    });
+    if (response?.success) {
+      console.log('Background service worker synced');
+    } else {
+      console.warn('Background sync failed:', response?.error);
+    }
+  } catch (error) {
+    console.warn('Failed to sync with background:', error);
+    // Non-fatal - popup can still work, but dApps won't work until background is synced
+  }
+}
+
+/**
+ * Notify background to lock
+ */
+async function lockBackground(): Promise<void> {
+  try {
+    await browser.runtime.sendMessage({
+      type: MessageType.LOCK_WALLET,
+    });
+  } catch (error) {
+    console.warn('Failed to notify background of lock:', error);
+  }
+}
 
 /**
  * Pre-derive all addresses (Cosmos, Bitcoin, EVM) for all accounts
@@ -214,6 +250,10 @@ export const useWalletStore = create<WalletState>((set, get) => ({
           }
 
           console.log('Restored wallet from session, accounts:', uniqueAccounts.length);
+
+          // Sync with background service worker so dApps can use the wallet
+          syncKeyringWithBackground(serializedWallet);
+
           set({
             isInitialized: true,
             isLocked: false,
@@ -375,6 +415,9 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     await EncryptedStorage.setSession(sessionId, serializedWallet);
     await EncryptedStorage.setLastActivity(); // Start activity tracking
 
+    // Sync with background service worker so dApps can use the wallet
+    syncKeyringWithBackground(serializedWallet);
+
     set({
       isLocked: false,
       accounts: uniqueAccounts,
@@ -392,6 +435,9 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     if (keyring) {
       keyring.clear();
     }
+
+    // Notify background to also lock
+    lockBackground();
 
     set({
       isLocked: true,
