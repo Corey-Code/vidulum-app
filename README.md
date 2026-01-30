@@ -33,11 +33,14 @@ Free Open-Source browser extension wallet built by the people, for the people.
 
 ### EVM Chains
 
-| Network   | Network ID       | Symbol | Chain ID | Status  |
-| --------- | ---------------- | ------ | -------- | ------- |
-| Ethereum  | ethereum-mainnet | ETH    | 1        | Enabled |
-| Base      | base-mainnet     | ETH    | 8453     | Enabled |
-| BNB Chain | bnb-mainnet      | BNB    | 56       | Enabled |
+| Network        | Network ID       | Symbol | Chain ID | Status  |
+| -------------- | ---------------- | ------ | -------- | ------- |
+| Ethereum       | eth-mainnet      | ETH    | 1        | Enabled |
+| OP Mainnet     | oeth-mainnet     | ETH    | 10       | Enabled |
+| BNB Chain      | bnb-mainnet      | BNB    | 56       | Enabled |
+| Polygon        | pol-mainnet      | POL    | 137      | Enabled |
+| Base           | base-mainnet     | ETH    | 8453     | Enabled |
+| Arbitrum One   | arb1-mainnet     | ETH    | 42161    | Enabled |
 
 ## Features
 
