@@ -651,60 +651,77 @@ async function updateBadge(count: number): Promise<void> {
 
 // Track if popup window is already open to avoid duplicates
 let popupWindowId: number | null = null;
+// Track pending window creation to prevent race conditions
+let pendingPopupCreation: Promise<void> | null = null;
 
 // Open the extension popup automatically when approval is needed
 async function openExtensionPopup(): Promise<void> {
-  try {
-    // Check if popup window is already open
-    if (popupWindowId !== null) {
-      try {
-        const existingWindow = await chrome.windows.get(popupWindowId);
-        if (existingWindow) {
-          // Focus the existing window
-          await chrome.windows.update(popupWindowId, { focused: true });
-          return;
-        }
-      } catch {
-        // Window doesn't exist anymore
-        popupWindowId = null;
-      }
-    }
+  // If a window creation is already in progress, wait for it to complete
+  if (pendingPopupCreation) {
+    await pendingPopupCreation;
+    return;
+  }
 
-    // Try chrome.action.openPopup first (Chrome 99+, requires user gesture in some contexts)
+  // Check if popup window is already open
+  if (popupWindowId !== null) {
     try {
-      if (typeof chrome !== 'undefined' && chrome.action?.openPopup) {
-        await chrome.action.openPopup();
+      const existingWindow = await chrome.windows.get(popupWindowId);
+      if (existingWindow) {
+        // Focus the existing window
+        await chrome.windows.update(popupWindowId, { focused: true });
         return;
       }
     } catch {
-      // openPopup failed (likely no user gesture), fall back to window.create
+      // Window doesn't exist anymore
+      popupWindowId = null;
     }
-
-    // Fallback: Open as a popup window
-    const popupUrl = chrome.runtime.getURL('popup.html');
-    const newWindow = await chrome.windows.create({
-      url: popupUrl,
-      type: 'popup',
-      width: 400,
-      height: 650,
-      focused: true,
-    });
-
-    if (newWindow.id) {
-      popupWindowId = newWindow.id;
-
-      // Listen for window close to reset the ID
-      chrome.windows.onRemoved.addListener(function onRemoved(windowId) {
-        if (windowId === popupWindowId) {
-          popupWindowId = null;
-          chrome.windows.onRemoved.removeListener(onRemoved);
-        }
-      });
-    }
-  } catch (error) {
-    // Fallback failed - user will need to click the extension icon
-    console.error('Failed to open popup:', error);
   }
+
+  // Set the promise immediately to prevent race conditions
+  pendingPopupCreation = (async () => {
+    try {
+      // Try chrome.action.openPopup first (Chrome 99+, requires user gesture in some contexts)
+      try {
+        if (typeof chrome !== 'undefined' && chrome.action?.openPopup) {
+          await chrome.action.openPopup();
+          return;
+        }
+      } catch {
+        // openPopup failed (likely no user gesture), fall back to window.create
+      }
+
+      // Fallback: Open as a popup window
+      const popupUrl = chrome.runtime.getURL('popup.html');
+      const newWindow = await chrome.windows.create({
+        url: popupUrl,
+        type: 'popup',
+        width: 400,
+        height: 650,
+        focused: true,
+      });
+
+      if (newWindow.id) {
+        popupWindowId = newWindow.id;
+
+        // Listen for window close to reset the ID
+        chrome.windows.onRemoved.addListener(function onRemoved(windowId) {
+          if (windowId === popupWindowId) {
+            popupWindowId = null;
+            chrome.windows.onRemoved.removeListener(onRemoved);
+          }
+        });
+      }
+    } catch (error) {
+      // Fallback failed - user will need to click the extension icon
+      console.error('Failed to open popup:', error);
+    } finally {
+      // Clear the pending creation flag
+      pendingPopupCreation = null;
+    }
+  })();
+
+  // Wait for the window creation to complete
+  await pendingPopupCreation;
 }
 
 // Get pending approval by ID (called by popup to get approval details)
