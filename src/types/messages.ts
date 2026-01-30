@@ -27,6 +27,14 @@ export enum MessageType {
   ETH_ESTIMATE_GAS = 'eth_estimateGas',
   ETH_GAS_PRICE = 'eth_gasPrice',
 
+  // Solana/Phantom API
+  SOL_CONNECT = 'sol_connect',
+  SOL_DISCONNECT = 'sol_disconnect',
+  SOL_SIGN_TRANSACTION = 'sol_signTransaction',
+  SOL_SIGN_ALL_TRANSACTIONS = 'sol_signAllTransactions',
+  SOL_SIGN_MESSAGE = 'sol_signMessage',
+  SOL_SIGN_AND_SEND_TRANSACTION = 'sol_signAndSendTransaction',
+
   // Wallet operations
   CREATE_WALLET = 'createWallet',
   IMPORT_WALLET = 'importWallet',

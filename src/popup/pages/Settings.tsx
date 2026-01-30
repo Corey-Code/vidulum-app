@@ -48,7 +48,7 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   const [enablePhantomInjection, setEnablePhantomInjection] = useState(false);
   const [enableCoinbaseInjection, setEnableCoinbaseInjection] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(true);
-  
+
   // Feature flags state
   const [featureSettings, setFeatureSettings] = useState<FeatureSettings>({
     VIDULUM_INJECTION: FEATURES.VIDULUM_INJECTION,
@@ -69,7 +69,7 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
         setEnableMetamaskInjection(settings.enableMetamaskInjection ?? false);
         setEnablePhantomInjection(settings.enablePhantomInjection ?? false);
         setEnableCoinbaseInjection(settings.enableCoinbaseInjection ?? false);
-        
+
         // Load feature settings
         setFeatureSettings({
           VIDULUM_INJECTION: settings.features?.VIDULUM_INJECTION ?? FEATURES.VIDULUM_INJECTION,

@@ -57,7 +57,7 @@ export async function isFeatureEnabledWithSettings(
     const result = await chrome.storage.local.get('vidulum_settings');
     const settings = result.vidulum_settings || {};
     const featureSettings = settings.features || {};
-    
+
     // Return user setting if exists, otherwise default
     return featureSettings[feature] ?? FEATURES[feature] ?? false;
   } catch {

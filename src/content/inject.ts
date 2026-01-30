@@ -35,7 +35,7 @@ async function injectScript() {
       AUTO_OPEN_POPUP: true, // Default
       TX_TRANSLATION: true, // Default
     };
-    
+
     try {
       const result = await browser.storage.local.get(SETTINGS_KEY);
       const settings = result[SETTINGS_KEY] || {};
@@ -43,7 +43,7 @@ async function injectScript() {
       enableMetamaskInjection = settings.enableMetamaskInjection ?? false;
       enablePhantomInjection = settings.enablePhantomInjection ?? false;
       enableCoinbaseInjection = settings.enableCoinbaseInjection ?? false;
-      
+
       // Load feature settings
       if (settings.features) {
         features = {
@@ -103,7 +103,7 @@ const methodToMessageType: Record<string, MessageType> = {
   disconnect: MessageType.DISCONNECT,
   suggestChain: MessageType.REQUEST_CONNECTION,
   getChainInfos: MessageType.GET_CONNECTION_STATUS,
-  
+
   // EVM/Ethereum methods
   eth_requestAccounts: MessageType.ETH_REQUEST_ACCOUNTS,
   eth_accounts: MessageType.ETH_ACCOUNTS,
@@ -123,7 +123,7 @@ const methodToMessageType: Record<string, MessageType> = {
   eth_call: MessageType.ETH_CALL,
   eth_estimateGas: MessageType.ETH_ESTIMATE_GAS,
   eth_gasPrice: MessageType.ETH_GAS_PRICE,
-  
+
   // Solana/Phantom methods
   sol_connect: MessageType.SOL_CONNECT,
   sol_disconnect: MessageType.SOL_DISCONNECT,

@@ -463,11 +463,11 @@ if (FEATURES.METAMASK_INJECTION) {
     readonly isMetaMask = true;
     readonly isVidulum = true;
     readonly _vidulum = true;
-    
+
     // Metamask chainId format (hex string)
     chainId: string | null = null;
     selectedAddress: string | null = null;
-    
+
     // Event listeners
     private eventListeners: Map<string, Set<Function>> = new Map();
 
@@ -573,7 +573,10 @@ if (FEATURES.METAMASK_INJECTION) {
     }
 
     // Legacy send methods for older dApps
-    send(methodOrPayload: string | { method: string; params?: unknown[] }, paramsOrCallback?: unknown[] | Function): unknown {
+    send(
+      methodOrPayload: string | { method: string; params?: unknown[] },
+      paramsOrCallback?: unknown[] | Function
+    ): unknown {
       // Handle different send signatures
       if (typeof methodOrPayload === 'string') {
         // send(method, params) - synchronous (deprecated)
@@ -591,7 +594,10 @@ if (FEATURES.METAMASK_INJECTION) {
     }
 
     // Legacy sendAsync for older dApps
-    sendAsync(payload: { method: string; params?: unknown[] }, callback: (error: Error | null, response?: { result: unknown }) => void): void {
+    sendAsync(
+      payload: { method: string; params?: unknown[] },
+      callback: (error: Error | null, response?: { result: unknown }) => void
+    ): void {
       this.request(payload)
         .then((result) => callback(null, { result }))
         .catch((error) => callback(error));
@@ -663,10 +669,10 @@ if (FEATURES.PHANTOM_INJECTION) {
     readonly isPhantom = true;
     readonly isVidulum = true;
     readonly _vidulum = true;
-    
+
     publicKey: { toBase58: () => string } | null = null;
     isConnected = false;
-    
+
     // Event listeners
     private eventListeners: Map<string, Set<Function>> = new Map();
 
@@ -675,20 +681,22 @@ if (FEATURES.PHANTOM_INJECTION) {
     }
 
     // Connect to wallet
-    async connect(options?: { onlyIfTrusted?: boolean }): Promise<{ publicKey: { toBase58: () => string } }> {
+    async connect(options?: {
+      onlyIfTrusted?: boolean;
+    }): Promise<{ publicKey: { toBase58: () => string } }> {
       try {
         if (options?.onlyIfTrusted && !this.isConnected) {
           throw new Error('User not trusted');
         }
 
-        const result = await sendRequest('sol_connect', {}) as { publicKey: string };
-        
+        const result = (await sendRequest('sol_connect', {})) as { publicKey: string };
+
         this.publicKey = {
           toBase58: () => result.publicKey,
         };
         this.isConnected = true;
         this.emit('connect', this.publicKey);
-        
+
         return { publicKey: this.publicKey };
       } catch (error) {
         throw new Error('User rejected the request');
@@ -720,15 +728,18 @@ if (FEATURES.PHANTOM_INJECTION) {
     }
 
     // Sign a message
-    async signMessage(message: Uint8Array, display?: string): Promise<{ signature: Uint8Array; publicKey: { toBase58: () => string } }> {
+    async signMessage(
+      message: Uint8Array,
+      display?: string
+    ): Promise<{ signature: Uint8Array; publicKey: { toBase58: () => string } }> {
       if (!this.isConnected) {
         throw new Error('Wallet not connected');
       }
-      const result = await sendRequest('sol_signMessage', { 
+      const result = (await sendRequest('sol_signMessage', {
         message: Array.from(message),
         display,
-      }) as { signature: number[]; publicKey: string };
-      
+      })) as { signature: number[]; publicKey: string };
+
       return {
         signature: new Uint8Array(result.signature),
         publicKey: {
@@ -738,11 +749,16 @@ if (FEATURES.PHANTOM_INJECTION) {
     }
 
     // Sign and send transaction
-    async signAndSendTransaction(transaction: unknown, options?: unknown): Promise<{ signature: string }> {
+    async signAndSendTransaction(
+      transaction: unknown,
+      options?: unknown
+    ): Promise<{ signature: string }> {
       if (!this.isConnected) {
         throw new Error('Wallet not connected');
       }
-      return sendRequest('sol_signAndSendTransaction', { transaction, options }) as Promise<{ signature: string }>;
+      return sendRequest('sol_signAndSendTransaction', { transaction, options }) as Promise<{
+        signature: string;
+      }>;
     }
 
     // Event emitter methods
@@ -789,7 +805,10 @@ if (FEATURES.PHANTOM_INJECTION) {
         case 'signMessage':
           return this.signMessage((params as any)?.message, (params as any)?.display);
         case 'signAndSendTransaction':
-          return this.signAndSendTransaction((params as any)?.transaction, (params as any)?.options);
+          return this.signAndSendTransaction(
+            (params as any)?.transaction,
+            (params as any)?.options
+          );
         default:
           throw new Error(`Method ${method} not supported`);
       }
@@ -828,13 +847,13 @@ if (FEATURES.COINBASE_INJECTION) {
     readonly isCoinbaseWallet = true;
     readonly isVidulum = true;
     readonly _vidulum = true;
-    
+
     // Also support Metamask compatibility
     readonly isMetaMask = false;
-    
+
     chainId: string | null = null;
     selectedAddress: string | null = null;
-    
+
     // Event listeners
     private eventListeners: Map<string, Set<Function>> = new Map();
 
@@ -931,7 +950,10 @@ if (FEATURES.COINBASE_INJECTION) {
     }
 
     // Legacy send methods
-    send(methodOrPayload: string | { method: string; params?: unknown[] }, paramsOrCallback?: unknown[] | Function): unknown {
+    send(
+      methodOrPayload: string | { method: string; params?: unknown[] },
+      paramsOrCallback?: unknown[] | Function
+    ): unknown {
       if (typeof methodOrPayload === 'string') {
         return this.request({ method: methodOrPayload, params: paramsOrCallback as unknown[] });
       } else if (typeof paramsOrCallback === 'function') {
@@ -944,7 +966,10 @@ if (FEATURES.COINBASE_INJECTION) {
       }
     }
 
-    sendAsync(payload: { method: string; params?: unknown[] }, callback: (error: Error | null, response?: { result: unknown }) => void): void {
+    sendAsync(
+      payload: { method: string; params?: unknown[] },
+      callback: (error: Error | null, response?: { result: unknown }) => void
+    ): void {
       this.request(payload)
         .then((result) => callback(null, { result }))
         .catch((error) => callback(error));
