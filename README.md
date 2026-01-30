@@ -19,7 +19,7 @@ Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/
 | AtomOne    | atomone-1   | ATONE  | Enabled |
 | Cosmos Hub | cosmoshub-4 | ATOM   | Enabled |
 
-[View full list of Cosmos chains](https://github.com/cosmos/chain-registry/tree/master/_IBC)
+[View full list of Cosmos chains](https://github.com/cosmos/chain-registry)
 
 ### UTXO Chains (Bitcoin-like)
 
