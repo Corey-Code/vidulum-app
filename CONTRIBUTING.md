@@ -148,7 +148,7 @@ This project uses ESLint and Prettier to maintain consistent code style.
 ### Automatic Formatting
 
 - Code is automatically formatted using Prettier
-- ESLint checks are enforced in the CI pipeline
+- ESLint checks should be run locally before submitting pull requests
 
 ### Guidelines
 
