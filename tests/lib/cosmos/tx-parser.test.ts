@@ -374,6 +374,48 @@ describe('Transaction Parser', () => {
 
       expect(result.messages[0].summary).toContain('VDL');
     });
+
+    it('should handle null signDoc gracefully', () => {
+      const result = parseTransaction(null);
+
+      expect(result.messages).toHaveLength(0);
+      expect(result.fee).toBe('Unknown');
+      expect(result.memo).toBe('');
+    });
+
+    it('should handle undefined signDoc gracefully', () => {
+      const result = parseTransaction(undefined);
+
+      expect(result.messages).toHaveLength(0);
+      expect(result.fee).toBe('Unknown');
+      expect(result.memo).toBe('');
+    });
+
+    it('should handle invalid amount strings gracefully', () => {
+      const signDoc = {
+        msgs: [
+          {
+            type: 'cosmos-sdk/MsgSend',
+            value: {
+              from_address: 'bze1abc123def456',
+              to_address: 'bze1xyz789ghi012',
+              amount: [{ denom: 'ubze', amount: '' }],
+            },
+          },
+        ],
+        fee: {
+          amount: [{ denom: 'ubze', amount: 'invalid' }],
+          gas: '200000',
+        },
+        memo: '',
+      };
+
+      const result = parseTransaction(signDoc);
+
+      expect(result.messages).toHaveLength(1);
+      expect(result.messages[0].summary).toContain('0');
+      expect(result.fee).toContain('0');
+    });
   });
 
   describe('getTransactionSummary', () => {

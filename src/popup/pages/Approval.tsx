@@ -165,7 +165,12 @@ const Approval: React.FC<ApprovalProps> = ({ approvalId, onComplete }) => {
               <>
                 {(() => {
                   try {
-                    const parsed = parseTransaction(approval.data?.signDoc);
+                    // Check if signDoc exists before parsing
+                    if (!approval.data?.signDoc) {
+                      throw new Error('No transaction data');
+                    }
+                    
+                    const parsed = parseTransaction(approval.data.signDoc);
                     return (
                       <>
                         {/* Messages */}

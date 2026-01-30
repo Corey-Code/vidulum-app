@@ -17,19 +17,32 @@ interface ParsedMessage {
 
 /**
  * Format token amount with proper decimals
+ * @param amount - String representation of the token amount in base units (e.g., micro-units)
+ * @param decimals - Number of decimal places to convert (default: 6)
+ * @returns Formatted amount string with decimals
+ * @throws Error if amount string is invalid or not a number
  */
 function formatAmount(amount: string, decimals: number = 6): string {
-  const num = BigInt(amount);
-  const divisor = BigInt(10 ** decimals);
-  const whole = num / divisor;
-  const fraction = num % divisor;
-  
-  if (fraction === BigInt(0)) {
-    return whole.toString();
+  // Validate input
+  if (!amount || amount.trim() === '' || !/^\d+$/.test(amount.trim())) {
+    return '0';
   }
   
-  const fractionStr = fraction.toString().padStart(decimals, '0').replace(/0+$/, '');
-  return `${whole}.${fractionStr}`;
+  try {
+    const num = BigInt(amount);
+    const divisor = BigInt(10 ** decimals);
+    const whole = num / divisor;
+    const fraction = num % divisor;
+    
+    if (fraction === BigInt(0)) {
+      return whole.toString();
+    }
+    
+    const fractionStr = fraction.toString().padStart(decimals, '0').replace(/0+$/, '');
+    return `${whole}.${fractionStr}`;
+  } catch (error) {
+    return '0';
+  }
 }
 
 /**
@@ -76,10 +89,12 @@ function parseMsgSend(msg: any): ParsedMessage {
   const { from_address, to_address, amount } = msg.value || msg;
   const coins = Array.isArray(amount) ? amount : [amount];
   
+  const recipient = to_address ? shortenAddress(to_address) : 'unknown address';
+  
   if (coins.length === 0) {
     return {
       type: 'MsgSend',
-      summary: `Sending to ${shortenAddress(to_address)}`,
+      summary: `Sending to ${recipient}`,
     };
   }
   
@@ -91,7 +106,7 @@ function parseMsgSend(msg: any): ParsedMessage {
   
   return {
     type: 'MsgSend',
-    summary: `Sending ${formattedAmounts} to ${shortenAddress(to_address)}`,
+    summary: `Sending ${formattedAmounts} to ${recipient}`,
     details: { from: from_address, to: to_address, amount: coins },
   };
 }
@@ -192,21 +207,22 @@ function parseMsgWithdrawDelegatorReward(msg: any): ParsedMessage {
 /**
  * Parse MsgVote - Governance vote
  */
+// Vote options constant
+const VOTE_OPTIONS: Record<string, string> = {
+  '1': 'Yes',
+  '2': 'Abstain',
+  '3': 'No',
+  '4': 'No with Veto',
+  'VOTE_OPTION_YES': 'Yes',
+  'VOTE_OPTION_ABSTAIN': 'Abstain',
+  'VOTE_OPTION_NO': 'No',
+  'VOTE_OPTION_NO_WITH_VETO': 'No with Veto',
+};
+
 function parseMsgVote(msg: any): ParsedMessage {
   const { proposal_id, voter, option } = msg.value || msg;
   
-  const voteOptions: Record<string, string> = {
-    '1': 'Yes',
-    '2': 'Abstain',
-    '3': 'No',
-    '4': 'No with Veto',
-    'VOTE_OPTION_YES': 'Yes',
-    'VOTE_OPTION_ABSTAIN': 'Abstain',
-    'VOTE_OPTION_NO': 'No',
-    'VOTE_OPTION_NO_WITH_VETO': 'No with Veto',
-  };
-  
-  const voteText = voteOptions[option] || option;
+  const voteText = VOTE_OPTIONS[option] || option;
   
   return {
     type: 'MsgVote',
@@ -238,27 +254,16 @@ function parseMsgTransfer(msg: any): ParsedMessage {
 function parseMessage(msg: any): ParsedMessage {
   // Handle both Amino and Direct sign formats
   const msgType = msg.type || msg.typeUrl || '';
-  const typeUrl = msgType.replace(/^cosmos\./, '/cosmos.').replace(/^\//, '');
   
-  // Extract the base message type
-  let baseType = '';
-  if (typeUrl.includes('MsgSend')) {
-    baseType = 'MsgSend';
-  } else if (typeUrl.includes('MsgMultiSwap')) {
-    baseType = 'MsgMultiSwap';
-  } else if (typeUrl.includes('MsgBeginRedelegate')) {
-    baseType = 'MsgBeginRedelegate';
-  } else if (typeUrl.includes('MsgUndelegate')) {
-    baseType = 'MsgUndelegate';
-  } else if (typeUrl.includes('MsgDelegate')) {
-    baseType = 'MsgDelegate';
-  } else if (typeUrl.includes('MsgWithdrawDelegatorReward')) {
-    baseType = 'MsgWithdrawDelegatorReward';
-  } else if (typeUrl.includes('MsgVote')) {
-    baseType = 'MsgVote';
-  } else if (typeUrl.includes('MsgTransfer')) {
-    baseType = 'MsgTransfer';
+  // Normalize the type URL - remove leading slash and handle both formats
+  let normalizedType = msgType;
+  if (normalizedType.startsWith('/')) {
+    normalizedType = normalizedType.slice(1);
   }
+  
+  // Extract the message type name (last part after the last '.' or '/')
+  const parts = normalizedType.split(/[./]/);
+  const baseType = parts[parts.length - 1];
   
   // Parse based on type
   switch (baseType) {
@@ -295,20 +300,29 @@ export function parseTransaction(signDoc: any): {
   fee: string;
   memo: string;
 } {
+  // Handle null or undefined signDoc
+  if (!signDoc) {
+    return {
+      messages: [],
+      fee: 'Unknown',
+      memo: '',
+    };
+  }
+  
   const msgs = signDoc.msgs || signDoc.messages || [];
   const parsedMessages = msgs.map(parseMessage);
   
   // Parse fee
   let feeText = 'Unknown';
   const fee = signDoc.fee;
-  if (fee && fee.amount && Array.isArray(fee.amount)) {
+  if (fee && fee.amount && Array.isArray(fee.amount) && fee.amount.length > 0) {
     const feeCoins = fee.amount.map((coin: Coin) => {
       const amt = formatAmount(coin.amount);
       const denom = formatDenom(coin.denom);
       return `${amt} ${denom}`;
     }).join(', ');
-    feeText = feeCoins || 'None';
-  } else if (fee && fee.amount && fee.amount.length === 0) {
+    feeText = feeCoins;
+  } else if (fee && fee.amount && Array.isArray(fee.amount) && fee.amount.length === 0) {
     feeText = 'None';
   }
   
