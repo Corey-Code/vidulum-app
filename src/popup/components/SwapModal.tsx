@@ -296,6 +296,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
         );
 
         // Find best route using router (max 3 hops)
+        // Note: LiquidityPool and RouterPool interfaces are identical
         const route = findBestRoute(
           pools as RouterPool[],
           fromToken.denom,
@@ -815,15 +816,13 @@ const SwapModal: React.FC<SwapModalProps> = ({
               {fromAmount && toAmount && currentRoute && toToken && (
                 <Box p={3} bg="#141414" borderRadius="xl">
                   <VStack spacing={2} align="stretch" fontSize="xs">
-                    {/* Route Visualization */}
-                    {hopCount > 1 && (
-                      <HStack justify="space-between">
-                        <Text color="gray.500">Route ({hopCount} hops)</Text>
-                        <Text fontSize="2xs" color="cyan.400">
-                          {routePath}
-                        </Text>
-                      </HStack>
-                    )}
+                    {/* Route Visualization - show for all routes */}
+                    <HStack justify="space-between">
+                      <Text color="gray.500">Route ({hopCount} {hopCount === 1 ? 'hop' : 'hops'})</Text>
+                      <Text fontSize="2xs" color="cyan.400">
+                        {routePath}
+                      </Text>
+                    </HStack>
                     <HStack justify="space-between">
                       <Text color="gray.500">Rate</Text>
                       <Text>
@@ -881,15 +880,13 @@ const SwapModal: React.FC<SwapModalProps> = ({
 
               <Box p={3} bg="#141414" borderRadius="xl">
                 <VStack spacing={2} align="stretch" fontSize="xs">
-                  {/* Route Visualization in confirmation */}
-                  {hopCount > 1 && (
-                    <HStack justify="space-between">
-                      <Text color="gray.500">Route ({hopCount} hops)</Text>
-                      <Text fontSize="2xs" color="cyan.400">
-                        {routePath}
-                      </Text>
-                    </HStack>
-                  )}
+                  {/* Route Visualization in confirmation - show for all routes */}
+                  <HStack justify="space-between">
+                    <Text color="gray.500">Route ({hopCount} {hopCount === 1 ? 'hop' : 'hops'})</Text>
+                    <Text fontSize="2xs" color="cyan.400">
+                      {routePath}
+                    </Text>
+                  </HStack>
                   <HStack justify="space-between">
                     <Text color="gray.500">Rate</Text>
                     <Text>

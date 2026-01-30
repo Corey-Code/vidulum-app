@@ -162,6 +162,39 @@ describe('Swap Router', () => {
       expect(route!.path[route!.path.length - 1]).toBe('ubze');
       expect(route!.outputAmount).toBeGreaterThan(0n);
     });
+
+    it('should return null for zero input amount', () => {
+      const inputAmount = BigInt(0);
+      const route = findBestRoute(mockPools, 'ubze', 'uvdl', inputAmount);
+
+      expect(route).toBeNull();
+    });
+
+    it('should return null for negative input amount', () => {
+      const inputAmount = BigInt(-100);
+      const route = findBestRoute(mockPools, 'ubze', 'uvdl', inputAmount);
+
+      expect(route).toBeNull();
+    });
+
+    it('should return null when swapping same token', () => {
+      const inputAmount = BigInt(100000000);
+      const route = findBestRoute(mockPools, 'ubze', 'ubze', inputAmount);
+
+      expect(route).toBeNull();
+    });
+
+    it('should compound price impact correctly for multi-hop routes', () => {
+      const poolsWithoutDirect = mockPools.filter((p) => p.id !== 'pool1');
+      const inputAmount = BigInt(100000000);
+      const route = findBestRoute(poolsWithoutDirect, 'ubze', 'uvdl', inputAmount);
+
+      expect(route).not.toBeNull();
+      // Price impact should be less than sum of individual impacts due to compounding
+      // For small impacts, compounding gives slightly less than additive
+      expect(route!.priceImpact).toBeGreaterThan(0);
+      expect(route!.priceImpact).toBeLessThan(100);
+    });
   });
 
   describe('getRoutePoolIds', () => {

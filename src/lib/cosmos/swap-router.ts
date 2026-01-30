@@ -180,7 +180,7 @@ function calculateRouteOutput(
 } {
   let currentAmount = inputAmount;
   let totalFee = 0;
-  let totalPriceImpact = 0;
+  let compoundedPriceImpact = 1; // Start at 1 for multiplicative compounding
 
   for (let i = 0; i < route.pools.length; i++) {
     const pool = route.pools[i];
@@ -215,12 +215,19 @@ function calculateRouteOutput(
       outputReserve
     );
 
-    // Accumulate fees and price impact
+    // Accumulate fees additively
     totalFee += feePercent;
-    totalPriceImpact += hopPriceImpact;
+    
+    // Compound price impacts multiplicatively: (1 - impact1) * (1 - impact2) * ...
+    // Then convert back to percentage impact
+    compoundedPriceImpact *= (1 - hopPriceImpact / 100);
 
     currentAmount = outputAmount;
   }
+
+  // Convert compounded impact back to percentage
+  // Final impact = 1 - (1 - impact1) * (1 - impact2) * ...
+  const totalPriceImpact = (1 - compoundedPriceImpact) * 100;
 
   return {
     outputAmount: currentAmount,
@@ -232,6 +239,11 @@ function calculateRouteOutput(
 /**
  * Find the best route considering output amount and fees
  * Returns null if no route is found
+ * @param pools Array of liquidity pools to search
+ * @param inputDenom Input token denomination
+ * @param outputDenom Output token denomination
+ * @param inputAmount Amount of input token (must be positive)
+ * @param maxHops Maximum number of pool hops allowed (default: 3, max limit for gas efficiency)
  */
 export function findBestRoute(
   pools: LiquidityPool[],
@@ -240,6 +252,16 @@ export function findBestRoute(
   inputAmount: bigint,
   maxHops: number = 3
 ): SwapRoute | null {
+  // Validate input
+  if (inputAmount <= 0n) {
+    return null;
+  }
+
+  // Don't swap same token
+  if (inputDenom === outputDenom) {
+    return null;
+  }
+
   // Build graph
   const graph = buildPoolGraph(pools);
 
