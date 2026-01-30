@@ -68,9 +68,92 @@ function formatDenom(denom: string): string {
  * Format an amount with decimals
  */
 export function formatAmount(amount: string, decimals: number): string {
-  const value = parseInt(amount) / Math.pow(10, decimals);
-  // Remove trailing zeros
-  return value.toFixed(6).replace(/\.?0+$/, '');
+  // Work in string space to avoid precision loss for very large amounts
+  let digits = amount.replace(/^0+/, '');
+
+  if (digits === '') {
+    return '0';
+  }
+
+  if (decimals <= 0) {
+    // No decimal places; just return the integer part
+    return digits;
+  }
+
+  const len = digits.length;
+  let intPart: string;
+  let fracPart: string;
+
+  if (len <= decimals) {
+    intPart = '0';
+    fracPart = digits.padStart(decimals, '0');
+  } else {
+    intPart = digits.slice(0, len - decimals);
+    fracPart = digits.slice(len - decimals);
+  }
+
+  // We want up to 6 decimal places, with rounding like toFixed(6)
+  if (fracPart.length > 6) {
+    const toKeep = fracPart.slice(0, 6);
+    const roundingDigit = fracPart.charAt(6);
+
+    if (roundingDigit >= '5') {
+      // Round up the kept fractional part
+      let carry = 1;
+      const fracChars = toKeep.split('');
+
+      for (let i = fracChars.length - 1; i >= 0; i--) {
+        const sum = (fracChars[i].charCodeAt(0) - 48) + carry;
+        if (sum >= 10) {
+          fracChars[i] = '0';
+          carry = 1;
+        } else {
+          fracChars[i] = String(sum);
+          carry = 0;
+          break;
+        }
+      }
+
+      let roundedFrac = fracChars.join('');
+
+      if (carry === 1) {
+        // Fractional part overflowed (e.g., 0.999999 -> 1.000000)
+        roundedFrac = '000000';
+        // Increment integer part
+        let intChars = intPart.split('');
+        carry = 1;
+        for (let i = intChars.length - 1; i >= 0; i--) {
+          const sum = (intChars[i].charCodeAt(0) - 48) + carry;
+          if (sum >= 10) {
+            intChars[i] = '0';
+            carry = 1;
+          } else {
+            intChars[i] = String(sum);
+            carry = 0;
+            break;
+          }
+        }
+        if (carry === 1) {
+          intChars.unshift('1');
+        }
+        intPart = intChars.join('');
+      }
+
+      fracPart = roundedFrac;
+    } else {
+    fracPart = toKeep;
+    }
+  }
+
+  // If fractional part is shorter than 6 digits, keep as is (no extra padding),
+  // then trim trailing zeros
+  fracPart = fracPart.replace(/0+$/, '');
+
+  if (fracPart === '') {
+    return intPart;
+  }
+
+  return `${intPart}.${fracPart}`;
 }
 
 /**
