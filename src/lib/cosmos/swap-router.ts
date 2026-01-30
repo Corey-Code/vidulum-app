@@ -150,7 +150,24 @@ function findAllRoutes(
     },
   ];
 
+  // Maximum iterations to prevent infinite loops in complex graphs
+  const MAX_ITERATIONS = 10000;
+  let iterations = 0;
+
+  // Maximum routes to find before early termination
+  const MAX_ROUTES = 100;
+
   while (queue.length > 0) {
+    // Check iteration limit to prevent hanging on complex graphs
+    if (++iterations > MAX_ITERATIONS) {
+      console.warn(`BFS exceeded ${MAX_ITERATIONS} iterations, stopping search`);
+      break;
+    }
+
+    // Early termination if we've found enough routes
+    if (routes.length >= MAX_ROUTES) {
+      break;
+    }
     const state = queue.shift()!;
 
     // Skip if we've exceeded max hops
