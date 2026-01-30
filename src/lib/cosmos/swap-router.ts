@@ -150,7 +150,25 @@ function findAllRoutes(
     },
   ];
 
+  // Maximum iterations to prevent infinite loops in complex graphs
+  // With maxHops=3 and typical DEX pool counts (10-100 pools), normal operation uses ~100-1000 iterations
+  // 10,000 iterations provides a safe upper bound for even the most complex graphs
+  const MAX_ITERATIONS = 10000;
+  let iterations = 0;
+
+  // Maximum routes to find before early termination
+  // 100 routes provides sufficient options for finding the optimal route while preventing excessive computation
+  // Most users will see 1-10 viable routes in typical scenarios
+  const MAX_ROUTES = 100;
+
   while (queue.length > 0) {
+    // Check iteration limit to prevent hanging on complex graphs
+    if (iterations >= MAX_ITERATIONS) {
+      console.warn(`BFS exceeded ${MAX_ITERATIONS} iterations, stopping search`);
+      break;
+    }
+    iterations++;
+
     const state = queue.shift()!;
 
     // Skip if we've exceeded max hops
@@ -199,6 +217,11 @@ function findAllRoutes(
           totalFee: newTotalFee,
           hops: newPools.length,
         });
+
+        // Early termination if we've found enough routes
+        if (routes.length >= MAX_ROUTES) {
+          return routes;
+        }
       } else {
         // Continue exploring
         queue.push({
@@ -310,7 +333,18 @@ export function getReachableTokens(
 
   const queue: State[] = [{ denom: fromDenom, hops: 0 }];
 
+  // Maximum iterations to prevent infinite loops in complex graphs
+  const MAX_ITERATIONS = 10000;
+  let iterations = 0;
+
   while (queue.length > 0) {
+    // Check iteration limit to prevent hanging on complex graphs
+    if (iterations >= MAX_ITERATIONS) {
+      console.warn(`getReachableTokens exceeded ${MAX_ITERATIONS} iterations, stopping search`);
+      break;
+    }
+    iterations++;
+
     const { denom, hops } = queue.shift()!;
 
     if (visited.has(denom)) continue;
