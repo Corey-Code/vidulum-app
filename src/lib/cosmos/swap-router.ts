@@ -159,15 +159,12 @@ function findAllRoutes(
 
   while (queue.length > 0) {
     // Check iteration limit to prevent hanging on complex graphs
-    if (++iterations > MAX_ITERATIONS) {
+    if (iterations >= MAX_ITERATIONS) {
       console.warn(`BFS exceeded ${MAX_ITERATIONS} iterations, stopping search`);
       break;
     }
+    iterations++;
 
-    // Early termination if we've found enough routes
-    if (routes.length >= MAX_ROUTES) {
-      break;
-    }
     const state = queue.shift()!;
 
     // Skip if we've exceeded max hops
@@ -216,6 +213,11 @@ function findAllRoutes(
           totalFee: newTotalFee,
           hops: newPools.length,
         });
+
+        // Early termination if we've found enough routes
+        if (routes.length >= MAX_ROUTES) {
+          return routes;
+        }
       } else {
         // Continue exploring
         queue.push({
