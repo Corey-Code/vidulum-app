@@ -47,7 +47,7 @@ We are committed to providing a welcoming and inclusive environment for all cont
 
 3. Add the upstream repository:
    ```bash
-   git remote add upstream https://github.com/Corey-Code/vidulum-app.git
+   git remote add upstream https://github.com/corey-code/vidulum-app.git
    ```
 
 ### Install Dependencies
