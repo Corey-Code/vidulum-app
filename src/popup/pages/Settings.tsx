@@ -79,7 +79,7 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
         });
       } catch (error) {
         // Storage access failed, use default
-        console.error('Failed to load settings:', error);
+        console.error('Failed to load settings from chrome.storage.local', error);
       } finally {
         setLoadingSettings(false);
       }
