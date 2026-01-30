@@ -10,12 +10,16 @@ Free Open-Source browser extension wallet built by the people, for the people.
 
 ### Cosmos SDK Chains
 
+Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/cosmos/chain-registry).
+
 | Network    | Chain ID    | Symbol | Status  |
 | ---------- | ----------- | ------ | ------- |
 | BeeZee     | beezee-1    | BZE    | Enabled |
 | Osmosis    | osmosis-1   | OSMO   | Enabled |
 | AtomOne    | atomone-1   | ATONE  | Enabled |
 | Cosmos Hub | cosmoshub-4 | ATOM   | Enabled |
+
+[View full list of Cosmos chains](https://github.com/cosmos/chain-registry)
 
 ### UTXO Chains (Bitcoin-like)
 
@@ -33,11 +37,14 @@ Free Open-Source browser extension wallet built by the people, for the people.
 
 ### EVM Chains
 
-| Network   | Network ID       | Symbol | Chain ID | Status  |
-| --------- | ---------------- | ------ | -------- | ------- |
-| Ethereum  | ethereum-mainnet | ETH    | 1        | Enabled |
-| Base      | base-mainnet     | ETH    | 8453     | Enabled |
-| BNB Chain | bnb-mainnet      | BNB    | 56       | Enabled |
+| Network        | Network ID       | Symbol | Chain ID | Status  |
+| -------------- | ---------------- | ------ | -------- | ------- |
+| Ethereum       | eth-mainnet      | ETH    | 1        | Enabled |
+| OP Mainnet     | oeth-mainnet     | ETH    | 10       | Enabled |
+| BNB Chain      | bnb-mainnet      | BNB    | 56       | Enabled |
+| Polygon        | pol-mainnet      | POL    | 137      | Enabled |
+| Base           | base-mainnet     | ETH    | 8453     | Enabled |
+| Arbitrum One   | arb1-mainnet     | ETH    | 42161    | Enabled |
 
 ## Features
 
