@@ -53,8 +53,9 @@ async function injectScript() {
           TX_TRANSLATION: settings.features.TX_TRANSLATION ?? true,
         };
       }
-    } catch {
+    } catch (error) {
       // Storage access failed, use default
+      console.error('[Vidulum] Failed to read settings from storage, using defaults:', error);
     }
 
     // Create a config element to pass settings to inpage script
