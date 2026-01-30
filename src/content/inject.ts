@@ -15,17 +15,41 @@ import { MessageType, Message } from '@/types/messages';
 const VIDULUM_REQUEST = 'VIDULUM_REQUEST';
 const VIDULUM_RESPONSE = 'VIDULUM_RESPONSE';
 
+// Settings storage key
+const SETTINGS_KEY = 'vidulum_settings';
+
 // ============================================================================
 // Inject the inpage provider script
 // ============================================================================
 
-function injectScript() {
+async function injectScript() {
   try {
+    // Read user settings from chrome.storage
+    let enableKeplrInjection = false; // Default: disabled
+    try {
+      const result = await browser.storage.local.get(SETTINGS_KEY);
+      const settings = result[SETTINGS_KEY] || {};
+      enableKeplrInjection = settings.enableKeplrInjection ?? false;
+    } catch {
+      // Storage access failed, use default
+    }
+
+    // Create a config element to pass settings to inpage script
+    const configElement = document.createElement('script');
+    configElement.id = 'vidulum-config';
+    configElement.type = 'application/json';
+    configElement.textContent = JSON.stringify({
+      enableKeplrInjection,
+    });
+    (document.head || document.documentElement).appendChild(configElement);
+
+    // Inject the main inpage script
     const script = document.createElement('script');
     script.src = browser.runtime.getURL('inpage.js');
     script.type = 'text/javascript';
     script.onload = () => {
       script.remove(); // Clean up after injection
+      configElement.remove(); // Clean up config element
     };
     (document.head || document.documentElement).appendChild(script);
   } catch (error) {

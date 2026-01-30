@@ -9,12 +9,25 @@
  */
 
 // ============================================================================
-// Feature Flags (embedded at build time)
+// Feature Flags (read from config element injected by content script)
 // ============================================================================
+function readConfig(): { enableKeplrInjection: boolean } {
+  try {
+    const configElement = document.getElementById('vidulum-config');
+    if (configElement && configElement.textContent) {
+      return JSON.parse(configElement.textContent);
+    }
+  } catch {
+    // Config parsing failed, use defaults
+  }
+  return { enableKeplrInjection: false };
+}
+
+const CONFIG = readConfig();
+
 const FEATURES = {
-  // Set to false to disable window.keplr injection
-  // This avoids conflicts with the actual Keplr extension
-  KEPLR_INJECTION: false,
+  // User-configurable: Enable window.keplr injection (Keplr replacement mode)
+  KEPLR_INJECTION: CONFIG.enableKeplrInjection,
 
   // Always inject window.vidulum for apps that specifically support Vidulum
   VIDULUM_INJECTION: true,

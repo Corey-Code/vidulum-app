@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   VStack,
@@ -8,11 +8,15 @@ import {
   IconButton,
   Input,
   Divider,
+  Switch,
   useToast,
 } from '@chakra-ui/react';
 import { ArrowBackIcon } from '@chakra-ui/icons';
 import { useWalletStore } from '@/store/walletStore';
 import { EncryptedStorage } from '@/lib/storage/encrypted-storage';
+
+// Settings storage key (must match inject.ts)
+const SETTINGS_KEY = 'vidulum_settings';
 
 interface SettingsProps {
   onBack: () => void;
@@ -21,6 +25,50 @@ interface SettingsProps {
 const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   const { accounts, autoLockMinutes, setAutoLockMinutes, lock } = useWalletStore();
   const toast = useToast();
+
+  // Keplr injection setting
+  const [enableKeplrInjection, setEnableKeplrInjection] = useState(false);
+  const [loadingSettings, setLoadingSettings] = useState(true);
+
+  // Load settings on mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const result = await chrome.storage.local.get(SETTINGS_KEY);
+        const settings = result[SETTINGS_KEY] || {};
+        setEnableKeplrInjection(settings.enableKeplrInjection ?? false);
+      } catch {
+        // Storage access failed, use default
+      } finally {
+        setLoadingSettings(false);
+      }
+    };
+    loadSettings();
+  }, []);
+
+  // Handle Keplr injection toggle
+  const handleKeplrInjectionToggle = async (enabled: boolean) => {
+    setEnableKeplrInjection(enabled);
+    try {
+      const result = await chrome.storage.local.get(SETTINGS_KEY);
+      const settings = result[SETTINGS_KEY] || {};
+      settings.enableKeplrInjection = enabled;
+      await chrome.storage.local.set({ [SETTINGS_KEY]: settings });
+      toast({
+        title: enabled ? 'Keplr mode enabled' : 'Keplr mode disabled',
+        description: 'Refresh any open dApp pages to apply changes',
+        status: 'info',
+        duration: 4000,
+      });
+    } catch {
+      toast({
+        title: 'Failed to save setting',
+        status: 'error',
+        duration: 2000,
+      });
+      setEnableKeplrInjection(!enabled); // Revert
+    }
+  };
 
   // Reveal keys state
   const [revealStep, setRevealStep] = useState<'hidden' | 'password' | 'revealed'>('hidden');
@@ -135,6 +183,46 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
                 ? 'Wallet will only lock when browser closes'
                 : `Wallet will lock after ${autoLockMinutes} minutes of inactivity`}
             </Text>
+          </Box>
+
+          <Divider borderColor="#2a2a2a" />
+
+          {/* Keplr Injection Toggle */}
+          <Box>
+            <Text fontSize="sm" color="gray.400" mb={3}>
+              dApp Compatibility
+            </Text>
+            <HStack justify="space-between" align="center">
+              <VStack align="start" spacing={0}>
+                <Text fontSize="sm" color="white">
+                  Keplr Replacement Mode
+                </Text>
+                <Text fontSize="xs" color="gray.500">
+                  Inject as window.keplr for dApp compatibility
+                </Text>
+              </VStack>
+              <Switch
+                colorScheme="cyan"
+                isChecked={enableKeplrInjection}
+                onChange={(e) => handleKeplrInjectionToggle(e.target.checked)}
+                isDisabled={loadingSettings}
+              />
+            </HStack>
+            {enableKeplrInjection && (
+              <Box
+                mt={3}
+                p={2}
+                bg="rgba(6, 182, 212, 0.1)"
+                borderRadius="lg"
+                border="1px"
+                borderColor="cyan.700"
+              >
+                <Text fontSize="xs" color="cyan.300">
+                  ⚡ Keplr mode active. Vidulum will appear as Keplr to dApps. Disable if you have
+                  Keplr installed to avoid conflicts.
+                </Text>
+              </Box>
+            )}
           </Box>
 
           <Divider borderColor="#2a2a2a" />

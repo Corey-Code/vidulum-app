@@ -8,9 +8,11 @@
 export const FEATURES = {
   /**
    * Inject window.keplr provider for Keplr-compatible dApps
-   * Set to false to disable Keplr compatibility and avoid conflicts
+   * NOTE: This is now a user-configurable setting in Settings page
+   * The actual value is read from chrome.storage.local by inject.ts
+   * Default: false (disabled to avoid conflicts with actual Keplr)
    */
-  KEPLR_INJECTION: false,
+  KEPLR_INJECTION: false, // User-controlled via Settings toggle
 
   /**
    * Inject window.vidulum provider (our own provider)
