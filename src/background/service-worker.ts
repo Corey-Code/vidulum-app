@@ -634,6 +634,11 @@ async function openExtensionPopup(): Promise<void> {
       }
     }
 
+    // Prevent creating multiple windows in quick succession
+    if (isCreatingPopup) {
+      return;
+    }
+
     // Check if popup window already exists and focus it
     if (popupWindowId !== null) {
       try {
@@ -642,35 +647,33 @@ async function openExtensionPopup(): Promise<void> {
         await chrome.windows.update(popupWindowId, { focused: true });
         return;
       } catch {
-        // Window doesn't exist anymore, create a new one
+        // Window doesn't exist anymore, will create a new one
         popupWindowId = null;
-        isCreatingPopup = false;
       }
-    }
-
-    // Prevent creating multiple windows in quick succession
-    if (isCreatingPopup) {
-      return;
     }
 
     // Create new popup window
     isCreatingPopup = true;
-    const window = await chrome.windows.create({
-      url: chrome.runtime.getURL('popup.html'),
-      type: 'popup',
-      width: 375,
-      height: 600,
-      focused: true,
-    });
+    try {
+      const window = await chrome.windows.create({
+        url: chrome.runtime.getURL('popup.html'),
+        type: 'popup',
+        width: 375,
+        height: 600,
+        focused: true,
+      });
 
-    if (window.id) {
-      popupWindowId = window.id;
-    } else {
+      if (window.id) {
+        popupWindowId = window.id;
+      } else {
+        isCreatingPopup = false;
+      }
+    } catch (windowError) {
       isCreatingPopup = false;
+      throw windowError;
     }
   } catch (error) {
     console.error('Failed to open extension popup:', error);
-    isCreatingPopup = false;
   }
 }
 
