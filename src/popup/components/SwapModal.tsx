@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -200,6 +200,15 @@ const SwapModal: React.FC<SwapModalProps> = ({
   const [tradeFee, setTradeFee] = useState<FeeEstimate | null>(null);
 
   const toast = useToast();
+
+  // Calculate total fees (Network Fee + Taker Fee)
+  const totalFees = useMemo(() => {
+    if (txFee && tradeFee) {
+      const total = (parseInt(txFee.amount) + parseInt(tradeFee.amount)) / 1_000_000;
+      return `${total.toFixed(6)} BZE`;
+    }
+    return '~0.1025 BZE';
+  }, [txFee, tradeFee]);
 
   const addressPrefix = chainConfig?.bech32Config.bech32PrefixAccAddr || 'bze';
   const chainAddress = getAddressForChain(addressPrefix) || '';
@@ -876,11 +885,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
                     </HStack>
                     <HStack justify="space-between">
                       <Text color="gray.500" fontWeight="semibold">Total Fees</Text>
-                      <Text fontWeight="semibold">
-                        {txFee && tradeFee
-                          ? `${((parseInt(txFee.amount) + parseInt(tradeFee.amount)) / 1_000_000).toFixed(6)} BZE`
-                          : '~0.1025 BZE'}
-                      </Text>
+                      <Text fontWeight="semibold">{totalFees}</Text>
                     </HStack>
                   </VStack>
                 </Box>
@@ -940,11 +945,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
                   </HStack>
                   <HStack justify="space-between">
                     <Text color="gray.500" fontWeight="semibold">Total Fees</Text>
-                    <Text fontWeight="semibold">
-                      {txFee && tradeFee
-                        ? `${((parseInt(txFee.amount) + parseInt(tradeFee.amount)) / 1_000_000).toFixed(6)} BZE`
-                        : '~0.1025 BZE'}
-                    </Text>
+                    <Text fontWeight="semibold">{totalFees}</Text>
                   </HStack>
                 </VStack>
               </Box>
