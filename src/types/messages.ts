@@ -7,6 +7,26 @@ export enum MessageType {
   SIGN_ARBITRARY = 'signArbitrary',
   VERIFY_ARBITRARY = 'verifyArbitrary',
 
+  // EVM/Ethereum API
+  ETH_REQUEST_ACCOUNTS = 'eth_requestAccounts',
+  ETH_ACCOUNTS = 'eth_accounts',
+  ETH_CHAIN_ID = 'eth_chainId',
+  ETH_SEND_TRANSACTION = 'eth_sendTransaction',
+  ETH_SIGN_TRANSACTION = 'eth_signTransaction',
+  ETH_SIGN = 'eth_sign',
+  PERSONAL_SIGN = 'personal_sign',
+  ETH_SIGN_TYPED_DATA = 'eth_signTypedData',
+  ETH_SIGN_TYPED_DATA_V3 = 'eth_signTypedData_v3',
+  ETH_SIGN_TYPED_DATA_V4 = 'eth_signTypedData_v4',
+  WALLET_SWITCH_ETHEREUM_CHAIN = 'wallet_switchEthereumChain',
+  WALLET_ADD_ETHEREUM_CHAIN = 'wallet_addEthereumChain',
+  WALLET_WATCH_ASSET = 'wallet_watchAsset',
+  ETH_GET_BALANCE = 'eth_getBalance',
+  ETH_BLOCK_NUMBER = 'eth_blockNumber',
+  ETH_CALL = 'eth_call',
+  ETH_ESTIMATE_GAS = 'eth_estimateGas',
+  ETH_GAS_PRICE = 'eth_gasPrice',
+
   // Wallet operations
   CREATE_WALLET = 'createWallet',
   IMPORT_WALLET = 'importWallet',

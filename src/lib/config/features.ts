@@ -47,6 +47,26 @@ export function isFeatureEnabled(feature: keyof typeof FEATURES): boolean {
 }
 
 /**
+ * Check if a feature is enabled based on user settings
+ * Falls back to default FEATURES value if not configured
+ */
+export async function isFeatureEnabledWithSettings(
+  feature: keyof typeof FEATURES
+): Promise<boolean> {
+  try {
+    const result = await chrome.storage.local.get('vidulum_settings');
+    const settings = result.vidulum_settings || {};
+    const featureSettings = settings.features || {};
+    
+    // Return user setting if exists, otherwise default
+    return featureSettings[feature] ?? FEATURES[feature] ?? false;
+  } catch {
+    // If storage access fails, use default
+    return FEATURES[feature] ?? false;
+  }
+}
+
+/**
  * Get all enabled features
  */
 export function getEnabledFeatures(): string[] {
