@@ -231,7 +231,7 @@ const Approval: React.FC<ApprovalProps> = ({ approvalId, onComplete }) => {
                       <Text color="gray.500">Network Fee</Text>
                       <Text color="gray.300">
                         {approval.data.signDoc.fee.amount?.[0]?.amount
-                          ? `${(parseInt(approval.data.signDoc.fee.amount[0].amount) / 1_000_000).toFixed(6)} BZE`
+                          ? `${(parseInt(approval.data.signDoc.fee.amount[0].amount) / 1_000_000).toFixed(6)} ${approval.data.signDoc.fee.amount[0].denom || ''}`
                           : 'Unknown'}
                       </Text>
                     </HStack>
