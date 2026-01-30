@@ -92,7 +92,8 @@ npm run build
 3. Make your changes and commit them:
    ```bash
    git add .
-   git commit -m "Brief description of your changes"
+   git commit -m "Add validation for EVM chain configuration"
+   # Or: git commit -m "Fix balance calculation for Cosmos staking rewards"
    ```
 
 4. Push to your fork:
@@ -152,7 +153,10 @@ This project uses ESLint and Prettier to maintain consistent code style.
 ### Guidelines
 
 - Use TypeScript for all new code
-- Follow existing patterns and conventions
+- Follow existing patterns and conventions (see `src/` for examples)
+  - Component structure: see `src/popup/components/`
+  - Network configurations: see `src/lib/networks/`
+  - Crypto operations: see `src/lib/crypto/`
 - Write clear, self-documenting code
 - Add comments for complex logic
 - Use meaningful variable and function names
@@ -263,9 +267,14 @@ If you discover a security vulnerability, please **DO NOT** open a public issue.
 
 Instead, please report it responsibly by:
 
-1. Emailing the maintainers directly (check the repository for contact info)
-2. Providing detailed information about the vulnerability
-3. Allowing time for the issue to be addressed before public disclosure
+1. Opening a private security advisory on GitHub:
+   - Go to the repository's Security tab
+   - Click "Report a vulnerability"
+   - Provide detailed information about the vulnerability
+2. Or create a draft security advisory if you have discovered a CVE
+3. Allow time for the issue to be addressed before public disclosure
+
+Alternatively, you can reach out to the maintainers through GitHub by opening a private discussion or checking the repository for contact information.
 
 ### Security Considerations
 
