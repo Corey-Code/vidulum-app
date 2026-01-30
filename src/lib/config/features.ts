@@ -27,12 +27,6 @@ export const FEATURES = {
   WALLET_CONNECT: false,
 
   /**
-   * Multi-hop swap routing
-   * Enable finding swap routes through multiple pools
-   */
-  MULTI_HOP_SWAPS: false,
-
-  /**
    * Auto-open popup on approval requests
    * When enabled, the extension popup opens automatically when approval is needed
    */
