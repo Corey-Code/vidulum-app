@@ -111,7 +111,10 @@ function calculateSwapOutput(
  */
 function calculatePriceImpact(inputAmount: bigint, inputReserve: bigint): number {
   if (inputReserve <= 0n) return 100;
-  return (Number(inputAmount) / Number(inputReserve)) * 100;
+  // Use bigint arithmetic to avoid precision loss, then convert bounded result to number.
+  // Calculate price impact in basis points (hundredths of a percent).
+  const impactBasisPoints = (inputAmount * 10000n) / inputReserve;
+  return Number(impactBasisPoints) / 100;
 }
 
 /**
