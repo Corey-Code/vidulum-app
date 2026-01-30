@@ -31,7 +31,7 @@ We are committed to providing a welcoming and inclusive environment for all cont
 
 ### Prerequisites
 
-- Node.js (v18 or higher recommended)
+- Node.js (v22 or higher)
 - npm (comes with Node.js)
 - Git
 - A Chromium-based browser (Chrome, Edge, Brave, etc.) for testing
