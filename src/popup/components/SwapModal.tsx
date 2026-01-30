@@ -338,9 +338,23 @@ const SwapModal: React.FC<SwapModalProps> = ({
         // Apply slippage tolerance to the estimated output
         const outputWithSlippage =
           (route.estimatedOutput * BigInt(Math.floor((100 - slippage) * 100))) / 10000n;
-        const outputFormatted = Number(outputWithSlippage) / Math.pow(10, toToken.decimals);
 
-        setToAmount(outputFormatted.toFixed(6));
+        // Format outputWithSlippage as a decimal string with 6 fractional digits
+        const scale = 10n ** BigInt(toToken.decimals);
+        // Round to 6 decimal places: multiply by 1e6, add half scale, then divide
+        const scaled = (outputWithSlippage * 1_000_000n + scale / 2n) / scale;
+        const scaledStr = scaled.toString();
+        let humanReadable: string;
+        if (scaledStr.length <= 6) {
+          const fractional = scaledStr.padStart(6, '0');
+          humanReadable = `0.${fractional}`;
+        } else {
+          const integerPart = scaledStr.slice(0, -6);
+          const fractionalPart = scaledStr.slice(-6);
+          humanReadable = `${integerPart}.${fractionalPart}`;
+        }
+
+        setToAmount(humanReadable);
       } catch (error) {
         console.error('Failed to get quote:', error);
         setToAmount('');
