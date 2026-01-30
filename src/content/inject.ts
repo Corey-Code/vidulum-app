@@ -15,17 +15,69 @@ import { MessageType, Message } from '@/types/messages';
 const VIDULUM_REQUEST = 'VIDULUM_REQUEST';
 const VIDULUM_RESPONSE = 'VIDULUM_RESPONSE';
 
+// Settings storage key
+const SETTINGS_KEY = 'vidulum_settings';
+
 // ============================================================================
 // Inject the inpage provider script
 // ============================================================================
 
-function injectScript() {
+async function injectScript() {
   try {
+    // Read user settings from chrome.storage
+    let enableKeplrInjection = false; // Default: disabled
+    let enableMetamaskInjection = false; // Default: disabled
+    let enablePhantomInjection = false; // Default: disabled
+    let enableCoinbaseInjection = false; // Default: disabled
+    let features = {
+      VIDULUM_INJECTION: true, // Default
+      WALLET_CONNECT: false, // Default
+      AUTO_OPEN_POPUP: true, // Default
+      TX_TRANSLATION: true, // Default
+    };
+
+    try {
+      const result = await browser.storage.local.get(SETTINGS_KEY);
+      const settings = result[SETTINGS_KEY] || {};
+      enableKeplrInjection = settings.enableKeplrInjection ?? false;
+      enableMetamaskInjection = settings.enableMetamaskInjection ?? false;
+      enablePhantomInjection = settings.enablePhantomInjection ?? false;
+      enableCoinbaseInjection = settings.enableCoinbaseInjection ?? false;
+
+      // Load feature settings
+      if (settings.features) {
+        features = {
+          VIDULUM_INJECTION: settings.features.VIDULUM_INJECTION ?? true,
+          WALLET_CONNECT: settings.features.WALLET_CONNECT ?? false,
+          AUTO_OPEN_POPUP: settings.features.AUTO_OPEN_POPUP ?? true,
+          TX_TRANSLATION: settings.features.TX_TRANSLATION ?? true,
+        };
+      }
+    } catch (error) {
+      // Storage access failed, use default
+      console.error('[Vidulum] Failed to read settings from storage, using defaults:', error);
+    }
+
+    // Create a config element to pass settings to inpage script
+    const configElement = document.createElement('script');
+    configElement.id = 'vidulum-config';
+    configElement.type = 'application/json';
+    configElement.textContent = JSON.stringify({
+      enableKeplrInjection,
+      enableMetamaskInjection,
+      enablePhantomInjection,
+      enableCoinbaseInjection,
+      features,
+    });
+    (document.head || document.documentElement).appendChild(configElement);
+
+    // Inject the main inpage script
     const script = document.createElement('script');
     script.src = browser.runtime.getURL('inpage.js');
     script.type = 'text/javascript';
     script.onload = () => {
       script.remove(); // Clean up after injection
+      configElement.remove(); // Clean up config element
     };
     (document.head || document.documentElement).appendChild(script);
   } catch (error) {
@@ -42,6 +94,7 @@ injectScript();
 
 // Map method names from inpage to MessageType enum
 const methodToMessageType: Record<string, MessageType> = {
+  // Cosmos/Keplr methods
   enable: MessageType.ENABLE,
   getKey: MessageType.GET_KEY,
   signAmino: MessageType.SIGN_AMINO,
@@ -49,8 +102,36 @@ const methodToMessageType: Record<string, MessageType> = {
   signArbitrary: MessageType.SIGN_ARBITRARY,
   verifyArbitrary: MessageType.VERIFY_ARBITRARY,
   disconnect: MessageType.DISCONNECT,
-  suggestChain: MessageType.REQUEST_CONNECTION, // Map to connection request
+  suggestChain: MessageType.REQUEST_CONNECTION,
   getChainInfos: MessageType.GET_CONNECTION_STATUS,
+
+  // EVM/Ethereum methods
+  eth_requestAccounts: MessageType.ETH_REQUEST_ACCOUNTS,
+  eth_accounts: MessageType.ETH_ACCOUNTS,
+  eth_chainId: MessageType.ETH_CHAIN_ID,
+  eth_sendTransaction: MessageType.ETH_SEND_TRANSACTION,
+  eth_signTransaction: MessageType.ETH_SIGN_TRANSACTION,
+  eth_sign: MessageType.ETH_SIGN,
+  personal_sign: MessageType.PERSONAL_SIGN,
+  eth_signTypedData: MessageType.ETH_SIGN_TYPED_DATA,
+  eth_signTypedData_v3: MessageType.ETH_SIGN_TYPED_DATA_V3,
+  eth_signTypedData_v4: MessageType.ETH_SIGN_TYPED_DATA_V4,
+  wallet_switchEthereumChain: MessageType.WALLET_SWITCH_ETHEREUM_CHAIN,
+  wallet_addEthereumChain: MessageType.WALLET_ADD_ETHEREUM_CHAIN,
+  wallet_watchAsset: MessageType.WALLET_WATCH_ASSET,
+  eth_getBalance: MessageType.ETH_GET_BALANCE,
+  eth_blockNumber: MessageType.ETH_BLOCK_NUMBER,
+  eth_call: MessageType.ETH_CALL,
+  eth_estimateGas: MessageType.ETH_ESTIMATE_GAS,
+  eth_gasPrice: MessageType.ETH_GAS_PRICE,
+
+  // Solana/Phantom methods
+  sol_connect: MessageType.SOL_CONNECT,
+  sol_disconnect: MessageType.SOL_DISCONNECT,
+  sol_signTransaction: MessageType.SOL_SIGN_TRANSACTION,
+  sol_signAllTransactions: MessageType.SOL_SIGN_ALL_TRANSACTIONS,
+  sol_signMessage: MessageType.SOL_SIGN_MESSAGE,
+  sol_signAndSendTransaction: MessageType.SOL_SIGN_AND_SEND_TRANSACTION,
 };
 
 // Listen for messages from the inpage script

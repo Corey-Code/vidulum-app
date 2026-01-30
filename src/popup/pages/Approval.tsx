@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Box, VStack, HStack, Text, Button, Spinner, Badge, Code, Divider } from '@chakra-ui/react';
-import { CheckIcon, CloseIcon } from '@chakra-ui/icons';
+import { CheckIcon, CloseIcon, ViewIcon, ViewOffIcon } from '@chakra-ui/icons';
 import browser from 'webextension-polyfill';
 import { MessageType } from '@/types/messages';
+import { parseSignDoc, ParsedTransaction } from '@/lib/cosmos/tx-parser';
 
 interface ApprovalData {
   id: string;
@@ -21,6 +22,13 @@ const Approval: React.FC<ApprovalProps> = ({ approvalId, onComplete }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [responding, setResponding] = useState(false);
+  const [showRawTx, setShowRawTx] = useState(false);
+  const [parsedTx, setParsedTx] = useState<{
+    messages: ParsedTransaction[];
+    chainId: string;
+    memo?: string;
+  } | null>(null);
+  const [parsingTx, setParsingTx] = useState(false);
 
   // Fetch approval details
   useEffect(() => {
@@ -45,6 +53,30 @@ const Approval: React.FC<ApprovalProps> = ({ approvalId, onComplete }) => {
 
     fetchApproval();
   }, [approvalId]);
+
+  // Parse transaction when approval is loaded
+  useEffect(() => {
+    const parseTx = async () => {
+      if (!approval || approval.type !== 'transaction' || !approval.data?.signDoc) {
+        return;
+      }
+
+      setParsingTx(true);
+      try {
+        const signDoc = approval.data.signDoc;
+        const chainId = signDoc.chain_id || signDoc.chainId || 'beezee-1';
+        const parsed = await parseSignDoc(chainId, signDoc);
+        setParsedTx(parsed);
+      } catch (err) {
+        console.error('Failed to parse transaction:', err);
+        // Fallback to raw display
+      } finally {
+        setParsingTx(false);
+      }
+    };
+
+    parseTx();
+  }, [approval]);
 
   const handleResponse = async (approved: boolean) => {
     setResponding(true);
@@ -154,32 +186,114 @@ const Approval: React.FC<ApprovalProps> = ({ approvalId, onComplete }) => {
         {/* Transaction Approval Details */}
         {approval.type === 'transaction' && (
           <VStack spacing={3} align="stretch">
-            <Text fontSize="sm" color="gray.300" textAlign="center">
-              Review and approve this transaction
-            </Text>
+            {parsingTx ? (
+              <VStack py={4}>
+                <Spinner size="sm" color="orange.400" />
+                <Text fontSize="xs" color="gray.500">
+                  Parsing transaction...
+                </Text>
+              </VStack>
+            ) : parsedTx && !showRawTx ? (
+              <>
+                {/* Parsed Transaction Summary */}
+                {parsedTx.messages.map((msg, idx) => (
+                  <Box
+                    key={idx}
+                    bg="#141414"
+                    borderRadius="lg"
+                    p={4}
+                    borderWidth="1px"
+                    borderColor="#2a2a2a"
+                  >
+                    <HStack justify="space-between" mb={2}>
+                      <Badge colorScheme="cyan">{msg.type}</Badge>
+                    </HStack>
+                    <Text fontSize="md" color="white" fontWeight="medium" mb={3}>
+                      {msg.summary}
+                    </Text>
+                    <VStack align="stretch" spacing={1}>
+                      {Object.entries(msg.details).map(([key, value]) => (
+                        <HStack key={key} justify="space-between" fontSize="xs">
+                          <Text color="gray.500">{key}</Text>
+                          <Text color="gray.300" maxW="200px" isTruncated>
+                            {value}
+                          </Text>
+                        </HStack>
+                      ))}
+                    </VStack>
+                  </Box>
+                ))}
 
-            <Box
-              bg="#141414"
-              borderRadius="lg"
-              p={3}
-              borderWidth="1px"
-              borderColor="#2a2a2a"
-              maxH="200px"
-              overflow="auto"
-            >
-              <Text fontSize="xs" color="gray.500" mb={2}>
-                Transaction Details
-              </Text>
-              <Code
-                fontSize="xs"
-                bg="transparent"
-                color="gray.300"
-                whiteSpace="pre-wrap"
-                display="block"
-              >
-                {JSON.stringify(approval.data?.signDoc, null, 2)}
-              </Code>
-            </Box>
+                {/* Fee info */}
+                {approval.data?.signDoc?.fee && (
+                  <Box bg="#141414" borderRadius="lg" p={3} borderWidth="1px" borderColor="#2a2a2a">
+                    <HStack justify="space-between" fontSize="xs">
+                      <Text color="gray.500">Network Fee</Text>
+                      <Text color="gray.300">
+                        {approval.data.signDoc.fee.amount?.[0]?.amount
+                          ? `${(parseInt(approval.data.signDoc.fee.amount[0].amount) / 1_000_000).toFixed(6)} ${approval.data.signDoc.fee.amount[0].denom || ''}`
+                          : 'Unknown'}
+                      </Text>
+                    </HStack>
+                  </Box>
+                )}
+
+                {/* Toggle to show raw */}
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  color="gray.500"
+                  leftIcon={<ViewIcon />}
+                  onClick={() => setShowRawTx(true)}
+                  alignSelf="center"
+                >
+                  Show Raw Transaction
+                </Button>
+              </>
+            ) : (
+              <>
+                {/* Raw Transaction View */}
+                <Text fontSize="sm" color="gray.300" textAlign="center">
+                  Review and approve this transaction
+                </Text>
+
+                <Box
+                  bg="#141414"
+                  borderRadius="lg"
+                  p={3}
+                  borderWidth="1px"
+                  borderColor="#2a2a2a"
+                  maxH="200px"
+                  overflow="auto"
+                >
+                  <Text fontSize="xs" color="gray.500" mb={2}>
+                    Raw Transaction
+                  </Text>
+                  <Code
+                    fontSize="xs"
+                    bg="transparent"
+                    color="gray.300"
+                    whiteSpace="pre-wrap"
+                    display="block"
+                  >
+                    {JSON.stringify(approval.data?.signDoc, null, 2)}
+                  </Code>
+                </Box>
+
+                {parsedTx && (
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    color="gray.500"
+                    leftIcon={<ViewOffIcon />}
+                    onClick={() => setShowRawTx(false)}
+                    alignSelf="center"
+                  >
+                    Show Summary
+                  </Button>
+                )}
+              </>
+            )}
 
             <Box bg="red.900" borderRadius="lg" p={3} borderWidth="1px" borderColor="red.700">
               <Text fontSize="xs" color="red.200">
