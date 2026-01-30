@@ -8,11 +8,13 @@
 export const FEATURES = {
   /**
    * Inject window.keplr provider for Keplr-compatible dApps
-   * NOTE: This is now a user-configurable setting in Settings page
-   * The actual value is read from chrome.storage.local by inject.ts
-   * Default: false (disabled to avoid conflicts with actual Keplr)
+   * NOTE: This is now a user-configurable setting in the Settings page.
+   * The runtime value used for injection is read from chrome.storage.local by inject.ts.
+   * This flag serves as the default/fallback configuration (e.g. for helpers/UI), and
+   * does not override the user setting stored in chrome.storage.local.
+   * Default: false (disabled to avoid conflicts with actual Keplr).
    */
-  KEPLR_INJECTION: false, // User-controlled via Settings toggle
+  KEPLR_INJECTION: false, // Default/fallback; user-controlled value lives in storage
 
   /**
    * Inject window.vidulum provider (our own provider)
