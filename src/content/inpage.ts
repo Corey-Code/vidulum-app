@@ -8,6 +8,18 @@
  * dApp → window.keplr → postMessage → content script → background → response
  */
 
+// ============================================================================
+// Feature Flags (embedded at build time)
+// ============================================================================
+const FEATURES = {
+  // Set to false to disable window.keplr injection
+  // This avoids conflicts with the actual Keplr extension
+  KEPLR_INJECTION: false,
+
+  // Always inject window.vidulum for apps that specifically support Vidulum
+  VIDULUM_INJECTION: true,
+};
+
 // Message types for communication with content script
 const VIDULUM_REQUEST = 'VIDULUM_REQUEST';
 const VIDULUM_RESPONSE = 'VIDULUM_RESPONSE';
@@ -344,38 +356,46 @@ const keplr = {
 // Expose to window
 // ============================================================================
 
-// Expose as window.keplr for Keplr compatibility
-Object.defineProperty(window, 'keplr', {
-  value: keplr,
-  writable: false,
-  configurable: false,
-});
+// Conditionally expose as window.keplr for Keplr compatibility
+// Disabled by default to avoid conflicts with actual Keplr extension
+if (FEATURES.KEPLR_INJECTION) {
+  Object.defineProperty(window, 'keplr', {
+    value: keplr,
+    writable: false,
+    configurable: false,
+  });
 
-// Also expose as window.vidulum for apps that want to specifically use Vidulum
-Object.defineProperty(window, 'vidulum', {
-  value: keplr,
-  writable: false,
-  configurable: false,
-});
+  // Expose getOfflineSigner globally (some dApps expect this)
+  Object.defineProperty(window, 'getOfflineSigner', {
+    value: keplr.getOfflineSigner.bind(keplr),
+    writable: false,
+    configurable: false,
+  });
 
-// Expose getOfflineSigner globally (some dApps expect this)
-Object.defineProperty(window, 'getOfflineSigner', {
-  value: keplr.getOfflineSigner.bind(keplr),
-  writable: false,
-  configurable: false,
-});
+  Object.defineProperty(window, 'getOfflineSignerOnlyAmino', {
+    value: keplr.getOfflineSignerOnlyAmino.bind(keplr),
+    writable: false,
+    configurable: false,
+  });
 
-Object.defineProperty(window, 'getOfflineSignerOnlyAmino', {
-  value: keplr.getOfflineSignerOnlyAmino.bind(keplr),
-  writable: false,
-  configurable: false,
-});
+  Object.defineProperty(window, 'getOfflineSignerAuto', {
+    value: keplr.getOfflineSignerAuto.bind(keplr),
+    writable: false,
+    configurable: false,
+  });
 
-Object.defineProperty(window, 'getOfflineSignerAuto', {
-  value: keplr.getOfflineSignerAuto.bind(keplr),
-  writable: false,
-  configurable: false,
-});
+  // Dispatch event to notify dApps that wallet is ready
+  window.dispatchEvent(new Event('keplr_keystorechange'));
+}
 
-// Dispatch event to notify dApps that wallet is ready
-window.dispatchEvent(new Event('keplr_keystorechange'));
+// Always expose as window.vidulum for apps that specifically support Vidulum
+if (FEATURES.VIDULUM_INJECTION) {
+  Object.defineProperty(window, 'vidulum', {
+    value: keplr,
+    writable: false,
+    configurable: false,
+  });
+
+  // Dispatch Vidulum-specific ready event
+  window.dispatchEvent(new Event('vidulum_ready'));
+}

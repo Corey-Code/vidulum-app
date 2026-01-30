@@ -29,6 +29,7 @@ import { useChainStore } from '@/store/chainStore';
 import { ChainInfo } from '@/types/wallet';
 import { fetchChainAssets } from '@/lib/assets/chainRegistry';
 import { estimateSwapFee, FeeEstimate } from '@/lib/cosmos/fees';
+import { findBestRoute, SwapRoute, LiquidityPool as RouterPool } from '@/lib/cosmos/swap-router';
 import { toBase64, fromBase64 } from '@cosmjs/encoding';
 import { TxRaw, AuthInfo, TxBody, SignerInfo, Fee } from 'cosmjs-types/cosmos/tx/v1beta1/tx';
 import { SignMode } from 'cosmjs-types/cosmos/tx/signing/v1beta1/signing';
@@ -198,6 +199,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
   const [loadingPools, setLoadingPools] = useState(false);
   const [txFee, setTxFee] = useState<FeeEstimate | null>(null);
   const [tradeFee, setTradeFee] = useState<FeeEstimate | null>(null);
+  const [selectedRoute, setSelectedRoute] = useState<SwapRoute | null>(null);
 
   const toast = useToast();
 
@@ -272,10 +274,9 @@ const SwapModal: React.FC<SwapModalProps> = ({
   const fromBalance = getTokenBalance(fromToken.denom);
   const toBalance = toToken ? getTokenBalance(toToken.denom) : 0;
 
-  // Find the pool for the current token pair
+  // Find the pool for the current token pair (legacy - for direct routes)
   const findPool = useCallback((): LiquidityPool | null => {
     if (!toToken) return null;
-    // Pool IDs are formatted as "base_quote" where base < quote alphabetically
     for (const pool of pools) {
       if (
         (pool.base === fromToken.denom && pool.quote === toToken.denom) ||
@@ -287,57 +288,63 @@ const SwapModal: React.FC<SwapModalProps> = ({
     return null;
   }, [pools, fromToken.denom, toToken]);
 
-  // Calculate swap quote
+  // Find the best route (supports multi-hop)
+  const findRoute = useCallback(
+    (inputAmount: bigint): SwapRoute | null => {
+      if (!toToken || pools.length === 0) return null;
+
+      // Cast to RouterPool type (same structure)
+      const routerPools = pools as RouterPool[];
+      return findBestRoute(routerPools, fromToken.denom, toToken.denom, inputAmount, 3);
+    },
+    [pools, fromToken.denom, toToken]
+  );
+
+  // Get token symbol from denom
+  const getSymbolForDenom = useCallback(
+    (denom: string): string => {
+      const token = availableTokens.find((t) => t.denom === denom);
+      return token?.symbol || denom;
+    },
+    [availableTokens]
+  );
+
+  // Calculate swap quote using multi-hop router
   useEffect(() => {
     if (!fromAmount || parseFloat(fromAmount) <= 0 || !toToken) {
       setToAmount('');
+      setSelectedRoute(null);
       return;
     }
 
     const calculateQuote = async () => {
       setFetchingQuote(true);
       try {
-        const pool = findPool();
-        if (!pool || !toToken) {
-          setToAmount('');
-          return;
-        }
-
         const inputAmountRaw = BigInt(
           Math.floor(parseFloat(fromAmount) * Math.pow(10, fromToken.decimals))
         );
 
-        // Determine which is input and which is output based on pool structure
-        let inputReserve: bigint;
-        let outputReserve: bigint;
+        // Use multi-hop router to find best route
+        const route = findRoute(inputAmountRaw);
 
-        if (pool.base === fromToken.denom) {
-          // Swapping base -> quote
-          inputReserve = BigInt(pool.reserve_base);
-          outputReserve = BigInt(pool.reserve_quote);
-        } else {
-          // Swapping quote -> base
-          inputReserve = BigInt(pool.reserve_quote);
-          outputReserve = BigInt(pool.reserve_base);
+        if (!route || !toToken) {
+          setToAmount('');
+          setSelectedRoute(null);
+          return;
         }
 
-        const feePercent = parseFloat(pool.fee);
-        const outputAmount = calculateSwapOutput(
-          inputAmountRaw,
-          inputReserve,
-          outputReserve,
-          feePercent
-        );
+        setSelectedRoute(route);
 
-        // Apply slippage tolerance
+        // Apply slippage tolerance to the estimated output
         const outputWithSlippage =
-          (outputAmount * BigInt(Math.floor((100 - slippage) * 100))) / 10000n;
+          (route.estimatedOutput * BigInt(Math.floor((100 - slippage) * 100))) / 10000n;
         const outputFormatted = Number(outputWithSlippage) / Math.pow(10, toToken.decimals);
 
         setToAmount(outputFormatted.toFixed(6));
       } catch (error) {
         console.error('Failed to get quote:', error);
         setToAmount('');
+        setSelectedRoute(null);
       } finally {
         setFetchingQuote(false);
       }
@@ -345,10 +352,11 @@ const SwapModal: React.FC<SwapModalProps> = ({
 
     const debounce = setTimeout(calculateQuote, 300);
     return () => clearTimeout(debounce);
-  }, [fromAmount, fromToken, toToken, slippage, findPool]);
+  }, [fromAmount, fromToken, toToken, slippage, findRoute]);
 
   // Swap token positions
   const handleSwapTokens = () => {
+    if (!toToken) return;
     const tempToken = fromToken;
     setFromToken(toToken);
     setToToken(tempToken);
@@ -392,9 +400,8 @@ const SwapModal: React.FC<SwapModalProps> = ({
       return;
     }
 
-    const pool = findPool();
-    if (!pool) {
-      toast({ title: 'No liquidity pool available', status: 'error', duration: 2000 });
+    if (!selectedRoute) {
+      toast({ title: 'No swap route available', status: 'error', duration: 2000 });
       return;
     }
 
@@ -412,9 +419,8 @@ const SwapModal: React.FC<SwapModalProps> = ({
       return;
     }
 
-    const pool = findPool();
-    if (!pool) {
-      toast({ title: 'No liquidity pool available', status: 'error', duration: 2000 });
+    if (!selectedRoute) {
+      toast({ title: 'No swap route available', status: 'error', duration: 2000 });
       return;
     }
 
@@ -447,11 +453,12 @@ const SwapModal: React.FC<SwapModalProps> = ({
       }
 
       // Build the Amino message for MsgMultiSwap (correct format from proto)
+      // Use the route's pools array for multi-hop support
       const aminoMsg = {
         type: 'bze/x/tradebin/MsgMultiSwap',
         value: {
           creator: chainAddress,
-          routes: [pool.id],
+          routes: selectedRoute.pools,
           input: {
             denom: fromToken.denom,
             amount: inputAmountRaw.toString(),
@@ -485,9 +492,10 @@ const SwapModal: React.FC<SwapModalProps> = ({
       const pubKey = signResponse.signature.pub_key;
 
       // Encode MsgMultiSwap as protobuf bytes
+      // Use the route's pools array for multi-hop support
       const msgBytes = encodeMsgMultiSwap(
         chainAddress,
-        [pool.id],
+        selectedRoute.pools,
         fromToken.denom,
         inputAmountRaw.toString(),
         toToken.denom,
@@ -605,29 +613,8 @@ const SwapModal: React.FC<SwapModalProps> = ({
     }
   };
 
-  // Calculate price impact
-  const calculatePriceImpact = (): number => {
-    if (!fromAmount || !toAmount) return 0;
-
-    const pool = findPool();
-    if (!pool) return 0;
-
-    const inputAmountRaw = parseFloat(fromAmount) * Math.pow(10, fromToken.decimals);
-    let inputReserve: number;
-
-    if (pool.base === fromToken.denom) {
-      inputReserve = parseFloat(pool.reserve_base);
-    } else {
-      inputReserve = parseFloat(pool.reserve_quote);
-    }
-
-    // Price impact = input / reserve * 100
-    return (inputAmountRaw / inputReserve) * 100;
-  };
-
-  const priceImpact = calculatePriceImpact();
-  const pool = findPool();
-  const poolFee = pool ? parseFloat(pool.fee) * 100 : 0;
+  // Price impact and fees are now calculated by the swap router
+  // and available in selectedRoute.priceImpact and selectedRoute.totalFee
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered size="md">
@@ -802,8 +789,8 @@ const SwapModal: React.FC<SwapModalProps> = ({
                 </HStack>
               </Box>
 
-              {/* No Pool Warning */}
-              {!pool && fromAmount && toToken && (
+              {/* No Route Warning */}
+              {!selectedRoute && fromAmount && toToken && !fetchingQuote && (
                 <Box
                   p={3}
                   bg="rgba(239, 68, 68, 0.1)"
@@ -812,7 +799,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
                   borderColor="red.500"
                 >
                   <Text fontSize="xs" color="red.400">
-                    No liquidity pool available for {fromToken.symbol}/{toToken.symbol}
+                    No swap route available for {fromToken.symbol} → {toToken.symbol}
                   </Text>
                 </Box>
               )}
@@ -839,9 +826,33 @@ const SwapModal: React.FC<SwapModalProps> = ({
               </Box>
 
               {/* Swap Info */}
-              {fromAmount && toAmount && pool && toToken && (
+              {fromAmount && toAmount && selectedRoute && toToken && (
                 <Box p={3} bg="#141414" borderRadius="xl">
                   <VStack spacing={2} align="stretch" fontSize="xs">
+                    {/* Route visualization for multi-hop */}
+                    {selectedRoute.hops > 1 && (
+                      <>
+                        <HStack justify="space-between">
+                          <Text color="gray.500">Route</Text>
+                          <HStack spacing={1}>
+                            {selectedRoute.path.map((denom, idx) => (
+                              <React.Fragment key={denom}>
+                                <Text color="cyan.400" fontWeight="medium">
+                                  {getSymbolForDenom(denom)}
+                                </Text>
+                                {idx < selectedRoute.path.length - 1 && (
+                                  <Text color="gray.600">→</Text>
+                                )}
+                              </React.Fragment>
+                            ))}
+                          </HStack>
+                        </HStack>
+                        <HStack justify="space-between">
+                          <Text color="gray.500">Hops</Text>
+                          <Text>{selectedRoute.hops}</Text>
+                        </HStack>
+                      </>
+                    )}
                     <HStack justify="space-between">
                       <Text color="gray.500">Rate</Text>
                       <Text>
@@ -852,18 +863,37 @@ const SwapModal: React.FC<SwapModalProps> = ({
                     </HStack>
                     <HStack justify="space-between">
                       <Text color="gray.500">Price Impact</Text>
-                      <Text color={priceImpact > 1 ? 'orange.400' : 'green.400'}>
-                        {priceImpact.toFixed(2)}%
+                      <Text color={selectedRoute.priceImpact > 1 ? 'orange.400' : 'green.400'}>
+                        {selectedRoute.priceImpact.toFixed(2)}%
                       </Text>
                     </HStack>
                     <HStack justify="space-between">
                       <Text color="gray.500">Pool Fee</Text>
-                      <Text>{poolFee.toFixed(2)}%</Text>
+                      <Text>{(selectedRoute.totalFee * 100).toFixed(2)}%</Text>
                     </HStack>
                     <HStack justify="space-between">
                       <Text color="gray.500">Min. Received</Text>
                       <Text>
                         {toAmount} {toToken.symbol}
+                      </Text>
+                    </HStack>
+                    <Box h="1px" bg="#2a2a2a" my={1} />
+                    <HStack justify="space-between">
+                      <Text color="gray.500">Network Fee</Text>
+                      <Text>{txFee?.formatted || '~0.015 BZE'}</Text>
+                    </HStack>
+                    <HStack justify="space-between">
+                      <Text color="gray.500">Taker Fee</Text>
+                      <Text>{tradeFee?.formatted || '0.1 BZE'}</Text>
+                    </HStack>
+                    <HStack justify="space-between">
+                      <Text color="gray.500" fontWeight="medium">
+                        Total Fees
+                      </Text>
+                      <Text fontWeight="medium">
+                        {txFee && tradeFee
+                          ? `${((parseInt(txFee.amount) + parseInt(tradeFee.amount)) / 1_000_000).toFixed(6)} BZE`
+                          : '~0.115 BZE'}
                       </Text>
                     </HStack>
                   </VStack>
@@ -899,6 +929,22 @@ const SwapModal: React.FC<SwapModalProps> = ({
 
               <Box p={3} bg="#141414" borderRadius="xl">
                 <VStack spacing={2} align="stretch" fontSize="xs">
+                  {/* Route visualization for multi-hop */}
+                  {selectedRoute && selectedRoute.hops > 1 && (
+                    <HStack justify="space-between">
+                      <Text color="gray.500">Route ({selectedRoute.hops} hops)</Text>
+                      <HStack spacing={1}>
+                        {selectedRoute.path.map((denom, idx) => (
+                          <React.Fragment key={denom}>
+                            <Text color="cyan.400" fontWeight="medium">
+                              {getSymbolForDenom(denom)}
+                            </Text>
+                            {idx < selectedRoute.path.length - 1 && <Text color="gray.600">→</Text>}
+                          </React.Fragment>
+                        ))}
+                      </HStack>
+                    </HStack>
+                  )}
                   <HStack justify="space-between">
                     <Text color="gray.500">Rate</Text>
                     <Text>
@@ -912,11 +958,28 @@ const SwapModal: React.FC<SwapModalProps> = ({
                   </HStack>
                   <HStack justify="space-between">
                     <Text color="gray.500">Pool Fee</Text>
-                    <Text>{poolFee.toFixed(2)}%</Text>
+                    <Text>
+                      {selectedRoute ? (selectedRoute.totalFee * 100).toFixed(2) : '0.00'}%
+                    </Text>
                   </HStack>
+                  <Box h="1px" bg="#2a2a2a" my={1} />
                   <HStack justify="space-between">
                     <Text color="gray.500">Network Fee</Text>
-                    <Text>{txFee?.formatted || '~0.0025 BZE'}</Text>
+                    <Text>{txFee?.formatted || '~0.015 BZE'}</Text>
+                  </HStack>
+                  <HStack justify="space-between">
+                    <Text color="gray.500">Taker Fee</Text>
+                    <Text>{tradeFee?.formatted || '0.1 BZE'}</Text>
+                  </HStack>
+                  <HStack justify="space-between">
+                    <Text color="gray.500" fontWeight="medium">
+                      Total Fees
+                    </Text>
+                    <Text fontWeight="medium" color="orange.300">
+                      {txFee && tradeFee
+                        ? `${((parseInt(txFee.amount) + parseInt(tradeFee.amount)) / 1_000_000).toFixed(6)} BZE`
+                        : '~0.115 BZE'}
+                    </Text>
                   </HStack>
                 </VStack>
               </Box>
@@ -948,7 +1011,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
                 flex={1}
                 borderRadius="xl"
                 onClick={handleContinue}
-                isDisabled={!fromAmount || !toAmount || fetchingQuote || !pool}
+                isDisabled={!fromAmount || !toAmount || fetchingQuote || !selectedRoute}
               >
                 Review Swap
               </Button>

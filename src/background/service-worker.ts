@@ -649,6 +649,64 @@ async function updateBadge(count: number): Promise<void> {
   }
 }
 
+// Track if popup window is already open to avoid duplicates
+let popupWindowId: number | null = null;
+
+// Open the extension popup automatically when approval is needed
+async function openExtensionPopup(): Promise<void> {
+  try {
+    // Check if popup window is already open
+    if (popupWindowId !== null) {
+      try {
+        const existingWindow = await chrome.windows.get(popupWindowId);
+        if (existingWindow) {
+          // Focus the existing window
+          await chrome.windows.update(popupWindowId, { focused: true });
+          return;
+        }
+      } catch {
+        // Window doesn't exist anymore
+        popupWindowId = null;
+      }
+    }
+
+    // Try chrome.action.openPopup first (Chrome 99+, requires user gesture in some contexts)
+    try {
+      if (typeof chrome !== 'undefined' && chrome.action?.openPopup) {
+        await chrome.action.openPopup();
+        return;
+      }
+    } catch {
+      // openPopup failed (likely no user gesture), fall back to window.create
+    }
+
+    // Fallback: Open as a popup window
+    const popupUrl = chrome.runtime.getURL('popup.html');
+    const newWindow = await chrome.windows.create({
+      url: popupUrl,
+      type: 'popup',
+      width: 400,
+      height: 650,
+      focused: true,
+    });
+
+    if (newWindow.id) {
+      popupWindowId = newWindow.id;
+
+      // Listen for window close to reset the ID
+      chrome.windows.onRemoved.addListener(function onRemoved(windowId) {
+        if (windowId === popupWindowId) {
+          popupWindowId = null;
+          chrome.windows.onRemoved.removeListener(onRemoved);
+        }
+      });
+    }
+  } catch (error) {
+    // Fallback failed - user will need to click the extension icon
+    console.error('Failed to open popup:', error);
+  }
+}
+
 // Get pending approval by ID (called by popup to get approval details)
 async function handleGetApproval(payload: any = {}): Promise<MessageResponse> {
   const { approvalId } = payload;
@@ -705,10 +763,15 @@ async function showApprovalPopup(origin: string, chainId: string): Promise<boole
       createdAt: Date.now(),
     };
 
-    savePendingApproval(approval).catch((error) => {
-      approvalResolvers.delete(approvalId);
-      reject(error);
-    });
+    savePendingApproval(approval)
+      .then(() => {
+        // Open the extension popup automatically
+        openExtensionPopup();
+      })
+      .catch((error) => {
+        approvalResolvers.delete(approvalId);
+        reject(error);
+      });
 
     // Timeout after 5 minutes
     setTimeout(
@@ -738,10 +801,15 @@ async function showTransactionApproval(signDoc: any, origin: string = ''): Promi
       createdAt: Date.now(),
     };
 
-    savePendingApproval(approval).catch((error) => {
-      approvalResolvers.delete(approvalId);
-      reject(error);
-    });
+    savePendingApproval(approval)
+      .then(() => {
+        // Open the extension popup automatically
+        openExtensionPopup();
+      })
+      .catch((error) => {
+        approvalResolvers.delete(approvalId);
+        reject(error);
+      });
 
     setTimeout(
       async () => {
@@ -770,10 +838,15 @@ async function showSigningApproval(data: any, origin: string = ''): Promise<bool
       createdAt: Date.now(),
     };
 
-    savePendingApproval(approval).catch((error) => {
-      approvalResolvers.delete(approvalId);
-      reject(error);
-    });
+    savePendingApproval(approval)
+      .then(() => {
+        // Open the extension popup automatically
+        openExtensionPopup();
+      })
+      .catch((error) => {
+        approvalResolvers.delete(approvalId);
+        reject(error);
+      });
 
     setTimeout(
       async () => {
