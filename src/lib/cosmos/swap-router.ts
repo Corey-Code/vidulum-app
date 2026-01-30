@@ -177,10 +177,11 @@ function findAllRoutes(
     }
 
     const edges = graph.getEdges(state.currentDenom);
+    const visitedDenoms = new Set(state.path);
 
     for (const edge of edges) {
       // Skip if we've already visited this denom (no cycles)
-      if (state.path.includes(edge.targetDenom)) {
+      if (visitedDenoms.has(edge.targetDenom)) {
         continue;
       }
 
