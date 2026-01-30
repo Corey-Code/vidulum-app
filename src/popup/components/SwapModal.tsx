@@ -866,6 +866,22 @@ const SwapModal: React.FC<SwapModalProps> = ({
                         {toAmount} {toToken.symbol}
                       </Text>
                     </HStack>
+                    <HStack justify="space-between">
+                      <Text color="gray.500">Network Fee</Text>
+                      <Text>{txFee?.formatted || '~0.0025 BZE'}</Text>
+                    </HStack>
+                    <HStack justify="space-between">
+                      <Text color="gray.500">Taker Fee</Text>
+                      <Text>{tradeFee?.formatted || '~0.1 BZE'}</Text>
+                    </HStack>
+                    <HStack justify="space-between">
+                      <Text color="gray.500" fontWeight="semibold">Total Fees</Text>
+                      <Text fontWeight="semibold">
+                        {txFee && tradeFee
+                          ? `${((parseInt(txFee.amount) + parseInt(tradeFee.amount)) / 1_000_000).toFixed(6)} BZE`
+                          : '~0.1025 BZE'}
+                      </Text>
+                    </HStack>
                   </VStack>
                 </Box>
               )}
@@ -917,6 +933,18 @@ const SwapModal: React.FC<SwapModalProps> = ({
                   <HStack justify="space-between">
                     <Text color="gray.500">Network Fee</Text>
                     <Text>{txFee?.formatted || '~0.0025 BZE'}</Text>
+                  </HStack>
+                  <HStack justify="space-between">
+                    <Text color="gray.500">Taker Fee</Text>
+                    <Text>{tradeFee?.formatted || '~0.1 BZE'}</Text>
+                  </HStack>
+                  <HStack justify="space-between">
+                    <Text color="gray.500" fontWeight="semibold">Total Fees</Text>
+                    <Text fontWeight="semibold">
+                      {txFee && tradeFee
+                        ? `${((parseInt(txFee.amount) + parseInt(tradeFee.amount)) / 1_000_000).toFixed(6)} BZE`
+                        : '~0.1025 BZE'}
+                    </Text>
                   </HStack>
                 </VStack>
               </Box>
