@@ -583,6 +583,17 @@ const PENDING_APPROVALS_KEY = 'pending_approvals';
 
 // Track popup window ID to prevent duplicates
 let popupWindowId: number | null = null;
+let isCreatingPopup = false;
+
+// Set up window close listener once at module level
+if (typeof chrome !== 'undefined' && chrome.windows) {
+  chrome.windows.onRemoved.addListener((windowId) => {
+    if (windowId === popupWindowId) {
+      popupWindowId = null;
+      isCreatingPopup = false;
+    }
+  });
+}
 
 // Pending approval structure for storage
 interface StoredApproval {
@@ -626,19 +637,24 @@ async function openExtensionPopup(): Promise<void> {
     // Check if popup window already exists and focus it
     if (popupWindowId !== null) {
       try {
-        const existingWindow = await chrome.windows.get(popupWindowId);
-        if (existingWindow) {
-          // Window exists, bring it to focus
-          await chrome.windows.update(popupWindowId, { focused: true });
-          return;
-        }
+        await chrome.windows.get(popupWindowId);
+        // Window exists, bring it to focus
+        await chrome.windows.update(popupWindowId, { focused: true });
+        return;
       } catch {
         // Window doesn't exist anymore, create a new one
         popupWindowId = null;
+        isCreatingPopup = false;
       }
     }
 
+    // Prevent creating multiple windows in quick succession
+    if (isCreatingPopup) {
+      return;
+    }
+
     // Create new popup window
+    isCreatingPopup = true;
     const window = await chrome.windows.create({
       url: chrome.runtime.getURL('popup.html'),
       type: 'popup',
@@ -649,16 +665,12 @@ async function openExtensionPopup(): Promise<void> {
 
     if (window.id) {
       popupWindowId = window.id;
-
-      // Clean up window ID when window is closed
-      chrome.windows.onRemoved.addListener((windowId) => {
-        if (windowId === popupWindowId) {
-          popupWindowId = null;
-        }
-      });
+    } else {
+      isCreatingPopup = false;
     }
   } catch (error) {
     console.error('Failed to open extension popup:', error);
+    isCreatingPopup = false;
   }
 }
 
