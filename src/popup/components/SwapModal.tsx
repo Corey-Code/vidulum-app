@@ -185,6 +185,10 @@ const SwapModal: React.FC<SwapModalProps> = ({
   const { selectedAccount, getAddressForChain, updateActivity, keyring } = useWalletStore();
   const { getBalance, fetchBalance } = useChainStore();
 
+  // Fee fallback constants
+  const FALLBACK_NETWORK_FEE = 0.0025; // BZE
+  const FALLBACK_TAKER_FEE = 0.1; // BZE
+
   const [availableTokens, setAvailableTokens] = useState<TokenInfo[]>(defaultBzeTokens);
   const [fromToken, setFromToken] = useState<TokenInfo>(defaultBzeTokens[0]);
   const [toToken, setToToken] = useState<TokenInfo | null>(null);
@@ -207,7 +211,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
       const total = (parseInt(txFee.amount) + parseInt(tradeFee.amount)) / 1_000_000;
       return `${total.toFixed(6)} BZE`;
     }
-    return '~0.1025 BZE';
+    return `~${(FALLBACK_NETWORK_FEE + FALLBACK_TAKER_FEE).toFixed(6)} BZE`;
   }, [txFee, tradeFee]);
 
   const addressPrefix = chainConfig?.bech32Config.bech32PrefixAccAddr || 'bze';
@@ -877,11 +881,11 @@ const SwapModal: React.FC<SwapModalProps> = ({
                     </HStack>
                     <HStack justify="space-between">
                       <Text color="gray.500">Network Fee</Text>
-                      <Text>{txFee?.formatted || '~0.0025 BZE'}</Text>
+                      <Text>{txFee?.formatted || `~${FALLBACK_NETWORK_FEE.toFixed(4)} BZE`}</Text>
                     </HStack>
                     <HStack justify="space-between">
                       <Text color="gray.500">Taker Fee</Text>
-                      <Text>{tradeFee?.formatted || '~0.1 BZE'}</Text>
+                      <Text>{tradeFee?.formatted || `~${FALLBACK_TAKER_FEE.toFixed(4)} BZE`}</Text>
                     </HStack>
                     <HStack justify="space-between">
                       <Text color="gray.500" fontWeight="semibold">Total Fees</Text>
@@ -937,11 +941,11 @@ const SwapModal: React.FC<SwapModalProps> = ({
                   </HStack>
                   <HStack justify="space-between">
                     <Text color="gray.500">Network Fee</Text>
-                    <Text>{txFee?.formatted || '~0.0025 BZE'}</Text>
+                    <Text>{txFee?.formatted || `~${FALLBACK_NETWORK_FEE.toFixed(4)} BZE`}</Text>
                   </HStack>
                   <HStack justify="space-between">
                     <Text color="gray.500">Taker Fee</Text>
-                    <Text>{tradeFee?.formatted || '~0.1 BZE'}</Text>
+                    <Text>{tradeFee?.formatted || `~${FALLBACK_TAKER_FEE.toFixed(4)} BZE`}</Text>
                   </HStack>
                   <HStack justify="space-between">
                     <Text color="gray.500" fontWeight="semibold">Total Fees</Text>
