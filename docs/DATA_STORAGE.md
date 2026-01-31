@@ -260,7 +260,7 @@ Data is isolated to the `vidulum.app` domain and cannot be accessed by other web
 
 ```javascript
 // In extension console
-chrome.storage.local.clear();
+browser.storage.local.clear();
 chrome.storage.session.clear();
 ```
 

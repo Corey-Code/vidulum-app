@@ -134,7 +134,7 @@ const available = await chainRegistryClient.getAvailableChains();
 The dynamic client:
 
 - Fetches from the chain registry on-demand
-- Caches results in `chrome.storage.local` for 24 hours
+- Caches results in `browser.storage.local` for 24 hours
 - Works for any chain in the registry
 
 ## Method 3: Manual Configuration (Legacy)
