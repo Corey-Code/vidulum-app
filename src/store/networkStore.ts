@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import browser from 'webextension-polyfill';
 import { networkRegistry, NetworkConfig } from '@/lib/networks';
 
 // Storage key for network preferences
@@ -48,21 +49,19 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
 
   loadPreferences: async () => {
     try {
-      if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-        const result = await chrome.storage.local.get(STORAGE_KEY);
-        if (result[STORAGE_KEY]) {
-          // Load stored overrides directly (defaults computed from registry at runtime)
-          const stored = result[STORAGE_KEY] as NetworkPreferences;
+      const result = await browser.storage.local.get(STORAGE_KEY);
+      if (result[STORAGE_KEY]) {
+        // Load stored overrides directly (defaults computed from registry at runtime)
+        const stored = result[STORAGE_KEY] as NetworkPreferences;
 
-          set({
-            preferences: {
-              enabledNetworks: stored.enabledNetworks || {},
-              enabledAssets: stored.enabledAssets || {},
-            },
-            isLoaded: true,
-          });
-          return;
-        }
+        set({
+          preferences: {
+            enabledNetworks: stored.enabledNetworks || {},
+            enabledAssets: stored.enabledAssets || {},
+          },
+          isLoaded: true,
+        });
+        return;
       }
     } catch (error) {
       console.warn('Failed to load network preferences:', error);
@@ -75,9 +74,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
   savePreferences: async () => {
     const { preferences } = get();
     try {
-      if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-        await chrome.storage.local.set({ [STORAGE_KEY]: preferences });
-      }
+      await browser.storage.local.set({ [STORAGE_KEY]: preferences });
     } catch (error) {
       console.warn('Failed to save network preferences:', error);
     }

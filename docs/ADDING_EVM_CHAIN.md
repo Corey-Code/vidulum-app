@@ -83,7 +83,7 @@ const popular = await evmRegistryClient.getPopularChains();
 The runtime client:
 
 - Fetches chain data from chainid.network
-- Caches results in `chrome.storage.local` for 24 hours
+- Caches results in `browser.storage.local` for 24 hours
 - Filters out deprecated chains and invalid RPC endpoints
 
 ## Method 3: Manual Configuration (Legacy)

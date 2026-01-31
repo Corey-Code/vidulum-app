@@ -5,21 +5,22 @@
  */
 
 import { act, renderHook } from '@testing-library/react';
+import { mockBrowser } from '../setup';
 
-// Mock chrome.storage.local before importing the store
+// Mock storage for testing
 const mockStorage: Record<string, unknown> = {};
-const mockChromeStorage = {
-  local: {
-    get: jest.fn((key: string) => Promise.resolve({ [key]: mockStorage[key] })),
-    set: jest.fn((data: Record<string, unknown>) => {
-      Object.assign(mockStorage, data);
-      return Promise.resolve();
-    }),
-  },
-};
 
-// @ts-expect-error - mocking chrome global
-global.chrome = { storage: mockChromeStorage };
+// Setup browser.storage.local mock behavior
+beforeAll(() => {
+  (mockBrowser.storage.local.get as jest.Mock).mockImplementation((key: string) => 
+    Promise.resolve({ [key]: mockStorage[key] })
+  );
+  
+  (mockBrowser.storage.local.set as jest.Mock).mockImplementation((data: Record<string, unknown>) => {
+    Object.assign(mockStorage, data);
+    return Promise.resolve();
+  });
+});
 
 // Mock the network registry
 jest.mock('@/lib/networks', () => ({
@@ -60,8 +61,8 @@ describe('Network Store', () => {
   beforeEach(() => {
     // Clear mock storage and reset store state
     Object.keys(mockStorage).forEach((key) => delete mockStorage[key]);
-    mockChromeStorage.local.get.mockClear();
-    mockChromeStorage.local.set.mockClear();
+    mockBrowser.storage.local.get.mockClear();
+    mockBrowser.storage.local.set.mockClear();
 
     // Reset the store state (empty overrides - defaults from registry)
     useNetworkStore.setState({
@@ -157,10 +158,10 @@ describe('Network Store', () => {
       });
 
       expect(result.current.isNetworkEnabled('cosmoshub-4')).toBe(true);
-      expect(mockChromeStorage.local.set).toHaveBeenCalled();
+      expect(mockBrowser.storage.local.set).toHaveBeenCalled();
 
       // Verify override is stored
-      const lastCall = mockChromeStorage.local.set.mock.calls.slice(-1)[0][0] as {
+      const lastCall = mockBrowser.storage.local.set.mock.calls.slice(-1)[0][0] as {
         network_preferences: { enabledNetworks: Record<string, boolean> };
       };
       expect(lastCall.network_preferences.enabledNetworks['cosmoshub-4']).toBe(true);
@@ -175,10 +176,10 @@ describe('Network Store', () => {
       });
 
       expect(result.current.isNetworkEnabled('beezee-1')).toBe(false);
-      expect(mockChromeStorage.local.set).toHaveBeenCalled();
+      expect(mockBrowser.storage.local.set).toHaveBeenCalled();
 
       // Verify override is stored
-      const lastCall = mockChromeStorage.local.set.mock.calls.slice(-1)[0][0] as {
+      const lastCall = mockBrowser.storage.local.set.mock.calls.slice(-1)[0][0] as {
         network_preferences: { enabledNetworks: Record<string, boolean> };
       };
       expect(lastCall.network_preferences.enabledNetworks['beezee-1']).toBe(false);
@@ -195,7 +196,7 @@ describe('Network Store', () => {
       expect(result.current.isNetworkEnabled('beezee-1')).toBe(true);
 
       // Verify no override stored (key should not exist)
-      const lastCall = mockChromeStorage.local.set.mock.calls.slice(-1)[0][0] as {
+      const lastCall = mockBrowser.storage.local.set.mock.calls.slice(-1)[0][0] as {
         network_preferences: { enabledNetworks: Record<string, boolean> };
       };
       expect(lastCall.network_preferences.enabledNetworks['beezee-1']).toBeUndefined();
@@ -366,7 +367,7 @@ describe('Network Store', () => {
         await result.current.setNetworkEnabled('beezee-1', false);
       });
 
-      expect(mockChromeStorage.local.set).toHaveBeenCalledWith(
+      expect(mockBrowser.storage.local.set).toHaveBeenCalledWith(
         expect.objectContaining({
           network_preferences: expect.objectContaining({
             enabledNetworks: expect.objectContaining({
@@ -396,7 +397,7 @@ describe('Network Store', () => {
       expect(result.current.isNetworkEnabled('beezee-1')).toBe(true);
 
       // The override should be removed from storage
-      const lastCall = mockChromeStorage.local.set.mock.calls.slice(-1)[0][0] as {
+      const lastCall = mockBrowser.storage.local.set.mock.calls.slice(-1)[0][0] as {
         network_preferences: { enabledNetworks: Record<string, boolean> };
       };
       expect(lastCall.network_preferences.enabledNetworks['beezee-1']).toBeUndefined();
@@ -409,7 +410,7 @@ describe('Network Store', () => {
         await result.current.setAssetEnabled('beezee-1', 'uvdl', true);
       });
 
-      expect(mockChromeStorage.local.set).toHaveBeenCalledWith(
+      expect(mockBrowser.storage.local.set).toHaveBeenCalledWith(
         expect.objectContaining({
           network_preferences: expect.objectContaining({
             enabledAssets: expect.objectContaining({

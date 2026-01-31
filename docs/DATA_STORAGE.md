@@ -4,11 +4,21 @@ This document describes how Vidulum App stores user data, including encryption m
 
 ## Overview
 
-The extension uses the WebExtension Storage API (`browser.storage`) for all data persistence. This is the standard storage mechanism for browser extensions and provides isolated storage per extension.
+Vidulum App runs in two modes with different storage backends:
+
+| Mode                  | Storage API                                         | Persistence                |
+| --------------------- | --------------------------------------------------- | -------------------------- |
+| Browser Extension     | `browser.storage.local` / `browser.storage.session` | Extension-isolated storage |
+| Web App (vidulum.app) | `localStorage` / `sessionStorage`                   | Domain-isolated storage    |
+
+Both modes use the same encryption and data structures. The web app includes a polyfill that maps the WebExtension Storage API to browser Web Storage APIs.
 
 ## Storage Types
 
-### Persistent Storage (`browser.storage.local`)
+### Persistent Storage
+
+**Extension:** `browser.storage.local`  
+**Web App:** `localStorage`
 
 Data stored here persists across browser sessions and restarts.
 
@@ -58,9 +68,12 @@ interface StoredPreferences {
 }
 ```
 
-### Session Storage (`browser.storage.session`)
+### Session Storage
 
-Data stored here is cleared when the browser closes.
+**Extension:** `browser.storage.session`  
+**Web App:** `sessionStorage`
+
+Data stored here is cleared when the browser closes (or tab closes for web app).
 
 | Key                | Description                           |
 | ------------------ | ------------------------------------- |
@@ -100,7 +113,18 @@ Data stored here is cleared when the browser closes.
 
 ## Physical Storage Locations
 
-### Chrome / Chromium-based Browsers
+### Web App (vidulum.app)
+
+Web app data is stored in the browser's Web Storage for the `vidulum.app` origin:
+
+- **localStorage**: Persistent wallet data (encrypted mnemonic, accounts, preferences)
+- **sessionStorage**: Session data (cleared when tab closes)
+
+Data is isolated to the `vidulum.app` domain and cannot be accessed by other websites.
+
+### Browser Extension
+
+#### Chrome / Chromium-based Browsers
 
 **Linux:**
 
@@ -179,7 +203,7 @@ Data stored here is cleared when the browser closes.
 1. User creates password
 2. New mnemonic generated (24 words, BIP39)
 3. Mnemonic encrypted with password
-4. Initial account derived (BIP44 path m/44'/118'/0'/0/0)
+4. Initial account derived (BIP44 path m/44'/0'/0'/0/0)
 5. Encrypted wallet saved to `storage.local`
 
 ### Wallet Unlock
@@ -236,7 +260,7 @@ Data stored here is cleared when the browser closes.
 
 ```javascript
 // In extension console
-chrome.storage.local.clear();
+browser.storage.local.clear();
 chrome.storage.session.clear();
 ```
 

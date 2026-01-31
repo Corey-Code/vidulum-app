@@ -1,6 +1,11 @@
 # Vidulum App
 
-Free Open-Source browser extension wallet built by the people, for the people.
+Free Open-Source multi-chain wallet built by the people, for the people.
+
+Available as:
+
+- **Browser Extension** - Chrome, Firefox, Edge
+- **Web App** - [vidulum.app](https://vidulum.app)
 
 - [Purpose](PURPOSE.md) - Project mission and core principles
 - [Privacy Policy](PRIVACY_POLICY.md) - No data collection, all storage is local
@@ -37,14 +42,14 @@ Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/
 
 ### EVM Chains
 
-| Network        | Network ID       | Symbol | Chain ID | Status  |
-| -------------- | ---------------- | ------ | -------- | ------- |
-| Ethereum       | eth-mainnet      | ETH    | 1        | Enabled |
-| OP Mainnet     | oeth-mainnet     | ETH    | 10       | Enabled |
-| BNB Chain      | bnb-mainnet      | BNB    | 56       | Enabled |
-| Polygon        | pol-mainnet      | POL    | 137      | Enabled |
-| Base           | base-mainnet     | ETH    | 8453     | Enabled |
-| Arbitrum One   | arb1-mainnet     | ETH    | 42161    | Enabled |
+| Network      | Network ID   | Symbol | Chain ID | Status  |
+| ------------ | ------------ | ------ | -------- | ------- |
+| Ethereum     | eth-mainnet  | ETH    | 1        | Enabled |
+| OP Mainnet   | oeth-mainnet | ETH    | 10       | Enabled |
+| BNB Chain    | bnb-mainnet  | BNB    | 56       | Enabled |
+| Polygon      | pol-mainnet  | POL    | 137      | Enabled |
+| Base         | base-mainnet | ETH    | 8453     | Enabled |
+| Arbitrum One | arb1-mainnet | ETH    | 42161    | Enabled |
 
 ## Features
 
@@ -57,7 +62,13 @@ Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/
 
 ## Installation
 
-### From Source
+### Web App
+
+Visit [vidulum.app](https://vidulum.app) - no installation required.
+
+### Browser Extension
+
+#### From Source
 
 ```bash
 # Clone the repository
@@ -71,7 +82,7 @@ npm install
 npm run build
 ```
 
-### Load in Chrome
+#### Load in Chrome
 
 1. Navigate to `chrome://extensions`
 2. Enable "Developer mode"
@@ -81,11 +92,17 @@ npm run build
 ## Development
 
 ```bash
-# Development build with watch
+# Development build with watch (extension)
 npm run dev
 
-# Production build
+# Development server (web app)
+npm run dev:web
+
+# Production build (extension)
 npm run build
+
+# Production build (web app)
+npm run build:web
 
 # Run tests
 npm test

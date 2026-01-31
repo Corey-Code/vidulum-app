@@ -8,6 +8,7 @@
  */
 
 import { CosmosNetworkConfig } from './types';
+import browser from 'webextension-polyfill';
 
 const CHAIN_REGISTRY_BASE = 'https://raw.githubusercontent.com/cosmos/chain-registry/master';
 const CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 hours
@@ -72,11 +73,9 @@ class ChainRegistryClient {
     if (this.initialized) return;
 
     try {
-      if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-        const result = await chrome.storage.local.get(STORAGE_KEY);
-        if (result[STORAGE_KEY]) {
-          this.cache = result[STORAGE_KEY];
-        }
+      const result = await browser.storage.local.get(STORAGE_KEY);
+      if (result[STORAGE_KEY]) {
+        this.cache = result[STORAGE_KEY];
       }
     } catch (error) {
       console.warn('Failed to load chain registry cache:', error);
@@ -90,9 +89,7 @@ class ChainRegistryClient {
    */
   private async saveCache(): Promise<void> {
     try {
-      if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-        await chrome.storage.local.set({ [STORAGE_KEY]: this.cache });
-      }
+      await browser.storage.local.set({ [STORAGE_KEY]: this.cache });
     } catch (error) {
       console.warn('Failed to save chain registry cache:', error);
     }
@@ -233,11 +230,7 @@ class ChainRegistryClient {
       const hostname = parsed.hostname;
 
       // Block obvious local/loopback hosts
-      if (
-        hostname === 'localhost' ||
-        hostname === '::1' ||
-        hostname === '0:0:0:0:0:0:0:1'
-      ) {
+      if (hostname === 'localhost' || hostname === '::1' || hostname === '0:0:0:0:0:0:0:1') {
         return false;
       }
 

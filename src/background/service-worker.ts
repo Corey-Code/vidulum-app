@@ -31,7 +31,7 @@ class SessionManager {
   private async loadConnections() {
     try {
       if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-        const result = await chrome.storage.local.get(CONNECTED_DAPPS_KEY);
+        const result = await browser.storage.local.get(CONNECTED_DAPPS_KEY);
         const stored = result[CONNECTED_DAPPS_KEY] as Record<string, string[]> | undefined;
         if (stored) {
           for (const [origin, chainIds] of Object.entries(stored)) {
@@ -51,7 +51,7 @@ class SessionManager {
         for (const [origin, chainIds] of this.connectedDapps.entries()) {
           toStore[origin] = Array.from(chainIds);
         }
-        await chrome.storage.local.set({ [CONNECTED_DAPPS_KEY]: toStore });
+        await browser.storage.local.set({ [CONNECTED_DAPPS_KEY]: toStore });
       }
     } catch {
       // Ignore errors
@@ -401,7 +401,7 @@ const CUSTOM_CHAINS_KEY = 'custom_chains';
 async function getCustomChains(): Promise<Record<string, any>> {
   try {
     if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-      const result = await chrome.storage.local.get(CUSTOM_CHAINS_KEY);
+      const result = await browser.storage.local.get(CUSTOM_CHAINS_KEY);
       return result[CUSTOM_CHAINS_KEY] || {};
     }
   } catch {
@@ -415,7 +415,7 @@ async function saveCustomChain(chainInfo: any): Promise<void> {
   if (typeof chrome !== 'undefined' && chrome.storage?.local) {
     const customChains = await getCustomChains();
     customChains[chainInfo.chainId] = chainInfo;
-    await chrome.storage.local.set({ [CUSTOM_CHAINS_KEY]: customChains });
+    await browser.storage.local.set({ [CUSTOM_CHAINS_KEY]: customChains });
   }
 }
 
@@ -605,10 +605,10 @@ function generateApprovalId(): string {
 // Save pending approval to storage (so popup can access it)
 async function savePendingApproval(approval: StoredApproval): Promise<void> {
   if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-    const result = await chrome.storage.local.get(PENDING_APPROVALS_KEY);
+    const result = await browser.storage.local.get(PENDING_APPROVALS_KEY);
     const approvals: StoredApproval[] = result[PENDING_APPROVALS_KEY] || [];
     approvals.push(approval);
-    await chrome.storage.local.set({ [PENDING_APPROVALS_KEY]: approvals });
+    await browser.storage.local.set({ [PENDING_APPROVALS_KEY]: approvals });
     // Update badge to show pending count
     await updateBadge(approvals.length);
   }
@@ -617,7 +617,7 @@ async function savePendingApproval(approval: StoredApproval): Promise<void> {
 // Get all pending approvals from storage
 async function getPendingApprovals(): Promise<StoredApproval[]> {
   if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-    const result = await chrome.storage.local.get(PENDING_APPROVALS_KEY);
+    const result = await browser.storage.local.get(PENDING_APPROVALS_KEY);
     return result[PENDING_APPROVALS_KEY] || [];
   }
   return [];
@@ -628,7 +628,7 @@ async function removePendingApproval(approvalId: string): Promise<void> {
   if (typeof chrome !== 'undefined' && chrome.storage?.local) {
     const approvals = await getPendingApprovals();
     const filtered = approvals.filter((a) => a.id !== approvalId);
-    await chrome.storage.local.set({ [PENDING_APPROVALS_KEY]: filtered });
+    await browser.storage.local.set({ [PENDING_APPROVALS_KEY]: filtered });
     await updateBadge(filtered.length);
   }
 }

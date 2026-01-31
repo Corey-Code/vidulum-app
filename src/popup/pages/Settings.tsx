@@ -13,6 +13,7 @@ import {
   Collapse,
 } from '@chakra-ui/react';
 import { ArrowBackIcon, ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
+import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
 import { EncryptedStorage } from '@/lib/storage/encrypted-storage';
 import { FEATURES } from '@/lib/config/features';
@@ -63,7 +64,7 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const result = await chrome.storage.local.get(SETTINGS_KEY);
+        const result = await browser.storage.local.get(SETTINGS_KEY);
         const settings = result[SETTINGS_KEY] || {};
         setEnableKeplrInjection(settings.enableKeplrInjection ?? false);
         setEnableMetamaskInjection(settings.enableMetamaskInjection ?? false);
@@ -79,7 +80,7 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
         });
       } catch (error) {
         // Storage access failed, use default
-        console.error('Failed to load settings from chrome.storage.local', error);
+        console.error('Failed to load settings from storage', error);
       } finally {
         setLoadingSettings(false);
       }
@@ -91,10 +92,10 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   const handleKeplrInjectionToggle = async (enabled: boolean) => {
     setEnableKeplrInjection(enabled);
     try {
-      const result = await chrome.storage.local.get(SETTINGS_KEY);
+      const result = await browser.storage.local.get(SETTINGS_KEY);
       const settings = result[SETTINGS_KEY] || {};
       settings.enableKeplrInjection = enabled;
-      await chrome.storage.local.set({ [SETTINGS_KEY]: settings });
+      await browser.storage.local.set({ [SETTINGS_KEY]: settings });
       toast({
         title: enabled ? 'Keplr mode enabled' : 'Keplr mode disabled',
         description: 'Refresh any open dApp pages to apply changes',
@@ -116,10 +117,10 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   const handleMetamaskInjectionToggle = async (enabled: boolean) => {
     setEnableMetamaskInjection(enabled);
     try {
-      const result = await chrome.storage.local.get(SETTINGS_KEY);
+      const result = await browser.storage.local.get(SETTINGS_KEY);
       const settings = result[SETTINGS_KEY] || {};
       settings.enableMetamaskInjection = enabled;
-      await chrome.storage.local.set({ [SETTINGS_KEY]: settings });
+      await browser.storage.local.set({ [SETTINGS_KEY]: settings });
       toast({
         title: enabled ? 'Metamask mode enabled' : 'Metamask mode disabled',
         description: 'Refresh any open dApp pages to apply changes',
@@ -141,10 +142,10 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   const handlePhantomInjectionToggle = async (enabled: boolean) => {
     setEnablePhantomInjection(enabled);
     try {
-      const result = await chrome.storage.local.get(SETTINGS_KEY);
+      const result = await browser.storage.local.get(SETTINGS_KEY);
       const settings = result[SETTINGS_KEY] || {};
       settings.enablePhantomInjection = enabled;
-      await chrome.storage.local.set({ [SETTINGS_KEY]: settings });
+      await browser.storage.local.set({ [SETTINGS_KEY]: settings });
       toast({
         title: enabled ? 'Phantom mode enabled' : 'Phantom mode disabled',
         description: 'Refresh any open dApp pages to apply changes',
@@ -166,10 +167,10 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   const handleCoinbaseInjectionToggle = async (enabled: boolean) => {
     setEnableCoinbaseInjection(enabled);
     try {
-      const result = await chrome.storage.local.get(SETTINGS_KEY);
+      const result = await browser.storage.local.get(SETTINGS_KEY);
       const settings = result[SETTINGS_KEY] || {};
       settings.enableCoinbaseInjection = enabled;
-      await chrome.storage.local.set({ [SETTINGS_KEY]: settings });
+      await browser.storage.local.set({ [SETTINGS_KEY]: settings });
       toast({
         title: enabled ? 'Coinbase Wallet mode enabled' : 'Coinbase Wallet mode disabled',
         description: 'Refresh any open dApp pages to apply changes',
@@ -191,10 +192,10 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   const handleFeatureToggle = async (featureKey: keyof FeatureSettings, enabled: boolean) => {
     setFeatureSettings((prev) => ({ ...prev, [featureKey]: enabled }));
     try {
-      const result = await chrome.storage.local.get(SETTINGS_KEY);
+      const result = await browser.storage.local.get(SETTINGS_KEY);
       const settings = result[SETTINGS_KEY] || {};
       settings.features = { ...(settings.features || {}), [featureKey]: enabled };
-      await chrome.storage.local.set({ [SETTINGS_KEY]: settings });
+      await browser.storage.local.set({ [SETTINGS_KEY]: settings });
       toast({
         title: enabled ? 'Feature enabled' : 'Feature disabled',
         description: 'Changes may require page refresh',

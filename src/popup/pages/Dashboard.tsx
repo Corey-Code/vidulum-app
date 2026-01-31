@@ -438,6 +438,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   return (
     <Box
       h="full"
+      flex="1"
       bg="#0a0a0a"
       display="flex"
       flexDirection="column"
@@ -1332,9 +1333,12 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Floating Settings Button */}
       <Button
-        position="absolute"
+        position="sticky"
         bottom={4}
         right={4}
+        alignSelf="flex-end"
+        mr={4}
+        mb={4}
         size="sm"
         bg="#1a1a1a"
         color="gray.400"

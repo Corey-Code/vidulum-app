@@ -3,6 +3,7 @@ import { Box } from '@chakra-ui/react';
 import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
 import { MessageType } from '@/types/messages';
+import VidulumLogoLoader from './components/VidulumLogoLoader';
 import Unlock from './pages/Unlock';
 import Dashboard from './pages/Dashboard';
 import CreateWallet from './pages/CreateWallet';
@@ -52,12 +53,24 @@ async function checkPendingApprovals(): Promise<string | null> {
 const App: React.FC = () => {
   const [view, setView] = useState<View>('loading');
   const [isReady, setIsReady] = useState(false);
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
   const [approvalId, setApprovalId] = useState<string | null>(null);
   const { isInitialized, isLocked, initialize } = useWalletStore();
 
-  // Check for approval request on mount
+  // Minimum display time for smooth loading animation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMinTimeElapsed(true);
+    }, 7000); // Show loader for at least 7 seconds
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Check for approval request on mount - defer to allow animation to render
   useEffect(() => {
     const initApp = async () => {
+      // Small delay to let the loading animation start smoothly
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
       // Always initialize wallet state first
       await initialize();
 
@@ -86,9 +99,9 @@ const App: React.FC = () => {
     initApp();
   }, [initialize]);
 
-  // Update view when state changes (after initialization)
+  // Update view when state changes (after initialization AND min time elapsed)
   useEffect(() => {
-    if (!isReady) return;
+    if (!isReady || !minTimeElapsed) return;
     // Don't change view if we're showing an approval
     if (approvalId) return;
 
@@ -99,7 +112,7 @@ const App: React.FC = () => {
     } else {
       setView('dashboard');
     }
-  }, [isReady, isInitialized, isLocked, approvalId]);
+  }, [isReady, minTimeElapsed, isInitialized, isLocked, approvalId]);
 
   const handleCreateSuccess = () => {
     setView('dashboard');
@@ -167,17 +180,26 @@ const App: React.FC = () => {
   };
 
   return (
-    <Box w="375px" h="600px" bg="#0a0a0a" color="white">
+    <Box
+      w="100%"
+      h="100%"
+      flex="1"
+      display="flex"
+      flexDirection="column"
+      bg="#0a0a0a"
+      color="white"
+    >
       {view === 'loading' && (
         <Box
           p={8}
           textAlign="center"
           h="full"
+          flex="1"
           display="flex"
           alignItems="center"
           justifyContent="center"
         >
-          Loading...
+          <VidulumLogoLoader />
         </Box>
       )}
       {view === 'create' && (
