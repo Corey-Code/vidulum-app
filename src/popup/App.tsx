@@ -199,7 +199,7 @@ const App: React.FC = () => {
           alignItems="center"
           justifyContent="center"
         >
-          <VidulumLogoLoader size={80} />
+          <VidulumLogoLoader />
         </Box>
       )}
       {view === 'create' && (
