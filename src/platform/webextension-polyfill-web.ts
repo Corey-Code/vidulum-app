@@ -75,7 +75,7 @@ const browser = {
   runtime: {
     // In the web build there is no background service worker to message.
     async sendMessage(_message: any): Promise<any> {
-      return undefined;
+      throw new Error('browser.runtime.sendMessage is not supported in the web build.');
     },
 
     // Used only in extension injection code; harmless stub for web.
