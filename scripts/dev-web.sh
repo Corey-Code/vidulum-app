@@ -4,7 +4,10 @@ set -euo pipefail
 # Best-effort: switch to the repo's pinned Node version via nvm, then run Vite.
 # If nvm isn't installed, we just run Vite with the current Node and let it error.
 
-NODE_VERSION="22.12.0"
+# Read Node version from .nvmrc (single source of truth)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+NODE_VERSION="$(cat "$REPO_ROOT/.nvmrc" | tr -d '[:space:]')"
 
 if [[ -z "${NVM_DIR:-}" ]]; then
   export NVM_DIR="$HOME/.nvm"
