@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { ChakraProvider, extendTheme, Box, Flex, HStack, Link, Icon } from '@chakra-ui/react';
+import { ChakraProvider, extendTheme, Flex, HStack, Link, Icon } from '@chakra-ui/react';
 import App from '@/popup/App';
 
 // GitHub icon (simple SVG path)
