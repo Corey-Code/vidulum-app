@@ -5,6 +5,8 @@
  * This allows for gradual rollout and easy feature toggling.
  */
 
+import browser from 'webextension-polyfill';
+
 export const FEATURES = {
   /**
    * Inject window.keplr provider for Keplr-compatible dApps
@@ -56,7 +58,7 @@ export async function isFeatureEnabledWithSettings(
   feature: keyof typeof FEATURES
 ): Promise<boolean> {
   try {
-    const result = await chrome.storage.local.get('vidulum_settings');
+    const result = await browser.storage.local.get('vidulum_settings');
     const settings = result.vidulum_settings || {};
     const featureSettings = settings.features || {};
 

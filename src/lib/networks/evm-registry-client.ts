@@ -9,6 +9,7 @@
  */
 
 import { EvmNetworkConfig } from './types';
+import browser from 'webextension-polyfill';
 
 const CHAINS_JSON_URL = 'https://chainid.network/chains.json';
 const CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 hours
@@ -127,11 +128,9 @@ class EvmRegistryClient {
     if (this.initialized) return;
 
     try {
-      if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-        const result = await chrome.storage.local.get(STORAGE_KEY);
-        if (result[STORAGE_KEY]) {
-          this.cache = result[STORAGE_KEY];
-        }
+      const result = await browser.storage.local.get(STORAGE_KEY);
+      if (result[STORAGE_KEY]) {
+        this.cache = result[STORAGE_KEY];
       }
     } catch (error) {
       console.warn('Failed to load EVM chain registry cache:', error);
@@ -145,9 +144,7 @@ class EvmRegistryClient {
    */
   private async saveCache(): Promise<void> {
     try {
-      if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-        await chrome.storage.local.set({ [STORAGE_KEY]: this.cache });
-      }
+      await browser.storage.local.set({ [STORAGE_KEY]: this.cache });
     } catch (error) {
       console.warn('Failed to save EVM chain registry cache:', error);
     }
