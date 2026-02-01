@@ -20,7 +20,7 @@ const MOONPAY_API_KEY = import.meta.env.VITE_MOONPAY_API_KEY || '';
  * MoonPay Widget - Universal Component
  *
  * - Web App: Uses @moonpay/moonpay-react SDK for embedded widget experience
- * - Extension: Uses iframe embedding (MV3 prohibits remote scripts)
+ * - Extension: Opens MoonPay in a new browser tab (this component provides fallback iframe for testing)
  */
 const MoonPayWidget: React.FC<MoonPayWidgetProps> = (props) => {
   const { flow, cryptoCode, walletAddress, amount, colorCode = '#3182CE', onClose } = props;
@@ -50,7 +50,7 @@ const MoonPayWidget: React.FC<MoonPayWidgetProps> = (props) => {
     );
   }
 
-  // Extension build: use iframe-based embedding
+  // Extension build: fallback to iframe (actual extension flow uses new tab via browser.tabs.create)
   return <MoonPayIframeWidget {...props} />;
 };
 
