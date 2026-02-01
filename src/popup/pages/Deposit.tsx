@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   VStack,
@@ -17,10 +17,10 @@ import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
 import { useNetworkStore } from '@/store/networkStore';
 import { networkRegistry } from '@/lib/networks';
+import MoonPayWidget from '@/popup/components/MoonPayWidget';
 
 // MoonPay supported cryptocurrencies mapping
 const MOONPAY_CRYPTO_CODES: Record<string, string> = {
-  // EVM chains - Base USDC is the primary option
   'base-mainnet': 'usdc_base',
   'ethereum-mainnet': 'eth',
   'bnb-mainnet': 'bnb_bsc',
@@ -28,22 +28,19 @@ const MOONPAY_CRYPTO_CODES: Record<string, string> = {
   'arbitrum-mainnet': 'eth_arbitrum',
   'optimism-mainnet': 'eth_optimism',
   'avalanche-mainnet': 'avax_cchain',
-  // Cosmos chains
   'cosmoshub-4': 'atom',
   'osmosis-1': 'osmo',
-  'beezee-1': '', // Not supported
-  'atomone-1': '', // Not supported
-  // UTXO chains
+  'beezee-1': '',
+  'atomone-1': '',
   'bitcoin-mainnet': 'btc',
   'litecoin-mainnet': 'ltc',
   'dogecoin-mainnet': 'doge',
   'zcash-mainnet': 'zec',
-  'flux-mainnet': '', // Not supported
-  'ravencoin-mainnet': '', // Not supported
-  'bitcoinz-mainnet': '', // Not supported
+  'flux-mainnet': '',
+  'ravencoin-mainnet': '',
+  'bitcoinz-mainnet': '',
 };
 
-// Display names for MoonPay assets (what users are actually buying)
 const MOONPAY_DISPLAY_NAMES: Record<string, string> = {
   'base-mainnet': 'USDC (Base)',
   'ethereum-mainnet': 'ETH (Ethereum)',
@@ -60,17 +57,72 @@ const MOONPAY_DISPLAY_NAMES: Record<string, string> = {
   'zcash-mainnet': 'ZEC (Zcash)',
 };
 
-// Default network for deposits
 const DEFAULT_DEPOSIT_NETWORK = 'base-mainnet';
-
-// MoonPay API Key (must be provided via VITE_MOONPAY_API_KEY; empty string disables MoonPay)
 const MOONPAY_API_KEY = import.meta.env.VITE_MOONPAY_API_KEY ?? '';
 
 interface DepositProps {
   onBack: () => void;
 }
 
+/**
+ * Deposit Page
+ * - Web App: Shows simplified MoonPay SDK widget with overlay popup
+ * - Extension: Shows network selection and opens MoonPay in new tab
+ */
 const Deposit: React.FC<DepositProps> = ({ onBack }) => {
+  // For web app, render simplified view with MoonPay SDK
+  if (__IS_WEB_BUILD__) {
+    return <DepositWeb onBack={onBack} />;
+  }
+
+  // Extension version with full network selection
+  return <DepositExtension onBack={onBack} />;
+};
+
+/**
+ * Simplified Deposit for Web App - Just MoonPay widget
+ */
+const DepositWeb: React.FC<DepositProps> = ({ onBack }) => {
+  return (
+    <Box minH="100vh" bg="#0a0a0a" color="white" p={4}>
+      <HStack mb={4}>
+        <IconButton
+          aria-label="Back"
+          icon={<ArrowBackIcon />}
+          variant="ghost"
+          color="gray.400"
+          _hover={{ color: 'white', bg: 'whiteAlpha.100' }}
+          onClick={onBack}
+          size="sm"
+        />
+        <Text fontSize="lg" fontWeight="bold">
+          Deposit
+        </Text>
+        <Badge colorScheme="teal" ml={2}>
+          Buy Crypto
+        </Badge>
+      </HStack>
+
+      <VStack spacing={4} align="stretch">
+        <MoonPayWidget flow="buy" colorCode="#14B8A6" />
+
+        <Box textAlign="center" pt={2}>
+          <Text fontSize="xs" color="gray.500">
+            Powered by{' '}
+            <Link href="https://www.moonpay.com" isExternal color="teal.400">
+              MoonPay
+            </Link>
+          </Text>
+        </Box>
+      </VStack>
+    </Box>
+  );
+};
+
+/**
+ * Full Deposit for Extension - Network selection + external MoonPay tab
+ */
+const DepositExtension: React.FC<DepositProps> = ({ onBack }) => {
   const { selectedAccount, getAddressForChain, getBitcoinAddress, getEvmAddress } =
     useWalletStore();
   const { loadPreferences, isLoaded: networkPrefsLoaded, isNetworkEnabled } = useNetworkStore();
@@ -80,20 +132,17 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
   const [walletAddress, setWalletAddress] = useState<string>('');
   const [loadingAddress, setLoadingAddress] = useState(false);
 
-  // Load network preferences on mount
   useEffect(() => {
     if (!networkPrefsLoaded) {
       loadPreferences();
     }
   }, [networkPrefsLoaded, loadPreferences]);
 
-  // Get supported networks for MoonPay - filter by user preferences
   const supportedNetworks = networkRegistry
     .getAll()
     .filter((n) => isNetworkEnabled(n.id))
     .filter((n) => MOONPAY_CRYPTO_CODES[n.id] && MOONPAY_CRYPTO_CODES[n.id] !== '');
 
-  // Ensure selected network is valid; if disabled, select the first available
   useEffect(() => {
     if (
       networkPrefsLoaded &&
@@ -104,7 +153,6 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
     }
   }, [networkPrefsLoaded, supportedNetworks, selectedNetwork]);
 
-  // Get current network config
   const networkConfig = networkRegistry.get(selectedNetwork);
   const cryptoCode = MOONPAY_CRYPTO_CODES[selectedNetwork] || '';
   const isSupported = cryptoCode !== '';
@@ -112,7 +160,6 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
     MOONPAY_DISPLAY_NAMES[selectedNetwork] ||
     (networkConfig ? `${networkConfig.symbol} (${networkConfig.name})` : 'crypto');
 
-  // Fetch wallet address when network changes
   useEffect(() => {
     const fetchAddress = async () => {
       if (!networkConfig || !selectedAccount) {
@@ -149,7 +196,6 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
     getEvmAddress,
   ]);
 
-  // Build MoonPay URL for external link fallback
   const buildMoonPayUrl = () => {
     const baseUrl = 'https://buy.moonpay.com';
     const params = new URLSearchParams({
@@ -180,7 +226,6 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
 
   return (
     <Box minH="100vh" bg="#0a0a0a" color="white" p={4}>
-      {/* Header */}
       <HStack mb={4}>
         <IconButton
           aria-label="Back"
@@ -200,7 +245,6 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
       </HStack>
 
       <VStack spacing={4} align="stretch">
-        {/* Loading State */}
         {!networkPrefsLoaded ? (
           <Box textAlign="center" py={8}>
             <Spinner size="lg" color="teal.400" />
@@ -210,7 +254,6 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
           </Box>
         ) : (
           <>
-            {/* Network Selection */}
             <Box>
               <Text fontSize="sm" color="gray.400" mb={2}>
                 Select Network
@@ -231,7 +274,6 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
               </Select>
             </Box>
 
-            {/* Wallet Address Display */}
             <Box>
               <HStack justify="space-between" mb={2}>
                 <Text fontSize="sm" color="gray.400">
@@ -263,7 +305,6 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
               </Box>
             </Box>
 
-            {/* MoonPay Action */}
             {!isSupported ? (
               <Box
                 bg="orange.900"
@@ -302,7 +343,6 @@ const Deposit: React.FC<DepositProps> = ({ onBack }) => {
               </VStack>
             )}
 
-            {/* Footer */}
             <Box textAlign="center" pt={2}>
               <Text fontSize="xs" color="gray.500">
                 Powered by{' '}

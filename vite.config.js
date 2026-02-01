@@ -9,6 +9,10 @@ export default defineConfig({
       '@': resolve(__dirname, './src'),
     },
   },
+  define: {
+    // Build-time constant to distinguish extension from web app
+    __IS_WEB_BUILD__: JSON.stringify(false),
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
