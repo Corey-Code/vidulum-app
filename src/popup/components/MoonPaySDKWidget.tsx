@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Text, Button, VStack, Icon } from '@chakra-ui/react';
+import { Box, Text, Button, VStack } from '@chakra-ui/react';
 import { MoonPayProvider, MoonPayBuyWidget, MoonPaySellWidget } from '@moonpay/moonpay-react';
 
 interface MoonPaySDKWidgetProps {
