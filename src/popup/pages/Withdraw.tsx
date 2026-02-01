@@ -17,6 +17,7 @@ import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
 import { useNetworkStore } from '@/store/networkStore';
 import { networkRegistry } from '@/lib/networks';
+import MoonPayWidget from '@/popup/components/MoonPayWidget';
 
 // MoonPay supported cryptocurrencies for selling (off-ramp)
 const MOONPAY_SELL_CODES: Record<string, string> = {
@@ -44,7 +45,67 @@ interface WithdrawProps {
   onBack: () => void;
 }
 
+/**
+ * Withdraw Page
+ * - Web App: Shows simplified MoonPay SDK widget with overlay popup
+ * - Extension: Shows network selection and opens MoonPay in new tab
+ */
 const Withdraw: React.FC<WithdrawProps> = ({ onBack }) => {
+  if (__IS_WEB_BUILD__) {
+    return <WithdrawWeb onBack={onBack} />;
+  }
+  return <WithdrawExtension onBack={onBack} />;
+};
+
+/**
+ * Simplified Withdraw for Web App - Just MoonPay widget
+ */
+const WithdrawWeb: React.FC<WithdrawProps> = ({ onBack }) => {
+  return (
+    <Box minH="100vh" bg="#0a0a0a" color="white" p={4}>
+      <HStack mb={4}>
+        <IconButton
+          aria-label="Back"
+          icon={<ArrowBackIcon />}
+          variant="ghost"
+          color="gray.400"
+          _hover={{ color: 'white', bg: 'whiteAlpha.100' }}
+          onClick={onBack}
+          size="sm"
+        />
+        <Text fontSize="lg" fontWeight="bold">
+          Withdraw
+        </Text>
+        <Badge colorScheme="orange" ml={2}>
+          Sell Crypto
+        </Badge>
+      </HStack>
+
+      <VStack spacing={4} align="stretch">
+        <MoonPayWidget
+          flow="sell"
+          colorCode="#F97316"
+          cryptoCode={MOONPAY_SELL_CODES[DEFAULT_WITHDRAW_NETWORK]}
+          walletAddress=""
+        />
+
+        <Box textAlign="center" pt={2}>
+          <Text fontSize="xs" color="gray.500">
+            Powered by{' '}
+            <Link href="https://www.moonpay.com" isExternal color="orange.400">
+              MoonPay
+            </Link>
+          </Text>
+        </Box>
+      </VStack>
+    </Box>
+  );
+};
+
+/**
+ * Full Withdraw for Extension - Network selection + external MoonPay tab
+ */
+const WithdrawExtension: React.FC<WithdrawProps> = ({ onBack }) => {
   const { selectedAccount, getAddressForChain, getBitcoinAddress, getEvmAddress } =
     useWalletStore();
   const { loadPreferences, getEnabledNetworks, isLoaded: networkPrefsLoaded } = useNetworkStore();
@@ -54,17 +115,14 @@ const Withdraw: React.FC<WithdrawProps> = ({ onBack }) => {
   const [walletAddress, setWalletAddress] = useState<string>('');
   const [loadingAddress, setLoadingAddress] = useState(false);
 
-  // Load network preferences on mount
   useEffect(() => {
     loadPreferences();
   }, [loadPreferences]);
 
-  // Get supported networks for MoonPay sell from user preferences
   const supportedNetworks = getEnabledNetworks().filter(
     (n) => MOONPAY_SELL_CODES[n.id] && MOONPAY_SELL_CODES[n.id] !== ''
   );
 
-  // Validate and update selected network when preferences load or supported networks change
   useEffect(() => {
     if (networkPrefsLoaded && supportedNetworks.length > 0) {
       const isSelectedNetworkAvailable = supportedNetworks.some((n) => n.id === selectedNetwork);
@@ -74,12 +132,10 @@ const Withdraw: React.FC<WithdrawProps> = ({ onBack }) => {
     }
   }, [networkPrefsLoaded, supportedNetworks, selectedNetwork]);
 
-  // Get current network config
   const networkConfig = networkRegistry.get(selectedNetwork);
   const cryptoCode = MOONPAY_SELL_CODES[selectedNetwork] || '';
   const isSupported = cryptoCode !== '';
 
-  // Fetch wallet address when network changes
   useEffect(() => {
     const fetchAddress = async () => {
       if (!networkConfig || !selectedAccount) {
@@ -116,7 +172,6 @@ const Withdraw: React.FC<WithdrawProps> = ({ onBack }) => {
     getEvmAddress,
   ]);
 
-  // Build MoonPay Sell URL for external link fallback
   const buildMoonPaySellUrl = () => {
     const baseUrl = 'https://sell.moonpay.com';
     const params = new URLSearchParams({
