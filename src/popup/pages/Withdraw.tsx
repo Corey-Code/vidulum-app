@@ -82,7 +82,12 @@ const WithdrawWeb: React.FC<WithdrawProps> = ({ onBack }) => {
       </HStack>
 
       <VStack spacing={4} align="stretch">
-        <MoonPayWidget flow="sell" colorCode="#F97316" />
+        <MoonPayWidget
+          flow="sell"
+          colorCode="#F97316"
+          cryptoCode={MOONPAY_SELL_CODES[DEFAULT_WITHDRAW_NETWORK]}
+          walletAddress=""
+        />
 
         <Box textAlign="center" pt={2}>
           <Text fontSize="xs" color="gray.500">
