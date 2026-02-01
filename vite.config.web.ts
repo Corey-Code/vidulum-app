@@ -27,6 +27,8 @@ export default defineConfig({
   define: {
     global: 'globalThis',
     'process.env': {},
+    // Build-time constant to distinguish web app from extension
+    __IS_WEB_BUILD__: JSON.stringify(true),
   },
   optimizeDeps: {
     esbuildOptions: {
