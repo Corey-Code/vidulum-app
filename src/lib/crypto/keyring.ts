@@ -26,7 +26,8 @@ import {
   UtxoNetworkId,
   UTXO_NETWORKS,
 } from './bitcoin';
-import { deriveEvmKeyPair, getEvmDerivationPath, EvmKeyPair } from './evm';
+import { deriveEvmKeyPair, getEvmDerivationPath } from './evm';
+import { networkRegistry } from '@/lib/networks';
 
 export interface KeyringAccount {
   id: string;
@@ -338,12 +339,14 @@ export class Keyring {
   /**
    * Derive a UTXO account from the mnemonic
    * Supports Bitcoin, Zcash, Flux, Ravencoin, and other UTXO chains
+   * @param forceReDerive - If true, re-derive keys even if account exists (useful after session restore)
    */
   async deriveBitcoinAccount(
     networkId: string,
     network: BitcoinNetwork = 'mainnet',
     accountIndex: number = 0,
-    addressType: 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent' = 'p2wpkh'
+    addressType: 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent' = 'p2wpkh',
+    forceReDerive: boolean = false
   ): Promise<BitcoinKeyringAccount> {
     if (!this.mnemonic) {
       throw new Error('Wallet not initialized');
@@ -352,12 +355,15 @@ export class Keyring {
     // Check if already derived using composite key
     const accountKey = this.getAccountKey(networkId, accountIndex);
     const existing = this.bitcoinAccounts.get(accountKey);
-    if (existing) {
+
+    // Return existing if it has valid keys (non-empty) and we're not forcing re-derivation
+    if (existing && existing.privateKey.length > 0 && !forceReDerive) {
       return existing;
     }
 
-    // Derive keys
-    const seed = await bip39.mnemonicToSeed(this.mnemonic);
+    // Derive keys - ensure seed is a proper Uint8Array
+    const seedBuffer = await bip39.mnemonicToSeed(this.mnemonic);
+    const seed = new Uint8Array(seedBuffer);
 
     let path: string;
     let address: string;
@@ -366,7 +372,8 @@ export class Keyring {
     if (networkId in UTXO_NETWORKS) {
       // Use UTXO-specific derivation path and address generation
       const utxoNetworkId = networkId as UtxoNetworkId;
-      path = getUtxoDerivationPath(utxoNetworkId, accountIndex, 0, false);
+      // Pass addressType to get correct BIP purpose (84 for native SegWit, 44 for legacy, etc.)
+      path = getUtxoDerivationPath(utxoNetworkId, accountIndex, 0, false, addressType);
       const keyPair = await deriveBitcoinKeyPairFromSeed(seed, path);
       address = getUtxoAddress(keyPair.publicKey, utxoNetworkId, addressType);
 
@@ -445,18 +452,60 @@ export class Keyring {
 
   /**
    * Get Bitcoin private key for signing (use carefully!)
+   * Will re-derive keys if they were restored from session without keys
    */
-  getBitcoinPrivateKey(networkId: string, accountIndex: number = 0): Uint8Array | undefined {
+  async getBitcoinPrivateKey(
+    networkId: string,
+    accountIndex: number = 0
+  ): Promise<Uint8Array | undefined> {
     const accountKey = this.getAccountKey(networkId, accountIndex);
-    return this.bitcoinAccounts.get(accountKey)?.privateKey;
+    let account = this.bitcoinAccounts.get(accountKey);
+
+    // If account doesn't exist or keys are empty, try to derive
+    if ((!account || account.privateKey.length === 0) && this.mnemonic) {
+      const network = networkRegistry.getBitcoin(networkId);
+      if (network) {
+        const reDerived = await this.deriveBitcoinAccount(
+          networkId,
+          network.network,
+          accountIndex,
+          network.addressType as 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent',
+          true // forceReDerive
+        );
+        return reDerived?.privateKey;
+      }
+    }
+
+    return account?.privateKey;
   }
 
   /**
    * Get Bitcoin public key
+   * Will re-derive keys if they were restored from session without keys
    */
-  getBitcoinPublicKey(networkId: string, accountIndex: number = 0): Uint8Array | undefined {
+  async getBitcoinPublicKey(
+    networkId: string,
+    accountIndex: number = 0
+  ): Promise<Uint8Array | undefined> {
     const accountKey = this.getAccountKey(networkId, accountIndex);
-    return this.bitcoinAccounts.get(accountKey)?.publicKey;
+    let account = this.bitcoinAccounts.get(accountKey);
+
+    // If account doesn't exist or keys are empty, try to derive
+    if ((!account || account.publicKey.length === 0) && this.mnemonic) {
+      const network = networkRegistry.getBitcoin(networkId);
+      if (network) {
+        const reDerived = await this.deriveBitcoinAccount(
+          networkId,
+          network.network,
+          accountIndex,
+          network.addressType as 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent',
+          true // forceReDerive
+        );
+        return reDerived?.publicKey;
+      }
+    }
+
+    return account?.publicKey;
   }
 
   // ============================================================================

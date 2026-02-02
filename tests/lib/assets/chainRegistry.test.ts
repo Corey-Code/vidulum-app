@@ -4,12 +4,15 @@
  * Tests for asset registry and token metadata
  */
 
-import {
-  fetchChainAssets,
-  getAssetByDenom,
-  getTokenColor,
-} from '@/lib/assets/chainRegistry';
+import { fetchChainAssets, getAssetByDenom, getTokenColor } from '@/lib/assets/chainRegistry';
+import * as cosmosRegistry from '@/lib/assets/cosmos-registry';
 import { mockFetchResponse } from '../../setup';
+
+// Mock the cosmos-registry module
+jest.mock('@/lib/assets/cosmos-registry', () => ({
+  ...jest.requireActual('@/lib/assets/cosmos-registry'),
+  COSMOS_REGISTRY_ASSETS: {},
+}));
 
 describe('Chain Registry', () => {
   describe('fetchChainAssets', () => {

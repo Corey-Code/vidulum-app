@@ -34,7 +34,7 @@ import { ChainInfo } from '@/types/wallet';
 import { fetchChainAssets, RegistryAsset } from '@/lib/assets/chainRegistry';
 import { simulateSendFee, FeeEstimate } from '@/lib/cosmos/fees';
 import { isValidBitcoinAddress } from '@/lib/crypto/bitcoin';
-import { getBitcoinClient } from '@/lib/bitcoin/client';
+import { getBitcoinClient, createSendTransaction, btcToSats } from '@/lib/bitcoin';
 import { isValidEvmAddress } from '@/lib/crypto/evm';
 import { getEvmClient, formatEther } from '@/lib/evm/client';
 import { NetworkType, networkRegistry } from '@/lib/networks';
@@ -73,6 +73,7 @@ const SendModal: React.FC<SendModalProps> = ({
   const [loadingAssets, setLoadingAssets] = useState(true);
   const [estimatedFee, setEstimatedFee] = useState<FeeEstimate | null>(null);
   const [simulatingFee, setSimulatingFee] = useState(false);
+  const [isSweepAll, setIsSweepAll] = useState(false);
 
   const toast = useToast();
 
@@ -124,8 +125,8 @@ const SendModal: React.FC<SendModalProps> = ({
   const chainAddress = isBitcoin
     ? bitcoinAddress
     : isEvm
-    ? evmAddress
-    : getAddressForChain(addressPrefix) || '';
+      ? evmAddress
+      : getAddressForChain(addressPrefix) || '';
 
   // Get current balance for this chain
   const balance = chainAddress ? getBalance(chainId, chainAddress) : undefined;
@@ -347,12 +348,14 @@ const SendModal: React.FC<SendModalProps> = ({
       setMemo('');
       setStep('input');
       setSelectedDenom('');
+      setIsSweepAll(false);
     }
   }, [isOpen]);
 
   // Reset selected denom when network changes to prevent stale asset selection
   useEffect(() => {
     setSelectedDenom('');
+    setIsSweepAll(false);
   }, [chainId]);
 
   // Auto-select native token for Bitcoin/EVM, or first token with balance for Cosmos
@@ -383,14 +386,47 @@ const SendModal: React.FC<SendModalProps> = ({
   };
 
   const handleMaxAmount = () => {
-    // Leave some for fees if sending native token
+    if (isBitcoin) {
+      // For Bitcoin sweep, we'll use the sweepAll mode which calculates exact fee at send time
+      // based on actual UTXO count. Display estimated max for UI.
+      const balanceInSats = Math.floor(availableBalance * Math.pow(10, nativeDecimals));
+
+      if (balanceInSats <= 0) {
+        setAmount('0');
+        setIsSweepAll(false);
+        return;
+      }
+
+      // Estimate fee for UI display (actual sweep will calculate exact fee)
+      // For SegWit P2WPKH: ~68 vbytes per input + ~31 vbytes for output + 10.5 vbytes overhead
+      const feeRate = estimatedFee ? Math.ceil(parseInt(estimatedFee.amount) / 140) : 10; // sats/vbyte
+      const estimatedVbytes = 110; // Single input estimate for display
+      const feeInSats = feeRate * estimatedVbytes;
+
+      // Show estimated max (actual sweep will send everything minus exact fee)
+      const maxSats = Math.max(0, balanceInSats - feeInSats);
+      const maxAmount = maxSats / Math.pow(10, nativeDecimals);
+      setAmount(maxAmount.toFixed(8));
+      setIsSweepAll(true); // Enable sweep mode for exact max
+      return;
+    }
+
+    if (isEvm) {
+      // For EVM, subtract estimated gas from balance (no buffer for max)
+      const feeInWei = estimatedFee ? BigInt(estimatedFee.amount) : 21000000000000n;
+      const balanceInWei = BigInt(Math.floor(availableBalance * Math.pow(10, nativeDecimals)));
+      const maxWei = balanceInWei > feeInWei ? balanceInWei - feeInWei : 0n;
+      const maxAmount = Number(maxWei) / Math.pow(10, nativeDecimals);
+      setAmount(maxAmount.toFixed(8));
+      return;
+    }
+
+    // Cosmos: Leave some for fees if sending native token
     const feeDenom = chainConfig?.feeCurrencies[0]?.coinMinimalDenom || 'ubze';
     // Use estimated fee or default to 0.001 (1000 ubze)
     const feeReserve = estimatedFee ? parseInt(estimatedFee.amount) / 1_000_000 : 0.001;
     const maxAmount =
-      selectedDenom === feeDenom
-        ? Math.max(0, availableBalance - feeReserve - 0.001) // Extra buffer
-        : availableBalance;
+      selectedDenom === feeDenom ? Math.max(0, availableBalance - feeReserve) : availableBalance;
     setAmount(maxAmount.toFixed(6));
   };
 
@@ -419,8 +455,8 @@ const SendModal: React.FC<SendModalProps> = ({
         description: isBitcoin
           ? 'Enter a valid Bitcoin address'
           : isEvm
-          ? 'Enter a valid Ethereum address (0x...)'
-          : `Address must start with "${addressPrefix}"`,
+            ? 'Enter a valid Ethereum address (0x...)'
+            : `Address must start with "${addressPrefix}"`,
         status: 'error',
         duration: 3000,
       });
@@ -436,7 +472,24 @@ const SendModal: React.FC<SendModalProps> = ({
       return;
     }
 
-    if (parseFloat(amount) > availableBalance) {
+    // Check if user has enough for amount + fees
+    if (isBitcoin || isEvm) {
+      const amountValue = parseFloat(amount);
+      const feeValue = estimatedFee
+        ? parseInt(estimatedFee.amount) / Math.pow(10, nativeDecimals)
+        : 0.0001;
+      const totalNeeded = amountValue + feeValue;
+
+      if (totalNeeded > availableBalance) {
+        toast({
+          title: 'Insufficient balance',
+          description: `Need ${totalNeeded.toFixed(8)} ${nativeSymbol} (amount + fee), but only have ${availableBalance.toFixed(8)} ${nativeSymbol}`,
+          status: 'error',
+          duration: 5000,
+        });
+        return;
+      }
+    } else if (parseFloat(amount) > availableBalance) {
       toast({
         title: 'Insufficient balance',
         status: 'error',
@@ -454,14 +507,83 @@ const SendModal: React.FC<SendModalProps> = ({
     setLoading(true);
     try {
       if (isBitcoin) {
-        // UTXO sending - show coming soon message for now
-        // Full implementation requires PSBT/transaction construction and signing
+        // UTXO transaction signing and sending
+        const btcNetwork = networkRegistry.getBitcoin(chainId);
+        if (!btcNetwork) {
+          throw new Error(`Network configuration not found for ${chainId}`);
+        }
+
+        // Get keyring to access private key
+        const { keyring, lock } = useWalletStore.getState();
+        if (!keyring) {
+          throw new Error('Wallet not initialized');
+        }
+
+        // Check if mnemonic is available for key derivation
+        if (!keyring.hasMnemonic()) {
+          // Session was restored but mnemonic is not available
+          // User needs to unlock again with password to enable signing
+          toast({
+            title: 'Re-authentication Required',
+            description:
+              'Please lock and unlock your wallet to enable Bitcoin transaction signing.',
+            status: 'warning',
+            duration: 7000,
+          });
+          // Lock the wallet to force re-unlock
+          await lock();
+          onClose();
+          return;
+        }
+
+        const privateKey = await keyring.getBitcoinPrivateKey(chainId);
+        const publicKey = await keyring.getBitcoinPublicKey(chainId);
+
+        if (!privateKey || !publicKey || privateKey.length === 0 || publicKey.length === 0) {
+          throw new Error('Failed to derive Bitcoin keys. Please try unlocking your wallet again.');
+        }
+
+        // Get UTXOs and fee estimates
+        const client = getBitcoinClient(chainId);
+        const [utxos, feeEstimates] = await Promise.all([
+          client.getUTXOs(chainAddress),
+          client.getFeeEstimates(),
+        ]);
+
+        // Convert amount to satoshis
+        const amountSats = btcToSats(parseFloat(amount));
+
+        // Use half-hour fee by default (balanced speed/cost)
+        const feeRate = feeEstimates.halfHourFee;
+
+        // Build and sign transaction
+        // Use sweep mode if user clicked MAX to send entire balance
+        const signedTx = await createSendTransaction(
+          utxos,
+          recipient,
+          amountSats,
+          feeRate,
+          privateKey,
+          publicKey,
+          chainAddress, // Use sender address as change address
+          btcNetwork,
+          { sweepAll: isSweepAll }
+        );
+
+        // Broadcast transaction
+        const txid = await client.broadcastTransaction(signedTx.txHex);
+
         toast({
-          title: `${nativeSymbol} Sending`,
-          description: `${nativeSymbol} transaction signing is coming soon. Your address is ready to receive ${nativeSymbol}.`,
-          status: 'info',
+          title: 'Transaction sent!',
+          description: `TX: ${txid.slice(0, 16)}...`,
+          status: 'success',
           duration: 5000,
         });
+
+        // Refresh balance
+        await fetchBalance(chainId, chainAddress);
+
+        onSuccess?.();
         onClose();
         return;
       }
@@ -522,8 +644,8 @@ const SendModal: React.FC<SendModalProps> = ({
   const feeDisplay = isBitcoin
     ? estimatedFee?.formatted || `~0.0001 ${nativeSymbol}`
     : isEvm
-    ? estimatedFee?.formatted || `~0.0001 ${nativeSymbol}`
-    : estimatedFee?.formatted || `~0.001 ${feeToken?.coinDenom || 'BZE'}`;
+      ? estimatedFee?.formatted || `~0.0001 ${nativeSymbol}`
+      : estimatedFee?.formatted || `~0.001 ${feeToken?.coinDenom || 'BZE'}`;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered size="md">
@@ -662,7 +784,11 @@ const SendModal: React.FC<SendModalProps> = ({
                     type="number"
                     placeholder="0.00"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(e) => {
+                      setAmount(e.target.value);
+                      // Clear sweep mode if user manually edits amount
+                      if (isSweepAll) setIsSweepAll(false);
+                    }}
                     step="0.000001"
                     bg="#141414"
                     border="none"
