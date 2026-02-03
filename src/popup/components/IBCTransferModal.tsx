@@ -53,7 +53,6 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
   onSuccess,
 }) => {
   const {
-    selectedAccount,
     getAddressForChain,
     signAndBroadcast,
     signAndBroadcastWithPassword,
