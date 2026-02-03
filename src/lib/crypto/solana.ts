@@ -33,11 +33,11 @@ function encodeBase58(buffer: Uint8Array): string {
     for (let j = 0; j < digits.length; j++) {
       carry += digits[j] << 8;
       digits[j] = carry % 58;
-      carry = (carry / 58) | 0;
+      carry = Math.floor(carry / 58);
     }
     while (carry > 0) {
       digits.push(carry % 58);
-      carry = (carry / 58) | 0;
+      carry = Math.floor(carry / 58);
     }
   }
 
@@ -50,6 +50,57 @@ function encodeBase58(buffer: Uint8Array): string {
     .reverse()
     .map((digit) => BASE58_ALPHABET[digit])
     .join('');
+}
+
+/**
+ * Decode a base58-encoded string to bytes
+ * @param str Base58-encoded string
+ * @returns Decoded bytes as Uint8Array
+ * @throws Error if string contains invalid base58 characters
+ */
+function decodeBase58(str: string): Uint8Array {
+  if (str.length === 0) return new Uint8Array(0);
+
+  // Convert base58 string to bytes
+  const bytes = [0];
+  for (let i = 0; i < str.length; i++) {
+    const charIndex = BASE58_ALPHABET.indexOf(str[i]);
+    if (charIndex === -1) {
+      throw new Error(`Invalid base58 character: ${str[i]}`);
+    }
+
+    let carry = charIndex;
+    for (let j = 0; j < bytes.length; j++) {
+      carry += bytes[j] * 58;
+      bytes[j] = carry % 256;
+      carry = Math.floor(carry / 256);
+    }
+
+    while (carry > 0) {
+      bytes.push(carry % 256);
+      carry = Math.floor(carry / 256);
+    }
+  }
+
+  // Handle leading '1' characters (which represent leading zero bytes)
+  // Count leading '1's in the input
+  let leadingOnes = 0;
+  for (let i = 0; i < str.length && str[i] === '1'; i++) {
+    leadingOnes++;
+  }
+
+  // Count trailing zeros already in bytes (these will become leading zeros after reverse)
+  let trailingZeros = 0;
+  for (let i = bytes.length - 1; i >= 0 && bytes[i] === 0; i--) {
+    trailingZeros++;
+  }
+
+  // Add additional zeros needed for leading '1's
+  for (let i = trailingZeros; i < leadingOnes; i++) {
+    bytes.push(0);
+  }
+
+  return new Uint8Array(bytes.reverse());
 }
 
 /**
@@ -155,12 +206,12 @@ export function isValidSolanaAddress(address: string): boolean {
     return false;
   }
 
-  // Check all characters are valid base58
-  for (const char of address) {
-    if (!BASE58_ALPHABET.includes(char)) {
-      return false;
-    }
+  // Try to decode the base58 address and verify it's exactly 32 bytes
+  try {
+    const decoded = decodeBase58(address);
+    return decoded.length === 32;
+  } catch (error) {
+    // Invalid base58 encoding
+    return false;
   }
-
-  return true;
 }
