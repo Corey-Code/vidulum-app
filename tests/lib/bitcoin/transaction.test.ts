@@ -67,10 +67,12 @@ const ZCASH_MAINNET: BitcoinNetworkConfig = {
 
 // Generate test keys
 async function generateTestKeys(): Promise<{ privateKey: Uint8Array; publicKey: Uint8Array }> {
-  const privateKey = new Uint8Array(32);
-  crypto.getRandomValues(privateKey);
-  // Ensure valid private key (non-zero, less than curve order)
-  privateKey[0] = 0x01;
+  let privateKey: Uint8Array;
+  // Generate until we get a key that is valid for secp256k1
+  do {
+    privateKey = new Uint8Array(32);
+    crypto.getRandomValues(privateKey);
+  } while (!secp256k1.utils.isValidPrivateKey(privateKey));
   const publicKey = secp256k1.getPublicKey(privateKey, true);
   return { privateKey, publicKey: new Uint8Array(publicKey) };
 }
