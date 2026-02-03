@@ -116,7 +116,7 @@ function deriveChild(
 }
 
 /**
- * Zero out a Uint8Array to prevent sensitive data from lingering in memory
+ * Clear a Uint8Array to reduce the likelihood of sensitive data lingering in memory
  */
 function secureZero(arr: Uint8Array): void {
   arr.fill(0);
