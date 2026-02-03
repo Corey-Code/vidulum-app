@@ -48,23 +48,6 @@ const DOGECOIN_MAINNET: BitcoinNetworkConfig = {
   },
 };
 
-const ZCASH_MAINNET: BitcoinNetworkConfig = {
-  id: 'zcash-mainnet',
-  name: 'Zcash',
-  type: 'bitcoin',
-  enabled: true,
-  symbol: 'ZEC',
-  decimals: 8,
-  coinType: 133,
-  network: 'mainnet',
-  apiUrls: ['https://api.zcha.in/v2'],
-  addressType: 'transparent',
-  addressPrefix: {
-    pubKeyHash: 0x1cb8,
-    scriptHash: 0x1cbd,
-  },
-};
-
 // Generate test keys
 async function generateTestKeys(): Promise<{ privateKey: Uint8Array; publicKey: Uint8Array }> {
   let privateKey: Uint8Array;
