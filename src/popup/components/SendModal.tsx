@@ -407,8 +407,8 @@ const SendModal: React.FC<SendModalProps> = ({
       const calculateAndSetMaxAmount = (vbytes: number) => {
         // Extract fee rate from estimated fee
         // The estimatedFee.amount represents the total fee in satoshis for a baseline transaction
-        // of ~140 vbytes (1 SegWit P2WPKH input + 2 outputs). We divide by 140 to derive the
-        // sats/vbyte rate, which we then apply to our actual transaction size.
+        // of ~140 vbytes (1 SegWit P2WPKH input + 2 P2WPKH outputs + overhead). We divide by 140
+        // to derive the sats/vbyte rate, which we then apply to our actual transaction size.
         const feeRate = estimatedFee ? Math.ceil(parseInt(estimatedFee.amount) / 140) : 10; // sats/vbyte
         const feeInSats = feeRate * vbytes;
 
@@ -440,9 +440,9 @@ const SendModal: React.FC<SendModalProps> = ({
 
         calculateAndSetMaxAmount(estimatedVbytes);
       } catch (error) {
-        console.warn('Failed to fetch UTXOs for max amount calculation, using fallback:', error);
+        console.warn('Failed to fetch UTXOs for accurate fee calculation, using conservative single-input estimate instead:', error);
         // Fallback to single input estimate if UTXO fetch fails
-        const estimatedVbytes = 110; // Single input estimate
+        const estimatedVbytes = 110; // Conservative single SegWit input estimate
         calculateAndSetMaxAmount(estimatedVbytes);
       } finally {
         setCalculatingMax(false);
