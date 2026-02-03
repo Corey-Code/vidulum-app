@@ -832,6 +832,16 @@ export async function createSendTransaction(
 
     const sweepAmount = totalInput - fee;
 
+    // Validate that fee doesn't exceed a reasonable percentage of total balance
+    const feePercentage = (fee / totalInput) * 100;
+    const MAX_FEE_PERCENTAGE = 20; // 20% threshold
+    if (feePercentage > MAX_FEE_PERCENTAGE) {
+      throw new Error(
+        `Fee too high: ${fee} sats (${feePercentage.toFixed(1)}%) exceeds ${MAX_FEE_PERCENTAGE}% of total balance (${totalInput} sats). ` +
+        `This may happen when sweeping many small UTXOs with high fee rates. Consider consolidating UTXOs at a lower fee rate first.`
+      );
+    }
+
     if (sweepAmount <= 0) {
       throw new Error(`Insufficient funds: fee (${fee} sats) exceeds balance (${totalInput} sats)`);
     }
