@@ -23,6 +23,7 @@ interface ImportedAccount {
   derivedAddresses?: {
     bitcoin?: Record<string, string>; // networkId -> address
     evm?: Record<string, string>; // networkId -> address
+    svm?: Record<string, string>; // networkId -> address
   };
 }
 
@@ -305,6 +306,7 @@ export class EncryptedStorage {
     derivedAddresses?: {
       bitcoin?: Record<string, string>;
       evm?: Record<string, string>;
+      svm?: Record<string, string>;
     }
   ): Promise<void> {
     const result = await browser.storage.local.get(this.WALLET_KEY);
@@ -391,7 +393,11 @@ export class EncryptedStorage {
   // Get pre-derived addresses for an imported account (no password required)
   static async getImportedAccountDerivedAddresses(
     cosmosAddress: string
-  ): Promise<{ bitcoin?: Record<string, string>; evm?: Record<string, string> } | null> {
+  ): Promise<{
+    bitcoin?: Record<string, string>;
+    evm?: Record<string, string>;
+    svm?: Record<string, string>;
+  } | null> {
     const result = await browser.storage.local.get(this.WALLET_KEY);
     const wallet = result[this.WALLET_KEY] as StoredWallet | LegacyStoredWallet | undefined;
 
@@ -446,6 +452,7 @@ export class EncryptedStorage {
     derivedAddresses: {
       bitcoin?: Record<string, string>;
       evm?: Record<string, string>;
+      svm?: Record<string, string>;
     },
     sourceAddress: string
   ): Promise<void> {

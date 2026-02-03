@@ -5,6 +5,7 @@ import {
   KeyringAccount,
   BitcoinKeyringAccount,
   EvmKeyringAccount,
+  SvmKeyringAccount,
 } from '@/lib/crypto/keyring';
 import { EncryptedStorage } from '@/lib/storage/encrypted-storage';
 import { MnemonicManager } from '@/lib/crypto/mnemonic';
@@ -63,16 +64,15 @@ async function lockBackground(): Promise<void> {
 }
 
 /**
- * Pre-derive all addresses (Cosmos, Bitcoin, EVM) for all accounts
+ * Pre-derive all addresses (Cosmos, Bitcoin, EVM, SVM) for all accounts
  * Called on wallet create/import/unlock to ensure all addresses are ready
  * Also handles new networks added after wallet was created
  */
-async function preDeriveAllAccounts(
-  keyring: Keyring
-): Promise<void> {
+async function preDeriveAllAccounts(keyring: Keyring): Promise<void> {
   const accounts = keyring.getAccounts();
   const bitcoinNetworks = networkRegistry.getEnabledByType('bitcoin');
   const evmNetworks = networkRegistry.getEnabledByType('evm');
+  const svmNetworks = networkRegistry.getEnabledByType('svm');
 
   for (const account of accounts) {
     const accountIndex = account.accountIndex;
@@ -101,6 +101,18 @@ async function preDeriveAllAccounts(
 
       try {
         await keyring.deriveEvmAccount(network.id, network.chainId, accountIndex);
+      } catch (error) {
+        console.warn(`Could not derive ${network.id} address for account ${accountIndex}:`, error);
+      }
+    }
+
+    // Derive all SVM (Solana) addresses
+    for (const network of svmNetworks) {
+      // Skip if already derived
+      if (keyring.getSvmAddress(network.id, accountIndex)) continue;
+
+      try {
+        await keyring.deriveSvmAccount(network.id, network.cluster, accountIndex);
       } catch (error) {
         console.warn(`Could not derive ${network.id} address for account ${accountIndex}:`, error);
       }
@@ -216,6 +228,15 @@ interface WalletState {
     cosmosAddress?: string
   ) => Promise<string | null>;
   deriveEvmAccount: (networkId: string, accountIndex?: number) => Promise<EvmKeyringAccount | null>;
+
+  // SVM (Solana)-specific methods
+  // cosmosAddress is used to identify imported accounts (which have their own mnemonics)
+  getSvmAddress: (
+    networkId: string,
+    accountIndex?: number,
+    cosmosAddress?: string
+  ) => Promise<string | null>;
+  deriveSvmAccount: (networkId: string, accountIndex?: number) => Promise<SvmKeyringAccount | null>;
 }
 
 export const useWalletStore = create<WalletState>((set, get) => ({
@@ -600,17 +621,19 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       throw new Error('Account collision - please try again');
     }
 
-    // Pre-derive Bitcoin and EVM addresses for this account
+    // Pre-derive Bitcoin, EVM, and SVM addresses for this account
     const derivedAddresses: {
       bitcoin: Record<string, string>;
       evm: Record<string, string>;
+      svm: Record<string, string>;
     } = {
       bitcoin: {},
       evm: {},
+      svm: {},
     };
 
-    // Derive Bitcoin addresses for all enabled Bitcoin networks
-    const bitcoinNetworks = networkRegistry.getEnabledByType('bitcoin');
+    // Derive Bitcoin addresses for ALL Bitcoin networks (so addresses are available when networks are enabled later)
+    const bitcoinNetworks = networkRegistry.getByType('bitcoin');
     for (const network of bitcoinNetworks) {
       try {
         const btcAccount = await tempKeyring.deriveBitcoinAccount(
@@ -627,13 +650,26 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       }
     }
 
-    // Derive EVM addresses for all enabled EVM networks
-    const evmNetworks = networkRegistry.getEnabledByType('evm');
+    // Derive EVM addresses for ALL EVM networks
+    const evmNetworks = networkRegistry.getByType('evm');
     for (const network of evmNetworks) {
       try {
         const evmAccount = await tempKeyring.deriveEvmAccount(network.id, network.chainId, 0);
         if (evmAccount?.address) {
           derivedAddresses.evm[network.id] = evmAccount.address;
+        }
+      } catch (error) {
+        console.warn(`Could not derive ${network.id} address:`, error);
+      }
+    }
+
+    // Derive SVM addresses for ALL SVM networks
+    const svmNetworks = networkRegistry.getByType('svm');
+    for (const network of svmNetworks) {
+      try {
+        const svmAccount = await tempKeyring.deriveSvmAccount(network.id, network.cluster, 0);
+        if (svmAccount?.address) {
+          derivedAddresses.svm[network.id] = svmAccount.address;
         }
       } catch (error) {
         console.warn(`Could not derive ${network.id} address:`, error);
@@ -732,13 +768,14 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       newAccount.id = `account-${nextIndex}`;
       newAccount.accountIndex = nextIndex;
 
-      // Pre-derive Bitcoin and EVM addresses
+      // Pre-derive Bitcoin, EVM, and SVM addresses
       const derivedAddresses: {
         bitcoin: Record<string, string>;
         evm: Record<string, string>;
-      } = { bitcoin: {}, evm: {} };
+        svm: Record<string, string>;
+      } = { bitcoin: {}, evm: {}, svm: {} };
 
-      const bitcoinNetworks = networkRegistry.getEnabledByType('bitcoin');
+      const bitcoinNetworks = networkRegistry.getByType('bitcoin');
       for (const network of bitcoinNetworks) {
         try {
           const btcAccount = await tempKeyring.deriveBitcoinAccount(
@@ -755,7 +792,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
         }
       }
 
-      const evmNetworks = networkRegistry.getEnabledByType('evm');
+      const evmNetworks = networkRegistry.getByType('evm');
       for (const network of evmNetworks) {
         try {
           const evmAccount = await tempKeyring.deriveEvmAccount(
@@ -765,6 +802,22 @@ export const useWalletStore = create<WalletState>((set, get) => ({
           );
           if (evmAccount?.address) {
             derivedAddresses.evm[network.id] = evmAccount.address;
+          }
+        } catch (error) {
+          console.warn(`Could not derive ${network.id} address:`, error);
+        }
+      }
+
+      const svmNetworks = networkRegistry.getByType('svm');
+      for (const network of svmNetworks) {
+        try {
+          const svmAccount = await tempKeyring.deriveSvmAccount(
+            network.id,
+            network.cluster,
+            nextIndex
+          );
+          if (svmAccount?.address) {
+            derivedAddresses.svm[network.id] = svmAccount.address;
           }
         } catch (error) {
           console.warn(`Could not derive ${network.id} address:`, error);
@@ -838,16 +891,18 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       throw new Error('This account already exists in your wallet');
     }
 
-    // Pre-derive Bitcoin and EVM addresses
+    // Pre-derive Bitcoin, EVM, and SVM addresses
     const derivedAddresses: {
       bitcoin: Record<string, string>;
       evm: Record<string, string>;
+      svm: Record<string, string>;
     } = {
       bitcoin: {},
       evm: {},
+      svm: {},
     };
 
-    const bitcoinNetworks = networkRegistry.getEnabledByType('bitcoin');
+    const bitcoinNetworks = networkRegistry.getByType('bitcoin');
     for (const network of bitcoinNetworks) {
       try {
         const btcAccount = await tempKeyring.deriveBitcoinAccount(
@@ -864,7 +919,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       }
     }
 
-    const evmNetworks = networkRegistry.getEnabledByType('evm');
+    const evmNetworks = networkRegistry.getByType('evm');
     for (const network of evmNetworks) {
       try {
         const evmAccount = await tempKeyring.deriveEvmAccount(
@@ -874,6 +929,22 @@ export const useWalletStore = create<WalletState>((set, get) => ({
         );
         if (evmAccount?.address) {
           derivedAddresses.evm[network.id] = evmAccount.address;
+        }
+      } catch (error) {
+        console.warn(`Could not derive ${network.id} address:`, error);
+      }
+    }
+
+    const svmNetworks = networkRegistry.getByType('svm');
+    for (const network of svmNetworks) {
+      try {
+        const svmAccount = await tempKeyring.deriveSvmAccount(
+          network.id,
+          network.cluster,
+          nextIndex
+        );
+        if (svmAccount?.address) {
+          derivedAddresses.svm[network.id] = svmAccount.address;
         }
       } catch (error) {
         console.warn(`Could not derive ${network.id} address:`, error);
@@ -932,18 +1003,20 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       throw new Error('This account is already in your wallet');
     }
 
-    // Pre-derive Bitcoin and EVM addresses for this imported account
+    // Pre-derive Bitcoin, EVM, and SVM addresses for this imported account
     // These are stored so we can display them without needing the mnemonic
     const derivedAddresses: {
       bitcoin: Record<string, string>;
       evm: Record<string, string>;
+      svm: Record<string, string>;
     } = {
       bitcoin: {},
       evm: {},
+      svm: {},
     };
 
-    // Derive Bitcoin addresses for all enabled Bitcoin networks
-    const bitcoinNetworks = networkRegistry.getEnabledByType('bitcoin');
+    // Derive Bitcoin addresses for ALL Bitcoin networks (so addresses are available when networks are enabled later)
+    const bitcoinNetworks = networkRegistry.getByType('bitcoin');
     for (const network of bitcoinNetworks) {
       try {
         const btcAccount = await tempKeyring.deriveBitcoinAccount(
@@ -960,13 +1033,26 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       }
     }
 
-    // Derive EVM addresses for all enabled EVM networks
-    const evmNetworks = networkRegistry.getEnabledByType('evm');
+    // Derive EVM addresses for ALL EVM networks
+    const evmNetworks = networkRegistry.getByType('evm');
     for (const network of evmNetworks) {
       try {
         const evmAccount = await tempKeyring.deriveEvmAccount(network.id, network.chainId, 0);
         if (evmAccount?.address) {
           derivedAddresses.evm[network.id] = evmAccount.address;
+        }
+      } catch (error) {
+        console.warn(`Could not derive ${network.id} address for imported account:`, error);
+      }
+    }
+
+    // Derive SVM addresses for ALL SVM networks
+    const svmNetworks = networkRegistry.getByType('svm');
+    for (const network of svmNetworks) {
+      try {
+        const svmAccount = await tempKeyring.deriveSvmAccount(network.id, network.cluster, 0);
+        if (svmAccount?.address) {
+          derivedAddresses.svm[network.id] = svmAccount.address;
         }
       } catch (error) {
         console.warn(`Could not derive ${network.id} address for imported account:`, error);
@@ -1260,7 +1346,9 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       );
 
       if (!importedMnemonic) {
-        throw new Error('Failed to decrypt imported account mnemonic: incorrect password or corrupted data');
+        throw new Error(
+          'Failed to decrypt imported account mnemonic: incorrect password or corrupted data'
+        );
       }
 
       // Create wallet from imported account's mnemonic with the target chain prefix
@@ -1379,13 +1467,10 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     // Try to get existing Bitcoin account (may have address from session restore)
     let btcAccount = keyring.getBitcoinAccount(networkId, idx);
 
-    // If mnemonic is available and account has no private key (restored from session),
-    // always re-derive to ensure correct BIP32 derivation
-    const needsRederivation =
-      keyring.hasMnemonic() && btcAccount && btcAccount.privateKey.length === 0;
-
-    // Return cached address only if it has valid keys (not a stale session restore)
-    if (btcAccount?.address && btcAccount.privateKey.length > 0) {
+    // Return cached address if available (from session restore or previous derivation)
+    if (btcAccount?.address) {
+      // If mnemonic is available and we have a stale session (no private key),
+      // the next derivation call will automatically re-derive with keys
       return btcAccount.address;
     }
 
@@ -1395,13 +1480,11 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       if (!network) return null;
 
       try {
-        // Force re-derivation to ensure correct addresses after BIP32 fix
         btcAccount = await keyring.deriveBitcoinAccount(
           networkId,
           network.network,
           idx,
-          network.addressType,
-          needsRederivation // Force re-derive if restored from session
+          network.addressType
         );
         // Update session with newly derived address
         await updateSession();
@@ -1511,6 +1594,81 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       return account;
     } catch (error) {
       console.error('Failed to derive EVM account:', error);
+      return null;
+    }
+  },
+
+  // SVM (Solana)-specific methods
+  getSvmAddress: async (networkId: string, accountIndex?: number, cosmosAddress?: string) => {
+    const { keyring, selectedAccount, accounts, updateSession } = get();
+    if (!keyring) return null;
+
+    // Determine which account we're getting the address for
+    const targetCosmosAddress = cosmosAddress ?? selectedAccount?.address;
+
+    // Check if this is an imported account (ID starts with 'imported-')
+    const targetAccount = accounts.find((acc) => acc.address === targetCosmosAddress);
+    const isImportedAccount = targetAccount?.id?.startsWith('imported-');
+
+    // For imported accounts, retrieve pre-derived addresses from storage
+    if (isImportedAccount && targetCosmosAddress) {
+      const derivedAddresses =
+        await EncryptedStorage.getImportedAccountDerivedAddresses(targetCosmosAddress);
+      if (derivedAddresses?.svm?.[networkId]) {
+        return derivedAddresses.svm[networkId];
+      }
+      // If no pre-derived address found, return null (can't derive without password)
+      console.warn(`No pre-derived SVM address for imported account on ${networkId}`);
+      return null;
+    }
+
+    // For main wallet accounts, use the keyring
+    // Use provided accountIndex or fall back to selected account's index
+    const idx = accountIndex ?? selectedAccount?.accountIndex ?? 0;
+
+    // Try to get existing SVM account (may have address from session restore)
+    let svmAccount = keyring.getSvmAccount(networkId, idx);
+
+    // Return cached address if available (from session restore or previous derivation)
+    if (svmAccount?.address) {
+      return svmAccount.address;
+    }
+
+    // Try to derive if mnemonic is available
+    if (keyring.hasMnemonic()) {
+      const network = networkRegistry.getSvm(networkId);
+      if (!network) return null;
+
+      try {
+        svmAccount = await keyring.deriveSvmAccount(networkId, network.cluster, idx);
+        // Update session with newly derived address
+        await updateSession();
+      } catch (error) {
+        console.error('Failed to derive SVM address:', error);
+        return null;
+      }
+    }
+
+    return svmAccount?.address || null;
+  },
+
+  deriveSvmAccount: async (networkId: string, accountIndex?: number) => {
+    const { keyring, selectedAccount, updateSession } = get();
+    if (!keyring) return null;
+
+    const network = networkRegistry.getSvm(networkId);
+    if (!network) return null;
+
+    // Use provided accountIndex or fall back to selected account's index
+    const idx = accountIndex ?? selectedAccount?.accountIndex ?? 0;
+
+    try {
+      const account = await keyring.deriveSvmAccount(networkId, network.cluster, idx);
+      // Update session with newly derived address
+      await updateSession();
+      return account;
+    } catch (error) {
+      console.error('Failed to derive SVM account:', error);
       return null;
     }
   },

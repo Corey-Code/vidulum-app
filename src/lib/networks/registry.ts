@@ -11,10 +11,12 @@ import {
   CosmosNetworkConfig,
   BitcoinNetworkConfig,
   EvmNetworkConfig,
+  SvmNetworkConfig,
 } from './types';
 import { COSMOS_NETWORKS } from './cosmos';
 import { BITCOIN_NETWORKS } from './bitcoin';
 import { EVM_NETWORKS } from './evm';
+import { SVM_NETWORKS } from './solana';
 
 // Import registry chains (auto-generated from chain registries)
 import { COSMOS_REGISTRY_CHAINS } from './cosmos-registry';
@@ -69,6 +71,11 @@ class NetworkRegistry {
     return network?.type === 'evm' ? network : undefined;
   }
 
+  getSvm(id: string): SvmNetworkConfig | undefined {
+    const network = this.get(id);
+    return network?.type === 'svm' ? network : undefined;
+  }
+
   isEnabled(id: string): boolean {
     return this.get(id)?.enabled ?? false;
   }
@@ -85,6 +92,7 @@ export const networkRegistry = new NetworkRegistry();
 COSMOS_NETWORKS.forEach((network) => networkRegistry.register(network));
 BITCOIN_NETWORKS.forEach((network) => networkRegistry.register(network));
 EVM_NETWORKS.forEach((network) => networkRegistry.register(network));
+SVM_NETWORKS.forEach((network) => networkRegistry.register(network));
 
 // Register chains from auto-generated registries (skip duplicates)
 // These provide additional chains from cosmos/chain-registry and ethereum-lists/chains
@@ -169,6 +177,13 @@ export function isBitcoinNetwork(network: NetworkConfig): network is BitcoinNetw
  */
 export function isEvmNetwork(network: NetworkConfig): network is EvmNetworkConfig {
   return network.type === 'evm';
+}
+
+/**
+ * Check if a network is SVM (Solana) compatible
+ */
+export function isSvmNetwork(network: NetworkConfig): network is SvmNetworkConfig {
+  return network.type === 'svm';
 }
 
 /**
