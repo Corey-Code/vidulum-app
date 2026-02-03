@@ -5,7 +5,6 @@
  */
 
 import { fetchChainAssets, getAssetByDenom, getTokenColor } from '@/lib/assets/chainRegistry';
-import * as cosmosRegistry from '@/lib/assets/cosmos-registry';
 import { mockFetchResponse } from '../../setup';
 
 // Mock the cosmos-registry module
