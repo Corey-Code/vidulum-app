@@ -34,7 +34,6 @@ import {
   getChainDisplayName,
 } from '@/lib/cosmos/ibc-connections';
 import { COSMOS_REGISTRY_CHAINS } from '@/lib/networks/cosmos-registry';
-import { Keyring } from '@/lib/crypto/keyring';
 
 interface IBCTransferModalProps {
   isOpen: boolean;
