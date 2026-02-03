@@ -349,6 +349,8 @@ function isValidDerivationPath(path: string): boolean {
   if (parts.length === 0 || parts.length > 10) return false; // Reasonable depth limit
 
   for (const part of parts) {
+    // Both ' and h are valid hardened derivation indicators per BIP32
+    // See: https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
     const cleaned = part.replace(/['h]$/, '');
     const index = parseInt(cleaned, 10);
     if (isNaN(index) || index < 0 || index >= 0x80000000) return false;
