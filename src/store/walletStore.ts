@@ -1480,13 +1480,11 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       if (!network) return null;
 
       try {
-        // Force re-derivation to ensure correct addresses after BIP32 fix
         btcAccount = await keyring.deriveBitcoinAccount(
           networkId,
           network.network,
           idx,
-          network.addressType,
-          needsRederivation // Force re-derive if restored from session
+          network.addressType
         );
         // Update session with newly derived address
         await updateSession();
