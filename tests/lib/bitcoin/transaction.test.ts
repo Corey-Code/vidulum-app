@@ -397,7 +397,7 @@ describe('UTXO Transaction Module', () => {
         utxos,
         'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
         0,
-        8, // 8 sat/vB: fee = 880 sats (8.8%), leaving 9120 sats (well above dust)
+        8, // 8 sat/vB: fee ≈ 880 sats (≈8.8%), leaving ≈9120 sats (well above dust)
         privateKey,
         publicKey,
         'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
