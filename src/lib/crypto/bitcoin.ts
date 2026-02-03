@@ -268,6 +268,7 @@ function deriveChild(
 ): { key: Uint8Array; chainCode: Uint8Array } {
   const data = new Uint8Array(37);
   const intermediates: Uint8Array[] = [];
+  let pubKey: Uint8Array | null = null;
 
   try {
     if (hardened) {
@@ -279,7 +280,7 @@ function deriveChild(
       data.set(indexBytes, 33);
     } else {
       // Normal derivation: public key || index
-      const pubKey = secp256k1.getPublicKey(parentKey, true);
+      pubKey = secp256k1.getPublicKey(parentKey, true);
       data.set(pubKey, 0);
       const indexBytes = new Uint8Array(4);
       new DataView(indexBytes.buffer).setUint32(0, index, false);
@@ -307,6 +308,9 @@ function deriveChild(
   } finally {
     // Zero out intermediate data
     secureZero(data);
+    if (pubKey !== null) {
+      secureZero(pubKey);
+    }
     for (const arr of intermediates) {
       secureZero(arr);
     }
