@@ -5,6 +5,7 @@ import {
   KeyringAccount,
   BitcoinKeyringAccount,
   EvmKeyringAccount,
+  SvmKeyringAccount,
 } from '@/lib/crypto/keyring';
 import { EncryptedStorage } from '@/lib/storage/encrypted-storage';
 import { MnemonicManager } from '@/lib/crypto/mnemonic';
@@ -14,12 +15,19 @@ import { coin } from '@cosmjs/stargate';
 import { simulateSendFee } from '@/lib/cosmos/fees';
 import { networkRegistry } from '@/lib/networks';
 import { MessageType } from '@/types/messages';
+import { DirectSecp256k1HdWallet, makeCosmoshubPath } from '@cosmjs/proto-signing';
 
 /**
  * Sync keyring state with background service worker
  * This ensures dApps can use the wallet when popup has unlocked
+ * Note: Only works in extension builds, skipped in web builds
  */
 async function syncKeyringWithBackground(serializedKeyring: string): Promise<void> {
+  // Skip in web builds - no background service worker
+  if (__IS_WEB_BUILD__) {
+    return;
+  }
+
   try {
     const response = await browser.runtime.sendMessage({
       type: MessageType.SYNC_KEYRING,
@@ -38,8 +46,14 @@ async function syncKeyringWithBackground(serializedKeyring: string): Promise<voi
 
 /**
  * Notify background to lock
+ * Note: Only works in extension builds, skipped in web builds
  */
 async function lockBackground(): Promise<void> {
+  // Skip in web builds - no background service worker
+  if (__IS_WEB_BUILD__) {
+    return;
+  }
+
   try {
     await browser.runtime.sendMessage({
       type: MessageType.LOCK_WALLET,
@@ -50,7 +64,7 @@ async function lockBackground(): Promise<void> {
 }
 
 /**
- * Pre-derive all addresses (Cosmos, Bitcoin, EVM) for all accounts
+ * Pre-derive all addresses (Cosmos, Bitcoin, EVM, SVM) for all accounts
  * Called on wallet create/import/unlock to ensure all addresses are ready
  * Also handles new networks added after wallet was created
  */
@@ -58,6 +72,7 @@ async function preDeriveAllAccounts(keyring: Keyring): Promise<void> {
   const accounts = keyring.getAccounts();
   const bitcoinNetworks = networkRegistry.getEnabledByType('bitcoin');
   const evmNetworks = networkRegistry.getEnabledByType('evm');
+  const svmNetworks = networkRegistry.getEnabledByType('svm');
 
   for (const account of accounts) {
     const accountIndex = account.accountIndex;
@@ -90,6 +105,18 @@ async function preDeriveAllAccounts(keyring: Keyring): Promise<void> {
         console.warn(`Could not derive ${network.id} address for account ${accountIndex}:`, error);
       }
     }
+
+    // Derive all SVM (Solana) addresses
+    for (const network of svmNetworks) {
+      // Skip if already derived
+      if (keyring.getSvmAddress(network.id, accountIndex)) continue;
+
+      try {
+        await keyring.deriveSvmAccount(network.id, network.cluster, accountIndex);
+      } catch (error) {
+        console.warn(`Could not derive ${network.id} address for account ${accountIndex}:`, error);
+      }
+    }
   }
 }
 
@@ -116,11 +143,23 @@ interface WalletState {
   updateActivity: () => void;
   renameAccount: (address: string, newName: string) => Promise<void>;
   addAccount: (name: string) => Promise<KeyringAccount>;
+  createAccountWithNewMnemonic: (
+    name: string,
+    password: string
+  ) => Promise<{ account: KeyringAccount; mnemonic: string }>;
   importAccountFromMnemonic: (
     mnemonic: string,
     name: string,
     password: string
   ) => Promise<KeyringAccount>;
+  // Derive a new account from a specific source wallet (main or imported)
+  deriveAccountFromSource: (
+    sourceCosmosAddress: string | null, // null = main wallet
+    name: string,
+    password: string
+  ) => Promise<KeyringAccount>;
+  // Get wallets that can be used as derivation source (main + imported with their own mnemonic)
+  getSourceWallets: () => Array<{ address: string; name: string; isMain: boolean }>;
 
   // DApp connections
   requestConnection: (origin: string, chainId: string) => Promise<boolean>;
@@ -151,6 +190,18 @@ interface WalletState {
     memo?: string
   ) => Promise<string>; // Returns tx hash
 
+  // Sign and broadcast with password (for cross-chain operations when mnemonic not in memory)
+  signAndBroadcastWithPassword: (
+    chainId: string,
+    messages: Array<{ typeUrl: string; value: any }>,
+    password: string,
+    fee?: { amount: Array<{ denom: string; amount: string }>; gas: string },
+    memo?: string
+  ) => Promise<string>; // Returns tx hash
+
+  // Check if mnemonic is available in memory (for cross-chain signing)
+  hasMnemonicInMemory: () => boolean;
+
   // Get address for a specific chain (converts bech32 prefix)
   getAddressForChain: (chainPrefix: string) => string | null;
 
@@ -158,15 +209,34 @@ interface WalletState {
   updateSession: () => Promise<void>;
 
   // Bitcoin-specific methods
-  getBitcoinAddress: (networkId: string, accountIndex?: number) => Promise<string | null>;
+  // cosmosAddress is used to identify imported accounts (which have their own mnemonics)
+  getBitcoinAddress: (
+    networkId: string,
+    accountIndex?: number,
+    cosmosAddress?: string
+  ) => Promise<string | null>;
   deriveBitcoinAccount: (
     networkId: string,
     accountIndex?: number
   ) => Promise<BitcoinKeyringAccount | null>;
 
   // EVM-specific methods
-  getEvmAddress: (networkId: string, accountIndex?: number) => Promise<string | null>;
+  // cosmosAddress is used to identify imported accounts (which have their own mnemonics)
+  getEvmAddress: (
+    networkId: string,
+    accountIndex?: number,
+    cosmosAddress?: string
+  ) => Promise<string | null>;
   deriveEvmAccount: (networkId: string, accountIndex?: number) => Promise<EvmKeyringAccount | null>;
+
+  // SVM (Solana)-specific methods
+  // cosmosAddress is used to identify imported accounts (which have their own mnemonics)
+  getSvmAddress: (
+    networkId: string,
+    accountIndex?: number,
+    cosmosAddress?: string
+  ) => Promise<string | null>;
+  deriveSvmAccount: (networkId: string, accountIndex?: number) => Promise<SvmKeyringAccount | null>;
 }
 
 export const useWalletStore = create<WalletState>((set, get) => ({
@@ -313,11 +383,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     return mnemonic;
   },
 
-  importWallet: async (
-    mnemonic: string,
-    password: string,
-    accountName: string = 'Imported Account'
-  ) => {
+  importWallet: async (mnemonic: string, password: string, accountName: string = 'Account 1') => {
     if (!MnemonicManager.validateMnemonic(mnemonic)) {
       throw new Error('Invalid mnemonic phrase');
     }
@@ -391,11 +457,6 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       seenAddresses.add(acc.address);
       return true;
     });
-
-    console.log(
-      'Loaded accounts:',
-      uniqueAccounts.map((a) => ({ id: a.id, name: a.name }))
-    );
 
     // Restore preferences (selected account & chain)
     const preferences = await EncryptedStorage.getPreferences();
@@ -530,8 +591,394 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     return newAccount;
   },
 
+  createAccountWithNewMnemonic: async (name: string, password: string) => {
+    const { accounts } = get();
+
+    // Verify the password is correct for the main wallet
+    const isValidPassword = await EncryptedStorage.verifyPassword(password);
+    if (!isValidPassword) {
+      throw new Error('Incorrect password');
+    }
+
+    // Generate a new mnemonic
+    const mnemonic = await MnemonicManager.generateMnemonicAsync();
+
+    // Create a temporary keyring to derive the account
+    const tempKeyring = new Keyring();
+    await tempKeyring.createFromMnemonic(mnemonic, 'bze', [0]);
+    const derivedAccounts = tempKeyring.getAccounts();
+
+    if (derivedAccounts.length === 0) {
+      throw new Error('Failed to derive account from generated mnemonic');
+    }
+
+    const newAccount = derivedAccounts[0];
+    newAccount.name = name;
+    newAccount.id = `imported-${Date.now()}`; // Use imported- prefix so it shows in Settings
+
+    // Check if account already exists (very unlikely with new mnemonic)
+    if (accounts.some((acc) => acc.address === newAccount.address)) {
+      throw new Error('Account collision - please try again');
+    }
+
+    // Pre-derive Bitcoin, EVM, and SVM addresses for this account
+    const derivedAddresses: {
+      bitcoin: Record<string, string>;
+      evm: Record<string, string>;
+      svm: Record<string, string>;
+    } = {
+      bitcoin: {},
+      evm: {},
+      svm: {},
+    };
+
+    // Derive Bitcoin addresses for ALL Bitcoin networks (so addresses are available when networks are enabled later)
+    const bitcoinNetworks = networkRegistry.getByType('bitcoin');
+    for (const network of bitcoinNetworks) {
+      try {
+        const btcAccount = await tempKeyring.deriveBitcoinAccount(
+          network.id,
+          network.network,
+          0,
+          network.addressType
+        );
+        if (btcAccount?.address) {
+          derivedAddresses.bitcoin[network.id] = btcAccount.address;
+        }
+      } catch (error) {
+        console.warn(`Could not derive ${network.id} address:`, error);
+      }
+    }
+
+    // Derive EVM addresses for ALL EVM networks
+    const evmNetworks = networkRegistry.getByType('evm');
+    for (const network of evmNetworks) {
+      try {
+        const evmAccount = await tempKeyring.deriveEvmAccount(network.id, network.chainId, 0);
+        if (evmAccount?.address) {
+          derivedAddresses.evm[network.id] = evmAccount.address;
+        }
+      } catch (error) {
+        console.warn(`Could not derive ${network.id} address:`, error);
+      }
+    }
+
+    // Derive SVM addresses for ALL SVM networks
+    const svmNetworks = networkRegistry.getByType('svm');
+    for (const network of svmNetworks) {
+      try {
+        const svmAccount = await tempKeyring.deriveSvmAccount(network.id, network.cluster, 0);
+        if (svmAccount?.address) {
+          derivedAddresses.svm[network.id] = svmAccount.address;
+        }
+      } catch (error) {
+        console.warn(`Could not derive ${network.id} address:`, error);
+      }
+    }
+
+    // Save to storage with its own encrypted mnemonic and pre-derived addresses
+    await EncryptedStorage.addImportedAccount(mnemonic, password, newAccount, derivedAddresses);
+
+    // Add to accounts list
+    const updatedAccounts = [...accounts, newAccount];
+    await EncryptedStorage.updateAccounts(updatedAccounts);
+
+    set({
+      accounts: updatedAccounts,
+      selectedAccount: newAccount,
+    });
+
+    return { account: newAccount, mnemonic };
+  },
+
+  // Get wallets that can be used as derivation source
+  getSourceWallets: () => {
+    const { accounts } = get();
+    const sources: Array<{ address: string; name: string; isMain: boolean }> = [];
+
+    // Find the main wallet account (first account without 'imported-' prefix)
+    const mainAccount = accounts.find((acc) => !acc.id.startsWith('imported-'));
+    if (mainAccount) {
+      sources.push({
+        address: mainAccount.address,
+        name: 'Main Wallet',
+        isMain: true,
+      });
+    }
+
+    // Find all imported accounts (they have their own mnemonics)
+    const importedAccounts = accounts.filter((acc) => acc.id.startsWith('imported-'));
+    for (const acc of importedAccounts) {
+      sources.push({
+        address: acc.address,
+        name: acc.name,
+        isMain: false,
+      });
+    }
+
+    return sources;
+  },
+
+  // Derive a new account from a specific source wallet
+  deriveAccountFromSource: async (
+    sourceCosmosAddress: string | null,
+    name: string,
+    password: string
+  ) => {
+    const { keyring, accounts, updateSession } = get();
+
+    // Helper function to derive from main wallet
+    const deriveFromMainWallet = async () => {
+      // Try to use keyring if it has mnemonic
+      if (keyring && keyring.getMnemonic()) {
+        const newAccount = await keyring.addAccount(name);
+        await preDeriveAllAccounts(keyring);
+        const updatedAccounts = [...accounts, newAccount];
+        await EncryptedStorage.updateAccounts(updatedAccounts);
+        await updateSession();
+        set({
+          accounts: updatedAccounts,
+          selectedAccount: newAccount,
+        });
+        return newAccount;
+      }
+
+      // Keyring doesn't have mnemonic - load from storage with password
+      const walletData = await EncryptedStorage.loadWallet(password);
+      if (!walletData) {
+        throw new Error('Incorrect password or wallet not found');
+      }
+
+      // Create a temporary keyring with the loaded mnemonic
+      const existingIndices = accounts
+        .filter((acc) => !acc.id.startsWith('imported-'))
+        .map((acc) => acc.accountIndex);
+      const nextIndex = existingIndices.length > 0 ? Math.max(...existingIndices) + 1 : 1;
+
+      const tempKeyring = new Keyring();
+      await tempKeyring.createFromMnemonic(walletData.mnemonic, 'bze', [nextIndex]);
+      const derivedAccounts = tempKeyring.getAccounts();
+
+      if (derivedAccounts.length === 0) {
+        throw new Error('Failed to derive new account');
+      }
+
+      const newAccount = derivedAccounts[0];
+      newAccount.name = name;
+      newAccount.id = `account-${nextIndex}`;
+      newAccount.accountIndex = nextIndex;
+
+      // Pre-derive Bitcoin, EVM, and SVM addresses
+      const derivedAddresses: {
+        bitcoin: Record<string, string>;
+        evm: Record<string, string>;
+        svm: Record<string, string>;
+      } = { bitcoin: {}, evm: {}, svm: {} };
+
+      const bitcoinNetworks = networkRegistry.getByType('bitcoin');
+      for (const network of bitcoinNetworks) {
+        try {
+          const btcAccount = await tempKeyring.deriveBitcoinAccount(
+            network.id,
+            network.network,
+            nextIndex,
+            network.addressType
+          );
+          if (btcAccount?.address) {
+            derivedAddresses.bitcoin[network.id] = btcAccount.address;
+          }
+        } catch (error) {
+          console.warn(`Could not derive ${network.id} address:`, error);
+        }
+      }
+
+      const evmNetworks = networkRegistry.getByType('evm');
+      for (const network of evmNetworks) {
+        try {
+          const evmAccount = await tempKeyring.deriveEvmAccount(
+            network.id,
+            network.chainId,
+            nextIndex
+          );
+          if (evmAccount?.address) {
+            derivedAddresses.evm[network.id] = evmAccount.address;
+          }
+        } catch (error) {
+          console.warn(`Could not derive ${network.id} address:`, error);
+        }
+      }
+
+      const svmNetworks = networkRegistry.getByType('svm');
+      for (const network of svmNetworks) {
+        try {
+          const svmAccount = await tempKeyring.deriveSvmAccount(
+            network.id,
+            network.cluster,
+            nextIndex
+          );
+          if (svmAccount?.address) {
+            derivedAddresses.svm[network.id] = svmAccount.address;
+          }
+        } catch (error) {
+          console.warn(`Could not derive ${network.id} address:`, error);
+        }
+      }
+
+      const updatedAccounts = [...accounts, newAccount];
+      await EncryptedStorage.updateAccounts(updatedAccounts);
+
+      set({
+        accounts: updatedAccounts,
+        selectedAccount: newAccount,
+      });
+
+      return newAccount;
+    };
+
+    // If source is null, derive from main wallet
+    if (sourceCosmosAddress === null) {
+      return await deriveFromMainWallet();
+    }
+
+    // Check if source is the main wallet by checking if it's a non-imported account
+    const sourceAccount = accounts.find((acc) => acc.address === sourceCosmosAddress);
+    if (!sourceAccount) {
+      throw new Error('Source wallet not found');
+    }
+
+    if (!sourceAccount.id.startsWith('imported-')) {
+      // Source is main wallet
+      return await deriveFromMainWallet();
+    }
+
+    // Source is an imported account - need to get its mnemonic and derive next index
+    const sourceMnemonic = await EncryptedStorage.getImportedAccountMnemonic(
+      sourceCosmosAddress,
+      password
+    );
+
+    if (!sourceMnemonic) {
+      throw new Error(
+        'Incorrect password for this imported wallet. Use the password you set when you imported/created this wallet.'
+      );
+    }
+
+    // Count existing accounts derived from this source
+    // For now, we'll track by finding accounts that share the same parent
+    // Since we store imported accounts separately, we need to count how many
+    // accounts have been derived from this specific mnemonic
+    // We'll use a simple approach: get all indices used by this source's mnemonic
+    const existingFromSource =
+      await EncryptedStorage.getImportedAccountsFromSource(sourceCosmosAddress);
+    const nextIndex = existingFromSource.length > 0 ? existingFromSource.length : 1; // Start from index 1 if source exists at 0
+
+    // Create a temporary keyring with the source mnemonic
+    const tempKeyring = new Keyring();
+    await tempKeyring.createFromMnemonic(sourceMnemonic, 'bze', [nextIndex]);
+    const derivedAccounts = tempKeyring.getAccounts();
+
+    if (derivedAccounts.length === 0) {
+      throw new Error('Failed to derive new account');
+    }
+
+    const newAccount = derivedAccounts[0];
+    newAccount.name = name;
+    newAccount.id = `imported-${Date.now()}`;
+    newAccount.accountIndex = nextIndex;
+
+    // Check if account already exists
+    if (accounts.some((acc) => acc.address === newAccount.address)) {
+      throw new Error('This account already exists in your wallet');
+    }
+
+    // Pre-derive Bitcoin, EVM, and SVM addresses
+    const derivedAddresses: {
+      bitcoin: Record<string, string>;
+      evm: Record<string, string>;
+      svm: Record<string, string>;
+    } = {
+      bitcoin: {},
+      evm: {},
+      svm: {},
+    };
+
+    const bitcoinNetworks = networkRegistry.getByType('bitcoin');
+    for (const network of bitcoinNetworks) {
+      try {
+        const btcAccount = await tempKeyring.deriveBitcoinAccount(
+          network.id,
+          network.network,
+          nextIndex,
+          network.addressType
+        );
+        if (btcAccount?.address) {
+          derivedAddresses.bitcoin[network.id] = btcAccount.address;
+        }
+      } catch (error) {
+        console.warn(`Could not derive ${network.id} address:`, error);
+      }
+    }
+
+    const evmNetworks = networkRegistry.getByType('evm');
+    for (const network of evmNetworks) {
+      try {
+        const evmAccount = await tempKeyring.deriveEvmAccount(
+          network.id,
+          network.chainId,
+          nextIndex
+        );
+        if (evmAccount?.address) {
+          derivedAddresses.evm[network.id] = evmAccount.address;
+        }
+      } catch (error) {
+        console.warn(`Could not derive ${network.id} address:`, error);
+      }
+    }
+
+    const svmNetworks = networkRegistry.getByType('svm');
+    for (const network of svmNetworks) {
+      try {
+        const svmAccount = await tempKeyring.deriveSvmAccount(
+          network.id,
+          network.cluster,
+          nextIndex
+        );
+        if (svmAccount?.address) {
+          derivedAddresses.svm[network.id] = svmAccount.address;
+        }
+      } catch (error) {
+        console.warn(`Could not derive ${network.id} address:`, error);
+      }
+    }
+
+    // Save with reference to source
+    await EncryptedStorage.addImportedAccountFromSource(
+      sourceMnemonic,
+      password,
+      newAccount,
+      derivedAddresses,
+      sourceCosmosAddress
+    );
+
+    const updatedAccounts = [...accounts, newAccount];
+    await EncryptedStorage.updateAccounts(updatedAccounts);
+
+    set({
+      accounts: updatedAccounts,
+      selectedAccount: newAccount,
+    });
+
+    return newAccount;
+  },
+
   importAccountFromMnemonic: async (mnemonic: string, name: string, password: string) => {
     const { accounts } = get();
+
+    // Verify the password is correct for the main wallet
+    const isValidPassword = await EncryptedStorage.verifyPassword(password);
+    if (!isValidPassword) {
+      throw new Error('Incorrect password');
+    }
 
     // Validate mnemonic
     if (!MnemonicManager.validateMnemonic(mnemonic)) {
@@ -556,8 +1003,69 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       throw new Error('This account is already in your wallet');
     }
 
-    // Save to storage with its own encrypted mnemonic
-    await EncryptedStorage.addImportedAccount(mnemonic, password, importedAccount);
+    // Pre-derive Bitcoin, EVM, and SVM addresses for this imported account
+    // These are stored so we can display them without needing the mnemonic
+    const derivedAddresses: {
+      bitcoin: Record<string, string>;
+      evm: Record<string, string>;
+      svm: Record<string, string>;
+    } = {
+      bitcoin: {},
+      evm: {},
+      svm: {},
+    };
+
+    // Derive Bitcoin addresses for ALL Bitcoin networks (so addresses are available when networks are enabled later)
+    const bitcoinNetworks = networkRegistry.getByType('bitcoin');
+    for (const network of bitcoinNetworks) {
+      try {
+        const btcAccount = await tempKeyring.deriveBitcoinAccount(
+          network.id,
+          network.network,
+          0, // accountIndex 0 for the imported account
+          network.addressType
+        );
+        if (btcAccount?.address) {
+          derivedAddresses.bitcoin[network.id] = btcAccount.address;
+        }
+      } catch (error) {
+        console.warn(`Could not derive ${network.id} address for imported account:`, error);
+      }
+    }
+
+    // Derive EVM addresses for ALL EVM networks
+    const evmNetworks = networkRegistry.getByType('evm');
+    for (const network of evmNetworks) {
+      try {
+        const evmAccount = await tempKeyring.deriveEvmAccount(network.id, network.chainId, 0);
+        if (evmAccount?.address) {
+          derivedAddresses.evm[network.id] = evmAccount.address;
+        }
+      } catch (error) {
+        console.warn(`Could not derive ${network.id} address for imported account:`, error);
+      }
+    }
+
+    // Derive SVM addresses for ALL SVM networks
+    const svmNetworks = networkRegistry.getByType('svm');
+    for (const network of svmNetworks) {
+      try {
+        const svmAccount = await tempKeyring.deriveSvmAccount(network.id, network.cluster, 0);
+        if (svmAccount?.address) {
+          derivedAddresses.svm[network.id] = svmAccount.address;
+        }
+      } catch (error) {
+        console.warn(`Could not derive ${network.id} address for imported account:`, error);
+      }
+    }
+
+    // Save to storage with its own encrypted mnemonic and pre-derived addresses
+    await EncryptedStorage.addImportedAccount(
+      mnemonic,
+      password,
+      importedAccount,
+      derivedAddresses
+    );
 
     // Update state
     const updatedAccounts = [...accounts, importedAccount];
@@ -763,12 +1271,17 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       throw new Error(`Chain ${chainId} not supported`);
     }
 
-    // Use the existing wallet from the keyring
-    const wallet = keyring.getWallet();
+    // Get the bech32 prefix for this chain
+    const chainPrefix = chainInfo.bech32Config.bech32PrefixAccAddr;
 
-    // Get all wallet accounts and find the one that matches our selected account
+    // Get a wallet with the correct prefix for this chain, ensuring the selected account's index is included
+    const wallet = await keyring.getWalletForChain(chainPrefix, selectedAccount.accountIndex);
+
+    // Convert selected account address to this chain's prefix
+    const signerAddress = Keyring.convertAddress(selectedAccount.address, chainPrefix);
+
+    // Get all wallet accounts and find the one that matches
     const walletAccounts = await wallet.getAccounts();
-    const signerAddress = selectedAccount.address;
     const matchingWalletAccount = walletAccounts.find((acc) => acc.address === signerAddress);
 
     if (!matchingWalletAccount) {
@@ -792,6 +1305,105 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     }
 
     return result.transactionHash;
+  },
+
+  signAndBroadcastWithPassword: async (
+    chainId: string,
+    messages: Array<{ typeUrl: string; value: any }>,
+    password: string,
+    fee?: { amount: Array<{ denom: string; amount: string }>; gas: string },
+    memo: string = ''
+  ) => {
+    const { keyring, isLocked, selectedAccount } = get();
+
+    if (isLocked || !keyring) {
+      throw new Error('Wallet is locked');
+    }
+
+    if (!selectedAccount) {
+      throw new Error('No account selected');
+    }
+
+    // Get chain info
+    const chainInfo = SUPPORTED_CHAINS.get(chainId);
+    if (!chainInfo) {
+      throw new Error(`Chain ${chainId} not supported`);
+    }
+
+    // Get the bech32 prefix for this chain
+    const chainPrefix = chainInfo.bech32Config.bech32PrefixAccAddr;
+
+    // Check if this is an imported account (has its own mnemonic)
+    const isImportedAccount = selectedAccount.id.startsWith('imported-');
+
+    let wallet: DirectSecp256k1HdWallet;
+
+    if (isImportedAccount) {
+      // For imported accounts, load their specific mnemonic
+      const importedMnemonic = await EncryptedStorage.getImportedAccountMnemonic(
+        selectedAccount.address,
+        password
+      );
+
+      if (!importedMnemonic) {
+        throw new Error(
+          'Failed to decrypt imported account mnemonic: incorrect password or corrupted data'
+        );
+      }
+
+      // Create wallet from imported account's mnemonic with the target chain prefix
+      wallet = await DirectSecp256k1HdWallet.fromMnemonic(importedMnemonic, {
+        prefix: chainPrefix,
+        hdPaths: [makeCosmoshubPath(0)], // Imported accounts always use index 0
+      });
+    } else {
+      // For main wallet accounts, load the main mnemonic if needed
+      if (!keyring.hasMnemonic()) {
+        const storedWallet = await EncryptedStorage.loadWallet(password);
+        if (!storedWallet || !storedWallet.mnemonic) {
+          throw new Error('Incorrect password or wallet not found');
+        }
+        keyring.setMnemonic(storedWallet.mnemonic);
+      }
+
+      // Get a wallet with the correct prefix for this chain
+      const accountIndexToUse = selectedAccount.accountIndex ?? 0;
+      wallet = await keyring.getWalletForChain(chainPrefix, accountIndexToUse);
+    }
+
+    // Convert selected account address to this chain's prefix
+    const signerAddress = Keyring.convertAddress(selectedAccount.address, chainPrefix);
+
+    // Get all wallet accounts and find the one that matches
+    const walletAccounts = await wallet.getAccounts();
+    const matchingWalletAccount = walletAccounts.find((acc) => acc.address === signerAddress);
+
+    if (!matchingWalletAccount) {
+      throw new Error('Selected account not found in wallet');
+    }
+
+    // Use provided fee or default
+    const txFee = fee || {
+      amount: [{ denom: chainInfo.feeCurrencies[0]?.coinMinimalDenom || 'ubze', amount: '5000' }],
+      gas: '200000',
+    };
+
+    // Create signing client
+    const signingClient = await cosmosClient.getSigningClient(chainInfo.rpc, wallet);
+
+    // Sign and broadcast the transaction
+    const result = await signingClient.signAndBroadcast(signerAddress, messages, txFee, memo);
+
+    if (result.code !== 0) {
+      throw new Error(`Transaction failed: ${result.rawLog}`);
+    }
+
+    return result.transactionHash;
+  },
+
+  hasMnemonicInMemory: () => {
+    const { keyring } = get();
+    return keyring ? keyring.hasMnemonic() : false;
   },
 
   getAddressForChain: (chainPrefix: string) => {
@@ -825,18 +1437,40 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   },
 
   // Bitcoin-specific methods
-  getBitcoinAddress: async (networkId: string, accountIndex?: number) => {
-    const { keyring, selectedAccount, updateSession } = get();
+  getBitcoinAddress: async (networkId: string, accountIndex?: number, cosmosAddress?: string) => {
+    const { keyring, selectedAccount, accounts, updateSession } = get();
     if (!keyring) return null;
 
+    // Determine which account we're getting the address for
+    const targetCosmosAddress = cosmosAddress ?? selectedAccount?.address;
+
+    // Check if this is an imported account (ID starts with 'imported-')
+    const targetAccount = accounts.find((acc) => acc.address === targetCosmosAddress);
+    const isImportedAccount = targetAccount?.id?.startsWith('imported-');
+
+    // For imported accounts, retrieve pre-derived addresses from storage
+    if (isImportedAccount && targetCosmosAddress) {
+      const derivedAddresses =
+        await EncryptedStorage.getImportedAccountDerivedAddresses(targetCosmosAddress);
+      if (derivedAddresses?.bitcoin?.[networkId]) {
+        return derivedAddresses.bitcoin[networkId];
+      }
+      // If no pre-derived address found, return null (can't derive without password)
+      console.warn(`No pre-derived Bitcoin address for imported account on ${networkId}`);
+      return null;
+    }
+
+    // For main wallet accounts, use the keyring
     // Use provided accountIndex or fall back to selected account's index
     const idx = accountIndex ?? selectedAccount?.accountIndex ?? 0;
 
     // Try to get existing Bitcoin account (may have address from session restore)
     let btcAccount = keyring.getBitcoinAccount(networkId, idx);
 
-    // Return cached address if available
+    // Return cached address if available (from session restore or previous derivation)
     if (btcAccount?.address) {
+      // If mnemonic is available and we have a stale session (no private key),
+      // the next derivation call will automatically re-derive with keys
       return btcAccount.address;
     }
 
@@ -890,10 +1524,30 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   },
 
   // EVM-specific methods
-  getEvmAddress: async (networkId: string, accountIndex?: number) => {
-    const { keyring, selectedAccount, updateSession } = get();
+  getEvmAddress: async (networkId: string, accountIndex?: number, cosmosAddress?: string) => {
+    const { keyring, selectedAccount, accounts, updateSession } = get();
     if (!keyring) return null;
 
+    // Determine which account we're getting the address for
+    const targetCosmosAddress = cosmosAddress ?? selectedAccount?.address;
+
+    // Check if this is an imported account (ID starts with 'imported-')
+    const targetAccount = accounts.find((acc) => acc.address === targetCosmosAddress);
+    const isImportedAccount = targetAccount?.id?.startsWith('imported-');
+
+    // For imported accounts, retrieve pre-derived addresses from storage
+    if (isImportedAccount && targetCosmosAddress) {
+      const derivedAddresses =
+        await EncryptedStorage.getImportedAccountDerivedAddresses(targetCosmosAddress);
+      if (derivedAddresses?.evm?.[networkId]) {
+        return derivedAddresses.evm[networkId];
+      }
+      // If no pre-derived address found, return null (can't derive without password)
+      console.warn(`No pre-derived EVM address for imported account on ${networkId}`);
+      return null;
+    }
+
+    // For main wallet accounts, use the keyring
     // Use provided accountIndex or fall back to selected account's index
     const idx = accountIndex ?? selectedAccount?.accountIndex ?? 0;
 
@@ -940,6 +1594,81 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       return account;
     } catch (error) {
       console.error('Failed to derive EVM account:', error);
+      return null;
+    }
+  },
+
+  // SVM (Solana)-specific methods
+  getSvmAddress: async (networkId: string, accountIndex?: number, cosmosAddress?: string) => {
+    const { keyring, selectedAccount, accounts, updateSession } = get();
+    if (!keyring) return null;
+
+    // Determine which account we're getting the address for
+    const targetCosmosAddress = cosmosAddress ?? selectedAccount?.address;
+
+    // Check if this is an imported account (ID starts with 'imported-')
+    const targetAccount = accounts.find((acc) => acc.address === targetCosmosAddress);
+    const isImportedAccount = targetAccount?.id?.startsWith('imported-');
+
+    // For imported accounts, retrieve pre-derived addresses from storage
+    if (isImportedAccount && targetCosmosAddress) {
+      const derivedAddresses =
+        await EncryptedStorage.getImportedAccountDerivedAddresses(targetCosmosAddress);
+      if (derivedAddresses?.svm?.[networkId]) {
+        return derivedAddresses.svm[networkId];
+      }
+      // If no pre-derived address found, return null (can't derive without password)
+      console.warn(`No pre-derived SVM address for imported account on ${networkId}`);
+      return null;
+    }
+
+    // For main wallet accounts, use the keyring
+    // Use provided accountIndex or fall back to selected account's index
+    const idx = accountIndex ?? selectedAccount?.accountIndex ?? 0;
+
+    // Try to get existing SVM account (may have address from session restore)
+    let svmAccount = keyring.getSvmAccount(networkId, idx);
+
+    // Return cached address if available (from session restore or previous derivation)
+    if (svmAccount?.address) {
+      return svmAccount.address;
+    }
+
+    // Try to derive if mnemonic is available
+    if (keyring.hasMnemonic()) {
+      const network = networkRegistry.getSvm(networkId);
+      if (!network) return null;
+
+      try {
+        svmAccount = await keyring.deriveSvmAccount(networkId, network.cluster, idx);
+        // Update session with newly derived address
+        await updateSession();
+      } catch (error) {
+        console.error('Failed to derive SVM address:', error);
+        return null;
+      }
+    }
+
+    return svmAccount?.address || null;
+  },
+
+  deriveSvmAccount: async (networkId: string, accountIndex?: number) => {
+    const { keyring, selectedAccount, updateSession } = get();
+    if (!keyring) return null;
+
+    const network = networkRegistry.getSvm(networkId);
+    if (!network) return null;
+
+    // Use provided accountIndex or fall back to selected account's index
+    const idx = accountIndex ?? selectedAccount?.accountIndex ?? 0;
+
+    try {
+      const account = await keyring.deriveSvmAccount(networkId, network.cluster, idx);
+      // Update session with newly derived address
+      await updateSession();
+      return account;
+    } catch (error) {
+      console.error('Failed to derive SVM account:', error);
       return null;
     }
   },

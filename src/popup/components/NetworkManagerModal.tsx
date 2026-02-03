@@ -26,8 +26,15 @@ import {
 } from '@chakra-ui/react';
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import { useNetworkStore } from '@/store/networkStore';
-import { fetchChainAssets, RegistryAsset } from '@/lib/assets/chainRegistry';
-import { NetworkConfig } from '@/lib/networks';
+import { fetchChainAssets } from '@/lib/assets/chainRegistry';
+import { getKnownErc20Tokens, getKnownSplTokens } from '@/lib/assets/knownAssets';
+import {
+  NetworkConfig,
+  EvmNetworkConfig,
+  SvmNetworkConfig,
+  isEvmNetwork,
+  isSvmNetwork,
+} from '@/lib/networks';
 
 interface NetworkManagerModalProps {
   isOpen: boolean;
@@ -42,22 +49,62 @@ interface NetworkItemProps {
 }
 
 const NetworkItem: React.FC<NetworkItemProps> = ({ network, isEnabled, onToggle }) => {
-  const [assets, setAssets] = useState<RegistryAsset[]>([]);
+  const [assets, setAssets] = useState<Array<{ denom: string; symbol: string }>>([]);
   const [loadingAssets, setLoadingAssets] = useState(false);
   const [expandedForAssets, setExpandedForAssets] = useState(false);
   const { isAssetEnabled, setAssetEnabled, setEnabledAssets } = useNetworkStore();
 
-  // Load assets when expanded
+  // Determine if this network type supports assets
+  const hasAssets = network.type === 'cosmos' || network.type === 'evm' || network.type === 'svm';
+
+  // Load assets when expanded based on network type
   useEffect(() => {
     if (expandedForAssets && isEnabled && assets.length === 0) {
       setLoadingAssets(true);
-      fetchChainAssets(network.id)
-        .then((a) => setAssets(a))
-        .finally(() => setLoadingAssets(false));
-    }
-  }, [expandedForAssets, isEnabled, network.id, assets.length]);
 
-  const hasAssets = network.type === 'cosmos'; // Cosmos chains have multiple assets
+      const loadAssets = async () => {
+        try {
+          // First load native assets from chain registry (works for all network types)
+          const nativeAssets = await fetchChainAssets(network.id);
+          const loadedAssets: { denom: string; symbol: string }[] = nativeAssets.map((a) => ({
+            denom: a.denom,
+            symbol: a.symbol,
+          }));
+
+          // Then append known tokens based on network type
+          if (isEvmNetwork(network)) {
+            // Append ERC20 tokens for this chain
+            const evmNetwork = network as EvmNetworkConfig;
+            const erc20Tokens = getKnownErc20Tokens(evmNetwork.chainId);
+            for (const token of erc20Tokens) {
+              // Avoid duplicates
+              if (!loadedAssets.some((a) => a.denom === token.denom)) {
+                loadedAssets.push({ denom: token.denom, symbol: token.symbol });
+              }
+            }
+          } else if (isSvmNetwork(network)) {
+            // Append SPL tokens for this cluster
+            const svmNetwork = network as SvmNetworkConfig;
+            const splTokens = getKnownSplTokens(svmNetwork.cluster);
+            for (const token of splTokens) {
+              // Avoid duplicates
+              if (!loadedAssets.some((a) => a.denom === token.denom)) {
+                loadedAssets.push({ denom: token.denom, symbol: token.symbol });
+              }
+            }
+          }
+
+          setAssets(loadedAssets);
+        } catch (error) {
+          console.error('Failed to load assets for network:', network.id, error);
+        } finally {
+          setLoadingAssets(false);
+        }
+      };
+
+      loadAssets();
+    }
+  }, [expandedForAssets, isEnabled, network, assets.length]);
 
   return (
     <Box
@@ -91,7 +138,9 @@ const NetworkItem: React.FC<NetworkItemProps> = ({ network, isEnabled, onToggle 
                   ? 'purple'
                   : network.type === 'bitcoin'
                     ? 'orange'
-                    : 'blue'
+                    : network.type === 'svm'
+                      ? 'green'
+                      : 'blue'
               }
               fontSize="2xs"
             >
@@ -226,6 +275,7 @@ const NetworkManagerModal: React.FC<NetworkManagerModalProps> = ({
   const cosmosNetworks = getNetworksByType('cosmos');
   const bitcoinNetworks = getNetworksByType('bitcoin');
   const evmNetworks = getNetworksByType('evm');
+  const svmNetworks = getNetworksByType('svm');
 
   const handleToggle = async (networkId: string, enabled: boolean) => {
     await setNetworkEnabled(networkId, enabled);
@@ -275,6 +325,14 @@ const NetworkManagerModal: React.FC<NetworkManagerModalProps> = ({
                 _selected={{ bg: 'blue.600', color: 'white' }}
               >
                 EVM ({getEnabledCount(evmNetworks)}/{evmNetworks.length})
+              </Tab>
+              <Tab
+                fontSize="xs"
+                px={3}
+                borderRadius="full"
+                _selected={{ bg: 'green.600', color: 'white' }}
+              >
+                SVM ({getEnabledCount(svmNetworks)}/{svmNetworks.length})
               </Tab>
             </TabList>
 
@@ -328,6 +386,26 @@ const NetworkManagerModal: React.FC<NetworkManagerModalProps> = ({
                     </Text>
                   ) : (
                     evmNetworks.map((network) => (
+                      <NetworkItem
+                        key={network.id}
+                        network={network}
+                        isEnabled={isNetworkEnabled(network.id)}
+                        onToggle={(enabled) => handleToggle(network.id, enabled)}
+                      />
+                    ))
+                  )}
+                </VStack>
+              </TabPanel>
+
+              {/* SVM Networks */}
+              <TabPanel p={0}>
+                <VStack spacing={2} align="stretch">
+                  {svmNetworks.length === 0 ? (
+                    <Text color="gray.500" textAlign="center" py={4}>
+                      No SVM networks available
+                    </Text>
+                  ) : (
+                    svmNetworks.map((network) => (
                       <NetworkItem
                         key={network.id}
                         network={network}

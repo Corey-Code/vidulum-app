@@ -1,9 +1,4 @@
-import { Buffer } from 'buffer';
-// Polyfill Buffer for browser environment (needed by bip39)
-if (typeof globalThis.Buffer === 'undefined') {
-  globalThis.Buffer = Buffer;
-}
-
+import { ensureBuffer } from '../buffer-polyfill';
 import { DirectSecp256k1HdWallet, makeCosmoshubPath } from '@cosmjs/proto-signing';
 import {
   AminoSignResponse,
@@ -26,7 +21,12 @@ import {
   UtxoNetworkId,
   UTXO_NETWORKS,
 } from './bitcoin';
-import { deriveEvmKeyPair, getEvmDerivationPath, EvmKeyPair } from './evm';
+import { deriveEvmKeyPair, getEvmDerivationPath } from './evm';
+import { deriveSolanaKeyPair, getSolanaDerivationPath } from './solana';
+import { networkRegistry } from '@/lib/networks';
+
+// Ensure Buffer is available at module load time
+const BufferImpl = ensureBuffer();
 
 export interface KeyringAccount {
   id: string;
@@ -63,12 +63,25 @@ export interface EvmKeyringAccount {
   accountIndex: number;
 }
 
+// SVM (Solana) account
+export interface SvmKeyringAccount {
+  id: string;
+  name: string;
+  address: string; // Base58-encoded public key
+  publicKey: Uint8Array;
+  privateKey: Uint8Array;
+  cluster: string; // mainnet-beta, testnet, devnet
+  hdPath: string;
+  accountIndex: number;
+}
+
 export class Keyring {
   private wallet: DirectSecp256k1HdWallet | null = null;
   private aminoWallet: Secp256k1HdWallet | null = null;
   private accounts: KeyringAccount[] = [];
   private bitcoinAccounts: Map<string, BitcoinKeyringAccount> = new Map(); // `networkId-accountIndex` -> account
   private evmAccounts: Map<string, EvmKeyringAccount> = new Map(); // `networkId-accountIndex` -> account
+  private svmAccounts: Map<string, SvmKeyringAccount> = new Map(); // `networkId-accountIndex` -> account
   private mnemonic: string = '';
   private prefix: string = 'bze';
 
@@ -237,7 +250,7 @@ export class Keyring {
       signature: response.signature.signature,
       pub_key: {
         type: 'tendermint/PubKeySecp256k1',
-        value: Buffer.from(account.pubKey).toString('base64'),
+        value: BufferImpl.from(account.pubKey).toString('base64'),
       },
     };
   }
@@ -253,15 +266,15 @@ export class Keyring {
   ): Promise<boolean> {
     try {
       // Decode the signature and public key from base64
-      const signatureBytes = Buffer.from(signature.signature, 'base64');
-      const pubKeyBytes = Buffer.from(signature.pub_key.value, 'base64');
+      const signatureBytes = BufferImpl.from(signature.signature, 'base64');
+      const pubKeyBytes = BufferImpl.from(signature.pub_key.value, 'base64');
 
       // Verify the public key matches the signer address
       // Derive address from public key and compare
       const account = this.accounts.find((acc) => acc.address === signerAddress);
       if (account) {
         // If we have the account, verify the pubkey matches
-        const storedPubKeyBase64 = Buffer.from(account.pubKey).toString('base64');
+        const storedPubKeyBase64 = BufferImpl.from(account.pubKey).toString('base64');
         if (storedPubKeyBase64 !== signature.pub_key.value) {
           return false;
         }
@@ -331,6 +344,46 @@ export class Keyring {
     return this.wallet;
   }
 
+  /**
+   * Get a wallet instance with a specific chain prefix for signing transactions
+   * This creates a new wallet with the same mnemonic but different prefix
+   * @param prefix - The bech32 prefix for the chain
+   * @param accountIndex - Optional specific account index to include (ensures this account is derived)
+   */
+  async getWalletForChain(prefix: string, accountIndex?: number): Promise<DirectSecp256k1HdWallet> {
+    if (!this.mnemonic) {
+      throw new Error('Mnemonic not available - wallet may need to be unlocked');
+    }
+
+    // If the prefix matches our current wallet and no specific account requested, return it
+    if (prefix === this.prefix && this.wallet && accountIndex === undefined) {
+      return this.wallet;
+    }
+
+    // Create HD paths for all account indices we have
+    let accountIndices = this.accounts.map((acc) => acc.accountIndex);
+
+    // Ensure the requested accountIndex is included
+    if (accountIndex !== undefined && !accountIndices.includes(accountIndex)) {
+      accountIndices = [...accountIndices, accountIndex];
+    }
+
+    // If no accounts, default to account 0
+    if (accountIndices.length === 0) {
+      accountIndices = [0];
+    }
+
+    const hdPaths = accountIndices.map((index) => makeCosmoshubPath(index));
+
+    // Create a new wallet with the requested prefix
+    const wallet = await DirectSecp256k1HdWallet.fromMnemonic(this.mnemonic, {
+      prefix,
+      hdPaths,
+    });
+
+    return wallet;
+  }
+
   // ============================================================================
   // Bitcoin Support
   // ============================================================================
@@ -352,12 +405,15 @@ export class Keyring {
     // Check if already derived using composite key
     const accountKey = this.getAccountKey(networkId, accountIndex);
     const existing = this.bitcoinAccounts.get(accountKey);
-    if (existing) {
+
+    // Return existing if it has valid keys (non-empty)
+    if (existing && existing.privateKey.length > 0) {
       return existing;
     }
 
-    // Derive keys
-    const seed = await bip39.mnemonicToSeed(this.mnemonic);
+    // Derive keys - ensure seed is a proper Uint8Array
+    const seedBuffer = await bip39.mnemonicToSeed(this.mnemonic);
+    const seed = new Uint8Array(seedBuffer);
 
     let path: string;
     let address: string;
@@ -366,7 +422,8 @@ export class Keyring {
     if (networkId in UTXO_NETWORKS) {
       // Use UTXO-specific derivation path and address generation
       const utxoNetworkId = networkId as UtxoNetworkId;
-      path = getUtxoDerivationPath(utxoNetworkId, accountIndex, 0, false);
+      // Pass addressType to get correct BIP purpose (84 for native SegWit, 44 for legacy, etc.)
+      path = getUtxoDerivationPath(utxoNetworkId, accountIndex, 0, false, addressType);
       const keyPair = await deriveBitcoinKeyPairFromSeed(seed, path);
       address = getUtxoAddress(keyPair.publicKey, utxoNetworkId, addressType);
 
@@ -445,18 +502,58 @@ export class Keyring {
 
   /**
    * Get Bitcoin private key for signing (use carefully!)
+   * Will re-derive keys if they were restored from session without keys
    */
-  getBitcoinPrivateKey(networkId: string, accountIndex: number = 0): Uint8Array | undefined {
+  async getBitcoinPrivateKey(
+    networkId: string,
+    accountIndex: number = 0
+  ): Promise<Uint8Array | undefined> {
     const accountKey = this.getAccountKey(networkId, accountIndex);
-    return this.bitcoinAccounts.get(accountKey)?.privateKey;
+    let account = this.bitcoinAccounts.get(accountKey);
+
+    // If account doesn't exist or keys are empty, try to derive
+    if ((!account || account.privateKey.length === 0) && this.mnemonic) {
+      const network = networkRegistry.getBitcoin(networkId);
+      if (network) {
+        const reDerived = await this.deriveBitcoinAccount(
+          networkId,
+          network.network,
+          accountIndex,
+          network.addressType as 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent'
+        );
+        return reDerived?.privateKey;
+      }
+    }
+
+    return account?.privateKey;
   }
 
   /**
    * Get Bitcoin public key
+   * Will re-derive keys if they were restored from session without keys
    */
-  getBitcoinPublicKey(networkId: string, accountIndex: number = 0): Uint8Array | undefined {
+  async getBitcoinPublicKey(
+    networkId: string,
+    accountIndex: number = 0
+  ): Promise<Uint8Array | undefined> {
     const accountKey = this.getAccountKey(networkId, accountIndex);
-    return this.bitcoinAccounts.get(accountKey)?.publicKey;
+    let account = this.bitcoinAccounts.get(accountKey);
+
+    // If account doesn't exist or keys are empty, try to derive
+    if ((!account || account.publicKey.length === 0) && this.mnemonic) {
+      const network = networkRegistry.getBitcoin(networkId);
+      if (network) {
+        const reDerived = await this.deriveBitcoinAccount(
+          networkId,
+          network.network,
+          accountIndex,
+          network.addressType as 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent'
+        );
+        return reDerived?.publicKey;
+      }
+    }
+
+    return account?.publicKey;
   }
 
   // ============================================================================
@@ -540,6 +637,115 @@ export class Keyring {
     return this.evmAccounts.get(accountKey)?.publicKey;
   }
 
+  // ============================================================================
+  // SVM (Solana) Support
+  // ============================================================================
+
+  /**
+   * Derive an SVM (Solana) account from the mnemonic
+   */
+  async deriveSvmAccount(
+    networkId: string,
+    cluster: string,
+    accountIndex: number = 0
+  ): Promise<SvmKeyringAccount> {
+    if (!this.mnemonic) {
+      throw new Error('Wallet not initialized');
+    }
+
+    // Check if already derived using composite key
+    const accountKey = this.getAccountKey(networkId, accountIndex);
+    const existing = this.svmAccounts.get(accountKey);
+    if (existing && existing.privateKey.length > 0) {
+      return existing;
+    }
+
+    // Derive Solana keys using Ed25519
+    const keyPair = await deriveSolanaKeyPair(this.mnemonic, accountIndex);
+    const path = getSolanaDerivationPath(accountIndex);
+
+    const account: SvmKeyringAccount = {
+      id: `svm-${networkId}-${accountIndex}`,
+      name: `Solana Account ${accountIndex + 1}`,
+      address: keyPair.address,
+      publicKey: keyPair.publicKey,
+      privateKey: keyPair.privateKey,
+      cluster,
+      hdPath: path,
+      accountIndex,
+    };
+
+    this.svmAccounts.set(accountKey, account);
+    return account;
+  }
+
+  /**
+   * Get SVM account for a network and account index
+   */
+  getSvmAccount(networkId: string, accountIndex: number = 0): SvmKeyringAccount | undefined {
+    const accountKey = this.getAccountKey(networkId, accountIndex);
+    return this.svmAccounts.get(accountKey);
+  }
+
+  /**
+   * Get all SVM accounts
+   */
+  getAllSvmAccounts(): SvmKeyringAccount[] {
+    return Array.from(this.svmAccounts.values());
+  }
+
+  /**
+   * Get SVM address for a network and account index
+   */
+  getSvmAddress(networkId: string, accountIndex: number = 0): string | undefined {
+    const accountKey = this.getAccountKey(networkId, accountIndex);
+    return this.svmAccounts.get(accountKey)?.address;
+  }
+
+  /**
+   * Get SVM private key for signing (use carefully!)
+   */
+  async getSvmPrivateKey(
+    networkId: string,
+    accountIndex: number = 0
+  ): Promise<Uint8Array | undefined> {
+    const accountKey = this.getAccountKey(networkId, accountIndex);
+    let account = this.svmAccounts.get(accountKey);
+
+    // If account doesn't exist or keys are empty, try to derive
+    if ((!account || account.privateKey.length === 0) && this.mnemonic) {
+      const network = networkRegistry.getSvm(networkId);
+      if (network) {
+        const reDerived = await this.deriveSvmAccount(networkId, network.cluster, accountIndex);
+        return reDerived?.privateKey;
+      }
+    }
+
+    return account?.privateKey;
+  }
+
+  /**
+   * Get SVM public key
+   */
+  async getSvmPublicKey(
+    networkId: string,
+    accountIndex: number = 0
+  ): Promise<Uint8Array | undefined> {
+    const accountKey = this.getAccountKey(networkId, accountIndex);
+    let account = this.svmAccounts.get(accountKey);
+
+    // If account doesn't exist or keys are empty, try to derive
+    if ((!account || account.publicKey.length === 0) && this.mnemonic) {
+      const network = networkRegistry.getSvm(networkId);
+      if (network) {
+        const reDerived = await this.deriveSvmAccount(networkId, network.cluster, accountIndex);
+        return reDerived?.publicKey;
+      }
+    }
+
+    return account?.publicKey;
+  }
+
   // Serialize wallet for session storage (keeps wallet unlocked across popup opens)
   async serialize(): Promise<string> {
     if (!this.wallet || !this.aminoWallet) {
@@ -586,6 +792,23 @@ export class Keyring {
       });
     }
 
+    // Serialize SVM accounts (excluding private keys for safety in session)
+    const svmAccountsData: Array<{
+      accountKey: string; // composite key: networkId-accountIndex
+      address: string;
+      cluster: string;
+      accountIndex: number;
+    }> = [];
+
+    for (const [accountKey, account] of this.svmAccounts) {
+      svmAccountsData.push({
+        accountKey,
+        address: account.address,
+        cluster: account.cluster,
+        accountIndex: account.accountIndex,
+      });
+    }
+
     const data = {
       serialized,
       aminoSerialized,
@@ -593,6 +816,7 @@ export class Keyring {
       prefix: this.prefix,
       bitcoinAccounts: bitcoinAccountsData,
       evmAccounts: evmAccountsData,
+      svmAccounts: svmAccountsData,
       hasMnemonic: !!this.mnemonic,
     };
     return JSON.stringify(data);
@@ -651,6 +875,25 @@ export class Keyring {
         this.evmAccounts.set(evmData.accountKey, account);
       }
     }
+
+    // Restore SVM accounts (addresses only, no private keys)
+    this.svmAccounts.clear();
+    if (data.svmAccounts) {
+      for (const svmData of data.svmAccounts) {
+        // Create a partial account with address info only (no keys)
+        const account: SvmKeyringAccount = {
+          id: `svm-restored-${svmData.accountKey}`,
+          name: `Solana Account ${svmData.accountIndex + 1}`,
+          address: svmData.address,
+          publicKey: new Uint8Array(), // Empty - will be re-derived if needed
+          privateKey: new Uint8Array(), // Empty - will be re-derived if needed
+          cluster: svmData.cluster,
+          hdPath: '',
+          accountIndex: svmData.accountIndex,
+        };
+        this.svmAccounts.set(svmData.accountKey, account);
+      }
+    }
   }
 
   // Set mnemonic (called during unlock to enable Bitcoin derivation)
@@ -669,6 +912,7 @@ export class Keyring {
     this.accounts = [];
     this.bitcoinAccounts.clear();
     this.evmAccounts.clear();
+    this.svmAccounts.clear();
     this.mnemonic = '';
   }
 }

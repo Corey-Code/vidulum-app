@@ -182,7 +182,7 @@ const CreateWallet: React.FC<Props> = ({ onSuccess, onSwitchToImport }) => {
   }
 
   return (
-    <Box h="full" bg="#0a0a0a" p={6} overflowY="auto">
+    <Box h="full" w="fit-content" bg="#0a0a0a" p={6} overflowY="auto" overflowX="auto">
       <VStack spacing={6} align="stretch">
         <VStack spacing={2}>
           <Text fontSize="xl" fontWeight="semibold" color="white">

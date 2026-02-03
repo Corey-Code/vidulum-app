@@ -693,7 +693,10 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
                 <Box>
                   <Text fontSize="xs" color="gray.500" mb={2}>
                     Main Wallet ({accounts.filter((a) => !a.id.startsWith('imported-')).length}{' '}
-                    accounts)
+                    {accounts.filter((a) => !a.id.startsWith('imported-')).length === 1
+                      ? 'account'
+                      : 'accounts'}
+                    )
                   </Text>
                   <Box p={3} bg="#141414" borderRadius="lg" border="1px" borderColor="#2a2a2a">
                     <Text
@@ -707,14 +710,15 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
                     </Text>
                   </Box>
                   <HStack mt={2} spacing={1} flexWrap="wrap">
+                    <Text fontSize="xs" color="gray.400">
+                      Accounts:
+                    </Text>
                     {accounts
                       .filter((a) => !a.id.startsWith('imported-'))
-                      .map((acc) => (
+                      .map((acc, idx, arr) => (
                         <Text key={acc.id} fontSize="xs" color="gray.500">
                           {acc.name}
-                          {acc !==
-                            accounts.filter((a) => !a.id.startsWith('imported-')).slice(-1)[0] &&
-                            ','}
+                          {idx < arr.length - 1 && ','}
                         </Text>
                       ))}
                   </HStack>

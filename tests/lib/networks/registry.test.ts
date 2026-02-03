@@ -11,8 +11,13 @@ import {
   isCosmosNetwork,
   isBitcoinNetwork,
   isEvmNetwork,
+  isSvmNetwork,
   getUINetworks,
   BITCOIN_MAINNET,
+  SOLANA_MAINNET,
+  SOLANA_DEVNET,
+  getSvmNetworkById,
+  getEnabledSvmNetworks,
 } from '@/lib/networks';
 
 describe('Network Registry', () => {
@@ -33,6 +38,12 @@ describe('Network Registry', () => {
       const evm = networkRegistry.getByType('evm');
       expect(evm.length).toBeGreaterThan(0);
       expect(evm.some((n) => n.chainId === 1)).toBe(true); // Ethereum mainnet
+    });
+
+    it('should have registered SVM networks', () => {
+      const svm = networkRegistry.getByType('svm');
+      expect(svm.length).toBeGreaterThan(0);
+      expect(svm.some((n) => n.id === 'solana-mainnet')).toBe(true);
     });
 
     it('should get network by ID', () => {
@@ -68,10 +79,19 @@ describe('Network Registry', () => {
       expect(evm?.rpcUrls).toBeInstanceOf(Array);
     });
 
+    it('should get SVM network with correct type', () => {
+      const svm = networkRegistry.getSvm('solana-mainnet');
+      expect(svm).toBeDefined();
+      expect(svm?.type).toBe('svm');
+      expect(svm?.rpcUrls).toBeInstanceOf(Array);
+      expect(svm?.cluster).toBe('mainnet-beta');
+    });
+
     it('should return null for wrong network type getter', () => {
       expect(networkRegistry.getCosmos('bitcoin-mainnet')).toBeUndefined();
       expect(networkRegistry.getBitcoin('beezee-1')).toBeUndefined();
       expect(networkRegistry.getEvm('beezee-1')).toBeUndefined();
+      expect(networkRegistry.getSvm('beezee-1')).toBeUndefined();
     });
 
     it('should check if network is enabled', () => {
@@ -295,6 +315,14 @@ describe('Network Registry', () => {
       expect(isBitcoinNetwork(ethereum)).toBe(false);
       expect(isEvmNetwork(ethereum)).toBe(true);
     });
+
+    it('should identify SVM network', () => {
+      const solana = networkRegistry.get('solana-mainnet')!;
+      expect(isCosmosNetwork(solana)).toBe(false);
+      expect(isBitcoinNetwork(solana)).toBe(false);
+      expect(isEvmNetwork(solana)).toBe(false);
+      expect(isSvmNetwork(solana)).toBe(true);
+    });
   });
 
   describe('getUINetworks', () => {
@@ -321,6 +349,85 @@ describe('Network Registry', () => {
         } else {
           expect(network.prefix).toBeUndefined();
         }
+      });
+    });
+  });
+
+  describe('SVM Networks', () => {
+    describe('Network Configurations', () => {
+      it('should have valid Solana mainnet config', () => {
+        expect(SOLANA_MAINNET).toBeDefined();
+        expect(SOLANA_MAINNET.id).toBe('solana-mainnet');
+        expect(SOLANA_MAINNET.name).toBe('Solana');
+        expect(SOLANA_MAINNET.symbol).toBe('SOL');
+        expect(SOLANA_MAINNET.type).toBe('svm');
+        expect(SOLANA_MAINNET.cluster).toBe('mainnet-beta');
+        expect(SOLANA_MAINNET.isMainnet).toBe(true);
+        expect(SOLANA_MAINNET.rpcUrls.length).toBeGreaterThan(0);
+      });
+
+      it('should have valid Solana devnet config', () => {
+        expect(SOLANA_DEVNET).toBeDefined();
+        expect(SOLANA_DEVNET.id).toBe('solana-devnet');
+        expect(SOLANA_DEVNET.cluster).toBe('devnet');
+        expect(SOLANA_DEVNET.isMainnet).toBe(false);
+      });
+
+      it('should have explorer URLs for Solana mainnet', () => {
+        expect(SOLANA_MAINNET.explorerUrl).toBeDefined();
+        expect(SOLANA_MAINNET.explorerAccountPath).toBeDefined();
+        expect(SOLANA_MAINNET.explorerTxPath).toBeDefined();
+      });
+    });
+
+    describe('getSvmNetworkById', () => {
+      it('should get Solana mainnet by id', () => {
+        const network = getSvmNetworkById('solana-mainnet');
+        expect(network).toBeDefined();
+        expect(network?.name).toBe('Solana');
+      });
+
+      it('should get Solana devnet by id', () => {
+        const network = getSvmNetworkById('solana-devnet');
+        expect(network).toBeDefined();
+        expect(network?.cluster).toBe('devnet');
+      });
+
+      it('should return undefined for unknown id', () => {
+        const network = getSvmNetworkById('unknown-network');
+        expect(network).toBeUndefined();
+      });
+    });
+
+    describe('getEnabledSvmNetworks', () => {
+      it('should return only enabled SVM networks', () => {
+        const enabled = getEnabledSvmNetworks();
+        expect(enabled.length).toBeGreaterThan(0);
+        enabled.forEach((network) => {
+          expect(network.enabled).toBe(true);
+          expect(network.type).toBe('svm');
+        });
+      });
+
+      it('should include Solana mainnet in enabled networks', () => {
+        const enabled = getEnabledSvmNetworks();
+        expect(enabled.some((n) => n.id === 'solana-mainnet')).toBe(true);
+      });
+    });
+
+    describe('Explorer URLs', () => {
+      it('should generate correct account explorer URL for Solana', () => {
+        const address = '11111111111111111111111111111111';
+        const url = getExplorerAccountUrl('solana-mainnet', address);
+        expect(url).toBeDefined();
+        expect(url).toContain(address);
+      });
+
+      it('should generate correct tx explorer URL for Solana', () => {
+        const txHash = '5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp';
+        const url = getExplorerTxUrl('solana-mainnet', txHash);
+        expect(url).toBeDefined();
+        expect(url).toContain(txHash);
       });
     });
   });

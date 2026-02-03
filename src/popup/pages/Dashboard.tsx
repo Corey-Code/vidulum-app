@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Box,
   VStack,
@@ -21,6 +21,7 @@ import {
   Tabs,
   TabList,
   Tab,
+  Tooltip,
 } from '@chakra-ui/react';
 import {
   CopyIcon,
@@ -40,7 +41,9 @@ import { getExplorerAccountUrl } from '@/lib/networks';
 import SendModal from '../components/SendModal';
 import SwapModal from '../components/SwapModal';
 import NetworkManagerModal from '../components/NetworkManagerModal';
+import IBCTransferModal from '../components/IBCTransferModal';
 import { useNetworkStore } from '@/store/networkStore';
+import { fetchIBCConnections, IBCChannel } from '@/lib/cosmos/ibc-connections';
 
 interface DashboardProps {
   onNavigateToStaking?: () => void;
@@ -65,10 +68,14 @@ const Dashboard: React.FC<DashboardProps> = ({
     selectedChainId,
     renameAccount,
     addAccount,
+    createAccountWithNewMnemonic,
     importAccountFromMnemonic,
+    deriveAccountFromSource,
+    getSourceWallets,
     getAddressForChain,
     getBitcoinAddress,
     getEvmAddress,
+    getSvmAddress,
     updateActivity,
   } = useWalletStore();
 
@@ -81,47 +88,39 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [editingName, setEditingName] = useState('');
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [addAccountStep, setAddAccountStep] = useState<
-    'none' | 'choose' | 'create' | 'import' | 'import-key' | 'import-mnemonic'
+    | 'none'
+    | 'choose'
+    | 'select-source'
+    | 'derive-from-source'
+    | 'create'
+    | 'create-new'
+    | 'show-mnemonic'
+    | 'import'
+    | 'import-key'
+    | 'import-mnemonic'
   >('none');
   const [newAccountName, setNewAccountName] = useState('');
+  const [selectedSourceWallet, setSelectedSourceWallet] = useState<string | null>(null); // null = main wallet
   const [importMnemonic, setImportMnemonic] = useState('');
   const [importPassword, setImportPassword] = useState('');
+  const [generatedMnemonic, setGeneratedMnemonic] = useState('');
+  const [createPassword, setCreatePassword] = useState('');
+  const [mnemonicConfirmed, setMnemonicConfirmed] = useState(false);
   const [addingLoading, setAddingLoading] = useState(false);
   const [bitcoinAddress, setBitcoinAddress] = useState<string>('');
   const [loadingBtcAddress, setLoadingBtcAddress] = useState(false);
-  // Cache of Bitcoin addresses for all accounts: accountIndex -> address
-  const [bitcoinAddressCache, setBitcoinAddressCache] = useState<Map<number, string>>(new Map());
-  // Cache of EVM addresses for all accounts: accountIndex -> address
-  const [evmAddressCache, setEvmAddressCache] = useState<Map<number, string>>(new Map());
-  // Network tab: 0 = All, 1 = Cosmos, 2 = UTXO, 3 = EVM
+  // Cache of Bitcoin addresses for all accounts: cosmosAddress -> networkId -> address
+  // Using refs to avoid including in dependencies while maintaining cache across renders
+  const bitcoinAddressCacheRef = useRef<Map<string, Map<string, string>>>(new Map());
+  const [, setBitcoinAddressCacheTrigger] = useState(0); // Trigger re-render when cache updates
+  // Cache of EVM addresses for all accounts: cosmosAddress -> networkId -> address
+  const evmAddressCacheRef = useRef<Map<string, Map<string, string>>>(new Map());
+  const [, setEvmAddressCacheTrigger] = useState(0); // Trigger re-render when cache updates
+  // Cache of SVM addresses for all accounts: cosmosAddress -> networkId -> address
+  const svmAddressCacheRef = useRef<Map<string, Map<string, string>>>(new Map());
+  const [, setSvmAddressCacheTrigger] = useState(0); // Trigger re-render when cache updates
+  // Network tab: 0 = All, 1 = Cosmos, 2 = UTXO, 3 = EVM, 4 = SVM
   const [networkTab, setNetworkTab] = useState(0);
-
-  // Handle network tab change - auto-select first network of that type
-  const handleNetworkTabChange = (tabIndex: number) => {
-    setNetworkTab(tabIndex);
-
-    // Auto-select first enabled network of the selected type
-    if (tabIndex === 1) {
-      // Cosmos tab - select first enabled Cosmos network
-      const cosmosNetwork = enabledUIChains.find((n) => n.type === 'cosmos');
-      if (cosmosNetwork) {
-        selectChain(cosmosNetwork.id);
-      }
-    } else if (tabIndex === 2) {
-      // UTXO tab - select first enabled Bitcoin network
-      const bitcoinNetwork = enabledUIChains.find((n) => n.type === 'bitcoin');
-      if (bitcoinNetwork) {
-        selectChain(bitcoinNetwork.id);
-      }
-    } else if (tabIndex === 3) {
-      // EVM tab - select first enabled EVM network
-      const evmNetwork = enabledUIChains.find((n) => n.type === 'evm');
-      if (evmNetwork) {
-        selectChain(evmNetwork.id);
-      }
-    }
-    // All tab (0) - keep current selection
-  };
 
   const toast = useToast();
   const { isOpen: isSendOpen, onOpen: onSendOpen, onClose: onSendClose } = useDisclosure();
@@ -131,6 +130,15 @@ const Dashboard: React.FC<DashboardProps> = ({
     onOpen: onNetworkManagerOpen,
     onClose: onNetworkManagerClose,
   } = useDisclosure();
+  const { isOpen: isIBCOpen, onOpen: onIBCOpen, onClose: onIBCClose } = useDisclosure();
+
+  // IBC transfer state
+  const [ibcConnections, setIbcConnections] = useState<IBCChannel[]>([]);
+  const [, setLoadingIbcConnections] = useState(false);
+  const [selectedIbcAsset, setSelectedIbcAsset] = useState<{
+    asset: RegistryAsset;
+    balance: string;
+  } | null>(null);
 
   // Network store for preferences
   const { loadPreferences, isLoaded: networkPrefsLoaded, isNetworkEnabled } = useNetworkStore();
@@ -142,10 +150,30 @@ const Dashboard: React.FC<DashboardProps> = ({
   const isCosmosSelected = selectedNetworkType === 'cosmos';
   const isBitcoinSelected = selectedNetworkType === 'bitcoin';
   const isEvmSelected = selectedNetworkType === 'evm';
+  const isSvmSelected = selectedNetworkType === 'svm';
 
   // State for EVM address
   const [evmAddress, setEvmAddress] = useState<string>('');
   const [loadingEvmAddress, setLoadingEvmAddress] = useState(false);
+
+  // State for SVM address
+  const [svmAddress, setSvmAddress] = useState<string>('');
+  const [loadingSvmAddress, setLoadingSvmAddress] = useState(false);
+
+  // Clear Bitcoin address display immediately when chain changes to prevent stale address display
+  useEffect(() => {
+    setBitcoinAddress('');
+  }, [selectedChainId]);
+
+  // Clear EVM address display immediately when chain changes
+  useEffect(() => {
+    setEvmAddress('');
+  }, [selectedChainId]);
+
+  // Clear SVM address display immediately when chain changes
+  useEffect(() => {
+    setSvmAddress('');
+  }, [selectedChainId]);
 
   // Derive Bitcoin address when Bitcoin network is selected
   useEffect(() => {
@@ -183,29 +211,75 @@ const Dashboard: React.FC<DashboardProps> = ({
     }
   }, [isEvmSelected, selectedChainId, selectedAccount, getEvmAddress]);
 
+  // Derive SVM address when SVM network is selected
+  useEffect(() => {
+    if (isSvmSelected && selectedAccount) {
+      setLoadingSvmAddress(true);
+      getSvmAddress(selectedChainId)
+        .then((addr) => {
+          setSvmAddress(addr || '');
+        })
+        .catch((err) => {
+          console.error('Failed to get SVM address:', err);
+          setSvmAddress('');
+        })
+        .finally(() => {
+          setLoadingSvmAddress(false);
+        });
+    }
+  }, [isSvmSelected, selectedChainId, selectedAccount, getSvmAddress]);
+
   // Derive Bitcoin addresses for all accounts when Bitcoin network is selected
   useEffect(() => {
     if (isBitcoinSelected && accounts.length > 0) {
       const deriveAllBitcoinAddresses = async () => {
-        const newCache = new Map<number, string>();
+        // Check current cache and collect addresses to derive
+        const addressesToDerive: Array<{ account: (typeof accounts)[0]; cosmosAddress: string }> =
+          [];
+
         for (const account of accounts) {
-          try {
-            const addr = await getBitcoinAddress(selectedChainId, account.accountIndex);
-            if (addr) {
-              newCache.set(account.accountIndex, addr);
-            }
-          } catch (err) {
-            console.error(
-              `Failed to derive Bitcoin address for account ${account.accountIndex}:`,
-              err
-            );
+          const accountCache = bitcoinAddressCacheRef.current.get(account.address);
+          if (!accountCache?.has(selectedChainId)) {
+            // Mark this address for derivation
+            addressesToDerive.push({ account, cosmosAddress: account.address });
           }
         }
-        setBitcoinAddressCache(newCache);
+
+        // Derive missing addresses
+        if (addressesToDerive.length > 0) {
+          const derivedAddresses = new Map<string, string>();
+          for (const { account, cosmosAddress } of addressesToDerive) {
+            try {
+              // Pass cosmosAddress to identify imported accounts
+              const addr = await getBitcoinAddress(
+                selectedChainId,
+                account.accountIndex,
+                cosmosAddress
+              );
+              if (addr) {
+                derivedAddresses.set(cosmosAddress, addr);
+              }
+            } catch (err) {
+              console.error(`Failed to derive Bitcoin address for account ${cosmosAddress}:`, err);
+            }
+          }
+
+          // Update cache with newly derived addresses
+          if (derivedAddresses.size > 0) {
+            for (const [cosmosAddress, address] of derivedAddresses) {
+              const accountCache = bitcoinAddressCacheRef.current.get(cosmosAddress);
+              const updatedAccountCache = accountCache
+                ? new Map(accountCache)
+                : new Map<string, string>();
+              updatedAccountCache.set(selectedChainId, address);
+              bitcoinAddressCacheRef.current.set(cosmosAddress, updatedAccountCache);
+            }
+            // Trigger re-render to update UI
+            setBitcoinAddressCacheTrigger((prev) => prev + 1);
+          }
+        }
       };
       deriveAllBitcoinAddresses();
-    } else {
-      setBitcoinAddressCache(new Map());
     }
   }, [isBitcoinSelected, selectedChainId, accounts, getBitcoinAddress]);
 
@@ -213,24 +287,109 @@ const Dashboard: React.FC<DashboardProps> = ({
   useEffect(() => {
     if (isEvmSelected && accounts.length > 0) {
       const deriveAllEvmAddresses = async () => {
-        const newCache = new Map<number, string>();
+        // Check current cache and collect addresses to derive
+        const addressesToDerive: Array<{ account: (typeof accounts)[0]; cosmosAddress: string }> =
+          [];
+
         for (const account of accounts) {
-          try {
-            const addr = await getEvmAddress(selectedChainId, account.accountIndex);
-            if (addr) {
-              newCache.set(account.accountIndex, addr);
-            }
-          } catch (err) {
-            console.error(`Failed to derive EVM address for account ${account.accountIndex}:`, err);
+          const accountCache = evmAddressCacheRef.current.get(account.address);
+          if (!accountCache?.has(selectedChainId)) {
+            // Mark this address for derivation
+            addressesToDerive.push({ account, cosmosAddress: account.address });
           }
         }
-        setEvmAddressCache(newCache);
+
+        // Derive missing addresses
+        if (addressesToDerive.length > 0) {
+          const derivedAddresses = new Map<string, string>();
+          for (const { account, cosmosAddress } of addressesToDerive) {
+            try {
+              // Pass cosmosAddress to identify imported accounts
+              const addr = await getEvmAddress(
+                selectedChainId,
+                account.accountIndex,
+                cosmosAddress
+              );
+              if (addr) {
+                derivedAddresses.set(cosmosAddress, addr);
+              }
+            } catch (err) {
+              console.error(`Failed to derive EVM address for account ${cosmosAddress}:`, err);
+            }
+          }
+
+          // Update cache with newly derived addresses
+          if (derivedAddresses.size > 0) {
+            for (const [cosmosAddress, address] of derivedAddresses) {
+              const accountCache = evmAddressCacheRef.current.get(cosmosAddress);
+              const updatedAccountCache = accountCache
+                ? new Map(accountCache)
+                : new Map<string, string>();
+              updatedAccountCache.set(selectedChainId, address);
+              evmAddressCacheRef.current.set(cosmosAddress, updatedAccountCache);
+            }
+            // Trigger re-render to update UI
+            setEvmAddressCacheTrigger((prev) => prev + 1);
+          }
+        }
       };
       deriveAllEvmAddresses();
-    } else {
-      setEvmAddressCache(new Map());
     }
   }, [isEvmSelected, selectedChainId, accounts, getEvmAddress]);
+
+  // Derive SVM addresses for all accounts when SVM network is selected
+  useEffect(() => {
+    if (isSvmSelected && accounts.length > 0) {
+      const deriveAllSvmAddresses = async () => {
+        // Check current cache and collect addresses to derive
+        const addressesToDerive: Array<{ account: (typeof accounts)[0]; cosmosAddress: string }> =
+          [];
+
+        for (const account of accounts) {
+          const accountCache = svmAddressCacheRef.current.get(account.address);
+          if (!accountCache?.has(selectedChainId)) {
+            // Mark this address for derivation
+            addressesToDerive.push({ account, cosmosAddress: account.address });
+          }
+        }
+
+        // Derive missing addresses
+        if (addressesToDerive.length > 0) {
+          const derivedAddresses = new Map<string, string>();
+          for (const { account, cosmosAddress } of addressesToDerive) {
+            try {
+              // Pass cosmosAddress to identify imported accounts
+              const addr = await getSvmAddress(
+                selectedChainId,
+                account.accountIndex,
+                cosmosAddress
+              );
+              if (addr) {
+                derivedAddresses.set(cosmosAddress, addr);
+              }
+            } catch (err) {
+              console.error(`Failed to derive SVM address for account ${cosmosAddress}:`, err);
+            }
+          }
+
+          // Update cache with newly derived addresses
+          if (derivedAddresses.size > 0) {
+            for (const [cosmosAddress, address] of derivedAddresses) {
+              const accountCache = svmAddressCacheRef.current.get(cosmosAddress);
+              const updatedAccountCache = accountCache
+                ? new Map(accountCache)
+                : new Map<string, string>();
+              updatedAccountCache.set(selectedChainId, address);
+              svmAddressCacheRef.current.set(cosmosAddress, updatedAccountCache);
+            }
+            // Trigger re-render to update UI
+            setSvmAddressCacheTrigger((prev) => prev + 1);
+          }
+        }
+      };
+      deriveAllSvmAddresses();
+    }
+  }, [isSvmSelected, selectedChainId, accounts, getSvmAddress]);
 
   // Token config with colors and mock prices
   // Load chain assets from registry when chain changes
@@ -241,6 +400,26 @@ const Dashboard: React.FC<DashboardProps> = ({
     };
     loadAssets();
   }, [selectedChainId]);
+
+  // Load IBC connections when Cosmos chain is selected
+  useEffect(() => {
+    if (isCosmosSelected) {
+      setLoadingIbcConnections(true);
+      fetchIBCConnections(selectedChainId)
+        .then((connections) => {
+          setIbcConnections(connections);
+        })
+        .catch((error) => {
+          console.warn('Failed to fetch IBC connections:', error);
+          setIbcConnections([]);
+        })
+        .finally(() => {
+          setLoadingIbcConnections(false);
+        });
+    } else {
+      setIbcConnections([]);
+    }
+  }, [selectedChainId, isCosmosSelected]);
 
   // Get token config from chain registry or fallback
   const getTokenConfig = (denom: string) => {
@@ -287,22 +466,35 @@ const Dashboard: React.FC<DashboardProps> = ({
       return evmAddress || 'Deriving address...';
     }
 
+    // For SVM, use the derived SVM address
+    if (isSvmSelected) {
+      if (loadingSvmAddress) return 'Loading...';
+      return svmAddress || 'Deriving address...';
+    }
+
     return selectedAccount.address;
   };
 
   // Convert any account's address to the selected chain's format
   const getAccountChainAddress = (account: { address: string; accountIndex?: number }) => {
-    const accountIndex = account.accountIndex ?? 0;
-
-    // For Bitcoin, use cached derived address
+    // For Bitcoin, use cached derived address (keyed by cosmos address)
     if (isBitcoinSelected) {
-      const cachedAddr = bitcoinAddressCache.get(accountIndex);
+      const accountCache = bitcoinAddressCacheRef.current.get(account.address);
+      const cachedAddr = accountCache?.get(selectedChainId);
       return cachedAddr || 'Deriving...';
     }
 
-    // For EVM, use cached derived address
+    // For EVM, use cached derived address (keyed by cosmos address)
     if (isEvmSelected) {
-      const cachedAddr = evmAddressCache.get(accountIndex);
+      const accountCache = evmAddressCacheRef.current.get(account.address);
+      const cachedAddr = accountCache?.get(selectedChainId);
+      return cachedAddr || 'Deriving...';
+    }
+
+    // For SVM, use cached derived address (keyed by cosmos address)
+    if (isSvmSelected) {
+      const accountCache = svmAddressCacheRef.current.get(account.address);
+      const cachedAddr = accountCache?.get(selectedChainId);
       return cachedAddr || 'Deriving...';
     }
 
@@ -321,8 +513,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   const resetAddAccountFlow = () => {
     setAddAccountStep('none');
     setNewAccountName('');
+    setSelectedSourceWallet(null);
     setImportMnemonic('');
     setImportPassword('');
+    setGeneratedMnemonic('');
+    setCreatePassword('');
+    setMnemonicConfirmed(false);
   };
 
   // Update activity on mount and interactions
@@ -340,6 +536,39 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Filter UI_CHAINS based on network preferences
   const enabledUIChains = UI_CHAINS.filter((chain) => isNetworkEnabled(chain.id));
 
+  // Handle network tab change - auto-select first network of that type
+  const handleNetworkTabChange = (tabIndex: number) => {
+    setNetworkTab(tabIndex);
+
+    // Auto-select first enabled network of the selected type
+    if (tabIndex === 1) {
+      // Cosmos tab - select first enabled Cosmos network
+      const cosmosNetwork = enabledUIChains.find((n) => n.type === 'cosmos');
+      if (cosmosNetwork) {
+        selectChain(cosmosNetwork.id);
+      }
+    } else if (tabIndex === 2) {
+      // UTXO tab - select first enabled Bitcoin network
+      const bitcoinNetwork = enabledUIChains.find((n) => n.type === 'bitcoin');
+      if (bitcoinNetwork) {
+        selectChain(bitcoinNetwork.id);
+      }
+    } else if (tabIndex === 3) {
+      // EVM tab - select first enabled EVM network
+      const evmNetwork = enabledUIChains.find((n) => n.type === 'evm');
+      if (evmNetwork) {
+        selectChain(evmNetwork.id);
+      }
+    } else if (tabIndex === 4) {
+      // SVM tab - select first enabled SVM network
+      const svmNetwork = enabledUIChains.find((n) => n.type === 'svm');
+      if (svmNetwork) {
+        selectChain(svmNetwork.id);
+      }
+    }
+    // All tab (0) - keep current selection
+  };
+
   // Track activity on any click
   useEffect(() => {
     const handleActivity = () => updateActivity();
@@ -349,6 +578,18 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   useEffect(() => {
     if (selectedAccount) {
+      // For Bitcoin/EVM/SVM, only load balance when we have a valid address for the current network
+      // This prevents using stale addresses from previous network selections
+      if (isBitcoinSelected && !bitcoinAddress) {
+        return; // Wait for Bitcoin address to be derived
+      }
+      if (isEvmSelected && !evmAddress) {
+        return; // Wait for EVM address to be derived
+      }
+      if (isSvmSelected && !svmAddress) {
+        return; // Wait for SVM address to be derived
+      }
+
       loadBalance();
 
       // Subscribe to real-time balance updates via WebSocket (Cosmos only)
@@ -364,7 +605,17 @@ const Dashboard: React.FC<DashboardProps> = ({
     return () => {
       unsubscribeAll();
     };
-  }, [selectedAccount, selectedChainId, isCosmosSelected, bitcoinAddress, evmAddress]);
+  }, [
+    selectedAccount,
+    selectedChainId,
+    isCosmosSelected,
+    isBitcoinSelected,
+    isEvmSelected,
+    isSvmSelected,
+    bitcoinAddress,
+    evmAddress,
+    svmAddress,
+  ]);
 
   const loadBalance = async () => {
     if (!selectedAccount) return;
@@ -448,8 +699,8 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Scrollable Content */}
       <Box flex={1} overflowY="auto" px={5} py={5} pb={14}>
         <VStack spacing={5} align="stretch">
-          {/* Deposit / Withdraw Buttons */}
-          <HStack spacing={3}>
+          {/* Deposit / Withdraw Buttons - Hidden for now (MoonPay integration pending) */}
+          {/* <HStack spacing={3}>
             <Button
               flex={1}
               size="md"
@@ -474,7 +725,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             >
               Withdraw
             </Button>
-          </HStack>
+          </HStack> */}
 
           {/* Account Card */}
           <Box bg="#141414" borderRadius="xl" p={4}>
@@ -487,6 +738,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 resetAddAccountFlow();
               }}
               closeOnSelect={false}
+              placement="bottom-start"
             >
               <MenuButton as={Box} cursor="pointer" w="full">
                 <VStack align="start" spacing={1}>
@@ -521,7 +773,27 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </VStack>
               </MenuButton>
 
-              <MenuList bg="#1a1a1a" borderColor="#2a2a2a" minW="280px">
+              <MenuList
+                bg="#1a1a1a"
+                borderColor="#2a2a2a"
+                width="325px"
+                maxH="350px"
+                overflowY="auto"
+                overflowX="hidden"
+                sx={{
+                  minWidth: '325px !important',
+                  '&::-webkit-scrollbar': {
+                    width: '6px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: '#1a1a1a',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: '#3a3a3a',
+                    borderRadius: '3px',
+                  },
+                }}
+              >
                 {/* Add Account */}
                 {addAccountStep === 'none' && (
                   <MenuItem
@@ -547,11 +819,23 @@ const Dashboard: React.FC<DashboardProps> = ({
                         borderColor="#3a3a3a"
                         _hover={{ bg: 'whiteAlpha.100' }}
                         onClick={() => {
-                          setAddAccountStep('create');
+                          setAddAccountStep('select-source');
                           setNewAccountName(`Account ${accounts.length + 1}`);
                         }}
                       >
-                        Create new account
+                        Derive from existing wallet
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        borderColor="#3a3a3a"
+                        _hover={{ bg: 'whiteAlpha.100' }}
+                        onClick={() => {
+                          setAddAccountStep('create-new');
+                          setNewAccountName(`Account ${accounts.length + 1}`);
+                        }}
+                      >
+                        Create new wallet
                       </Button>
                       <Button
                         size="sm"
@@ -560,7 +844,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         _hover={{ bg: 'whiteAlpha.100' }}
                         onClick={() => setAddAccountStep('import')}
                       >
-                        Import account
+                        Import existing wallet
                       </Button>
                       <Button size="xs" variant="ghost" onClick={resetAddAccountFlow}>
                         Cancel
@@ -569,11 +853,134 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </Box>
                 )}
 
+                {addAccountStep === 'select-source' && (
+                  <Box px={3} py={2}>
+                    <VStack spacing={2} align="stretch">
+                      <Text fontSize="sm" fontWeight="medium" color="gray.400">
+                        Select Source Wallet
+                      </Text>
+                      <Text fontSize="xs" color="gray.500">
+                        Choose which wallet to derive the new account from.
+                      </Text>
+                      {getSourceWallets().map((source) => (
+                        <Button
+                          key={source.address}
+                          size="sm"
+                          variant="outline"
+                          borderColor={
+                            selectedSourceWallet === (source.isMain ? null : source.address)
+                              ? 'cyan.400'
+                              : '#3a3a3a'
+                          }
+                          bg={
+                            selectedSourceWallet === (source.isMain ? null : source.address)
+                              ? 'whiteAlpha.100'
+                              : 'transparent'
+                          }
+                          _hover={{ bg: 'whiteAlpha.100' }}
+                          onClick={() => {
+                            setSelectedSourceWallet(source.isMain ? null : source.address);
+                            setAddAccountStep('derive-from-source');
+                          }}
+                          justifyContent="flex-start"
+                          px={3}
+                        >
+                          <VStack align="start" spacing={0}>
+                            <Text fontSize="sm">{source.name}</Text>
+                            <Text fontSize="xs" color="gray.500" fontFamily="mono">
+                              {source.address.slice(0, 10)}...{source.address.slice(-6)}
+                            </Text>
+                          </VStack>
+                        </Button>
+                      ))}
+                      <Button size="xs" variant="ghost" onClick={() => setAddAccountStep('choose')}>
+                        Back
+                      </Button>
+                    </VStack>
+                  </Box>
+                )}
+
+                {addAccountStep === 'derive-from-source' && (
+                  <Box px={3} py={2}>
+                    <VStack spacing={2} align="stretch">
+                      <Text fontSize="sm" fontWeight="medium" color="gray.400">
+                        Derive New Account
+                      </Text>
+                      <Input
+                        size="sm"
+                        bg="#0a0a0a"
+                        borderColor="#3a3a3a"
+                        placeholder="Account name"
+                        value={newAccountName}
+                        onChange={(e) => setNewAccountName(e.target.value)}
+                        autoFocus
+                      />
+                      <Input
+                        size="sm"
+                        bg="#0a0a0a"
+                        borderColor="#3a3a3a"
+                        type="password"
+                        placeholder="Wallet password"
+                        value={importPassword}
+                        onChange={(e) => setImportPassword(e.target.value)}
+                      />
+                      <HStack>
+                        <Button
+                          size="sm"
+                          colorScheme="cyan"
+                          flex={1}
+                          isLoading={addingLoading}
+                          isDisabled={!importPassword}
+                          onClick={async () => {
+                            setAddingLoading(true);
+                            try {
+                              await deriveAccountFromSource(
+                                selectedSourceWallet,
+                                newAccountName || `Account ${accounts.length + 1}`,
+                                importPassword
+                              );
+                              toast({
+                                title: 'Account created',
+                                status: 'success',
+                                duration: 2000,
+                              });
+                              setIsAccountMenuOpen(false);
+                              resetAddAccountFlow();
+                            } catch (error) {
+                              toast({
+                                title: 'Failed',
+                                description:
+                                  error instanceof Error ? error.message : 'Unknown error',
+                                status: 'error',
+                                duration: 3000,
+                              });
+                            } finally {
+                              setAddingLoading(false);
+                            }
+                          }}
+                        >
+                          Create
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setAddAccountStep('select-source')}
+                        >
+                          Back
+                        </Button>
+                      </HStack>
+                    </VStack>
+                  </Box>
+                )}
+
                 {addAccountStep === 'create' && (
                   <Box px={3} py={2}>
                     <VStack spacing={2} align="stretch">
                       <Text fontSize="sm" fontWeight="medium" color="gray.400">
-                        Create Account
+                        Derive from Main Wallet
+                      </Text>
+                      <Text fontSize="xs" color="gray.500">
+                        Uses the same recovery phrase as your main wallet.
                       </Text>
                       <Input
                         size="sm"
@@ -628,11 +1035,145 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </Box>
                 )}
 
+                {addAccountStep === 'create-new' && (
+                  <Box px={3} py={2}>
+                    <VStack spacing={2} align="stretch">
+                      <Text fontSize="sm" fontWeight="medium" color="gray.400">
+                        Create New Wallet
+                      </Text>
+                      <Text fontSize="xs" color="gray.500">
+                        Generate a new recovery phrase for this account.
+                      </Text>
+                      <Input
+                        size="sm"
+                        bg="#0a0a0a"
+                        borderColor="#3a3a3a"
+                        placeholder="Account name"
+                        value={newAccountName}
+                        onChange={(e) => setNewAccountName(e.target.value)}
+                        autoFocus
+                      />
+                      <Input
+                        size="sm"
+                        bg="#0a0a0a"
+                        borderColor="#3a3a3a"
+                        type="password"
+                        placeholder="Wallet password"
+                        value={createPassword}
+                        onChange={(e) => setCreatePassword(e.target.value)}
+                      />
+                      <HStack>
+                        <Button
+                          size="sm"
+                          colorScheme="cyan"
+                          flex={1}
+                          isLoading={addingLoading}
+                          isDisabled={!createPassword}
+                          onClick={async () => {
+                            setAddingLoading(true);
+                            try {
+                              const result = await createAccountWithNewMnemonic(
+                                newAccountName || `Account ${accounts.length + 1}`,
+                                createPassword
+                              );
+                              setGeneratedMnemonic(result.mnemonic);
+                              setAddAccountStep('show-mnemonic');
+                            } catch (error) {
+                              toast({
+                                title: 'Failed',
+                                description:
+                                  error instanceof Error ? error.message : 'Unknown error',
+                                status: 'error',
+                                duration: 3000,
+                              });
+                            } finally {
+                              setAddingLoading(false);
+                            }
+                          }}
+                        >
+                          Create
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setAddAccountStep('choose')}
+                        >
+                          Back
+                        </Button>
+                      </HStack>
+                    </VStack>
+                  </Box>
+                )}
+
+                {addAccountStep === 'show-mnemonic' && (
+                  <Box px={3} py={2}>
+                    <VStack spacing={1} align="stretch">
+                      <Text fontSize="xs" fontWeight="medium" color="orange.400">
+                        ⚠️ Backup Recovery Phrase
+                      </Text>
+                      <Box
+                        p={2}
+                        bg="#141414"
+                        borderRadius="md"
+                        border="1px"
+                        borderColor="orange.400"
+                        maxH="120px"
+                        overflowY="auto"
+                      >
+                        <Text
+                          fontSize="xs"
+                          fontFamily="mono"
+                          color="orange.300"
+                          wordBreak="break-word"
+                          userSelect="all"
+                          lineHeight="1.4"
+                        >
+                          {generatedMnemonic}
+                        </Text>
+                      </Box>
+                      <HStack spacing={2}>
+                        <input
+                          type="checkbox"
+                          id="mnemonicConfirm"
+                          checked={mnemonicConfirmed}
+                          onChange={(e) => setMnemonicConfirmed(e.target.checked)}
+                          style={{ accentColor: '#00BCD4' }}
+                        />
+                        <Text
+                          as="label"
+                          htmlFor="mnemonicConfirm"
+                          fontSize="xs"
+                          color="gray.400"
+                          cursor="pointer"
+                        >
+                          I have saved my recovery phrase
+                        </Text>
+                      </HStack>
+                      <Button
+                        size="sm"
+                        colorScheme="cyan"
+                        isDisabled={!mnemonicConfirmed}
+                        onClick={() => {
+                          toast({
+                            title: 'Account created',
+                            status: 'success',
+                            duration: 2000,
+                          });
+                          setIsAccountMenuOpen(false);
+                          resetAddAccountFlow();
+                        }}
+                      >
+                        Done
+                      </Button>
+                    </VStack>
+                  </Box>
+                )}
+
                 {addAccountStep === 'import' && (
                   <Box px={3} py={2}>
                     <VStack spacing={2} align="stretch">
                       <Text fontSize="sm" fontWeight="medium" color="gray.400">
-                        Import Account
+                        Import Existing Wallet
                       </Text>
                       <Button
                         size="sm"
@@ -755,117 +1296,135 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </Box>
                 )}
 
-                <MenuDivider borderColor="#2a2a2a" />
+                {/* Only show divider and accounts when not in add account flow */}
+                {addAccountStep === 'none' && (
+                  <>
+                    <MenuDivider borderColor="#2a2a2a" />
 
-                {/* Account List */}
-                {accounts.map((account, index) => {
-                  const isEditing = editingAccountId === account.id;
-                  // Check if this exact account is selected by ID
-                  const isSelected = selectedAccount !== null && selectedAccount.id === account.id;
-                  const accountAddr = getAccountChainAddress(account);
+                    {/* Account List */}
+                    {accounts.map((account, index) => {
+                      const isEditing = editingAccountId === account.id;
+                      // Check if this exact account is selected by ID
+                      const isSelected =
+                        selectedAccount !== null && selectedAccount.id === account.id;
+                      const accountAddr = getAccountChainAddress(account);
 
-                  return (
-                    <MenuItem
-                      key={`${account.id}-${index}`}
-                      bg={isSelected ? 'whiteAlpha.50' : 'transparent'}
-                      _hover={{ bg: 'whiteAlpha.100' }}
-                      _focus={{ bg: 'whiteAlpha.100' }}
-                      onClick={() => {
-                        if (!isEditing) {
-                          selectAccount(account.id);
-                          setIsAccountMenuOpen(false);
-                        }
-                      }}
-                      closeOnSelect={false}
-                    >
-                      <HStack spacing={3} w="full">
-                        <Box w={4} flexShrink={0}>
-                          {isSelected && <CheckIcon color="cyan.400" boxSize={3} />}
-                        </Box>
-                        <VStack align="start" spacing={0} flex={1}>
-                          {isEditing ? (
-                            <HStack spacing={2}>
-                              <Input
-                                size="sm"
-                                value={editingName}
-                                onChange={(e) => setEditingName(e.target.value)}
-                                onClick={(e) => e.stopPropagation()}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    renameAccount(account.address, editingName);
-                                    setEditingAccountId(null);
-                                    toast({ title: 'Renamed', status: 'success', duration: 2000 });
-                                  } else if (e.key === 'Escape') {
-                                    setEditingAccountId(null);
-                                  }
-                                }}
-                                autoFocus
-                                bg="#0a0a0a"
-                                borderColor="#3a3a3a"
-                              />
-                              <Box
-                                p={1}
-                                cursor="pointer"
-                                color="cyan.400"
-                                _hover={{ color: 'white' }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  renameAccount(account.address, editingName);
-                                  setEditingAccountId(null);
-                                  toast({ title: 'Renamed', status: 'success', duration: 2000 });
-                                }}
-                              >
-                                <CheckIcon boxSize={3} />
-                              </Box>
-                            </HStack>
-                          ) : (
-                            <HStack spacing={2}>
-                              <Text fontWeight="medium" fontSize="sm">
-                                {account.name}
-                              </Text>
-                              <Box
-                                p={1}
-                                cursor="pointer"
-                                color="gray.500"
-                                _hover={{ color: 'white' }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingAccountId(account.id);
-                                  setEditingName(account.name);
-                                }}
-                              >
-                                <EditIcon boxSize={3} />
-                              </Box>
-                            </HStack>
-                          )}
-                          <Text fontSize="xs" color="gray.500" fontFamily="mono">
-                            {formatAddress(accountAddr)}
-                          </Text>
-                        </VStack>
-                        {/* Copy address button */}
-                        <Box
-                          p={1}
-                          borderRadius="md"
-                          cursor="pointer"
-                          color="gray.500"
-                          _hover={{ color: 'white' }}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
+                      return (
+                        <MenuItem
+                          key={`${account.id}-${index}`}
+                          bg={isSelected ? 'whiteAlpha.50' : 'transparent'}
+                          _hover={{ bg: 'whiteAlpha.100' }}
+                          _focus={{ bg: 'whiteAlpha.100' }}
+                          onClick={() => {
+                            if (!isEditing) {
+                              selectAccount(account.id);
+                              setIsAccountMenuOpen(false);
+                            }
                           }}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            navigator.clipboard.writeText(accountAddr);
-                            toast({ title: 'Address copied', status: 'success', duration: 2000 });
-                          }}
+                          closeOnSelect={false}
                         >
-                          <CopyIcon boxSize={3} />
-                        </Box>
-                      </HStack>
-                    </MenuItem>
-                  );
-                })}
+                          <HStack spacing={3} w="full">
+                            <Box w={4} flexShrink={0}>
+                              {isSelected && <CheckIcon color="cyan.400" boxSize={3} />}
+                            </Box>
+                            <VStack align="start" spacing={0} flex={1}>
+                              {isEditing ? (
+                                <HStack spacing={2}>
+                                  <Input
+                                    size="sm"
+                                    value={editingName}
+                                    onChange={(e) => setEditingName(e.target.value)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        renameAccount(account.address, editingName);
+                                        setEditingAccountId(null);
+                                        toast({
+                                          title: 'Renamed',
+                                          status: 'success',
+                                          duration: 2000,
+                                        });
+                                      } else if (e.key === 'Escape') {
+                                        setEditingAccountId(null);
+                                      }
+                                    }}
+                                    autoFocus
+                                    bg="#0a0a0a"
+                                    borderColor="#3a3a3a"
+                                  />
+                                  <Box
+                                    p={1}
+                                    cursor="pointer"
+                                    color="cyan.400"
+                                    _hover={{ color: 'white' }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      renameAccount(account.address, editingName);
+                                      setEditingAccountId(null);
+                                      toast({
+                                        title: 'Renamed',
+                                        status: 'success',
+                                        duration: 2000,
+                                      });
+                                    }}
+                                  >
+                                    <CheckIcon boxSize={3} />
+                                  </Box>
+                                </HStack>
+                              ) : (
+                                <HStack spacing={2}>
+                                  <Text fontWeight="medium" fontSize="sm">
+                                    {account.name}
+                                  </Text>
+                                  <Box
+                                    p={1}
+                                    cursor="pointer"
+                                    color="gray.500"
+                                    _hover={{ color: 'white' }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingAccountId(account.id);
+                                      setEditingName(account.name);
+                                    }}
+                                  >
+                                    <EditIcon boxSize={3} />
+                                  </Box>
+                                </HStack>
+                              )}
+                              <Text fontSize="xs" color="gray.500" fontFamily="mono">
+                                {formatAddress(accountAddr)}
+                              </Text>
+                            </VStack>
+                            {/* Copy address button */}
+                            <Box
+                              p={1}
+                              borderRadius="md"
+                              cursor="pointer"
+                              color="gray.500"
+                              _hover={{ color: 'white' }}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                navigator.clipboard.writeText(accountAddr);
+                                toast({
+                                  title: 'Address copied',
+                                  status: 'success',
+                                  duration: 2000,
+                                });
+                              }}
+                            >
+                              <CopyIcon boxSize={3} />
+                            </Box>
+                          </HStack>
+                        </MenuItem>
+                      );
+                    })}
+                  </>
+                )}
               </MenuList>
             </Menu>
           </Box>
@@ -936,6 +1495,16 @@ const Dashboard: React.FC<DashboardProps> = ({
                   >
                     EVM
                   </Tab>
+                  <Tab
+                    fontSize="xs"
+                    px={2}
+                    py={1}
+                    borderRadius="full"
+                    color="gray.500"
+                    _selected={{ bg: 'green.600', color: 'white' }}
+                  >
+                    SVM
+                  </Tab>
                 </TabList>
               </Tabs>
             </HStack>
@@ -989,22 +1558,28 @@ const Dashboard: React.FC<DashboardProps> = ({
                       if (networkTab === 1) return network.type === 'cosmos'; // Cosmos only
                       if (networkTab === 2) return network.type === 'bitcoin'; // UTXO only
                       if (networkTab === 3) return network.type === 'evm'; // EVM only
+                      if (networkTab === 4) return network.type === 'svm'; // SVM only
                       return true;
                     })
                     .map((network) => {
                       const isActive = selectedChainId === network.id;
                       const isBitcoin = network.type === 'bitcoin';
                       const isEvm = network.type === 'evm';
+                      const isSvm = network.type === 'svm';
                       const borderActiveColor = isBitcoin
                         ? 'orange.500'
                         : isEvm
                           ? 'blue.500'
-                          : 'cyan.500';
+                          : isSvm
+                            ? 'green.500'
+                            : 'cyan.500';
                       const borderHoverColor = isBitcoin
                         ? 'orange.400'
                         : isEvm
                           ? 'blue.400'
-                          : 'cyan.400';
+                          : isSvm
+                            ? 'green.400'
+                            : 'cyan.400';
                       return (
                         <Button
                           key={network.id}
@@ -1083,7 +1658,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                     as="a"
                     href={getExplorerUrl()}
                     target="_blank"
-                    isDisabled={isBitcoinSelected} // Bitcoin explorer needs address
+                    isDisabled={
+                      !chainAddress ||
+                      chainAddress === 'Loading...' ||
+                      chainAddress === 'Deriving address...'
+                    }
                   >
                     <HStack justify="space-between" w="full">
                       <Text>Explorer</Text>
@@ -1142,16 +1721,80 @@ const Dashboard: React.FC<DashboardProps> = ({
 
                   {/* Bitcoin-specific menu items */}
                   {isBitcoinSelected && (
-                    <MenuItem bg="transparent" _hover={{ bg: 'whiteAlpha.100' }} isDisabled>
-                      <Text color="gray.500">Coming soon...</Text>
-                    </MenuItem>
+                    <>
+                      <MenuItem
+                        bg="transparent"
+                        _hover={{ bg: 'whiteAlpha.100' }}
+                        as="a"
+                        href={
+                          selectedChainId === 'bitcoin-mainnet'
+                            ? 'https://mempool.space'
+                            : selectedChainId === 'bitcoin-testnet'
+                              ? 'https://mempool.space/testnet'
+                              : selectedChainId === 'litecoin-mainnet'
+                                ? 'https://litecoinspace.org'
+                                : selectedChainId === 'dogecoin-mainnet'
+                                  ? 'https://dogechain.info'
+                                  : 'https://mempool.space'
+                        }
+                        target="_blank"
+                      >
+                        <HStack justify="space-between" w="full">
+                          <Text>Mempool</Text>
+                          <ExternalLinkIcon boxSize={3} color="gray.500" />
+                        </HStack>
+                      </MenuItem>
+                      <MenuItem
+                        bg="transparent"
+                        _hover={{ bg: 'whiteAlpha.100' }}
+                        as="a"
+                        href={
+                          selectedChainId === 'bitcoin-mainnet'
+                            ? 'https://mempool.space/tx/push'
+                            : selectedChainId === 'bitcoin-testnet'
+                              ? 'https://mempool.space/testnet/tx/push'
+                              : undefined
+                        }
+                        target="_blank"
+                        isDisabled={!selectedChainId.startsWith('bitcoin')}
+                      >
+                        <HStack justify="space-between" w="full">
+                          <Text>Broadcast TX</Text>
+                          <ExternalLinkIcon boxSize={3} color="gray.500" />
+                        </HStack>
+                      </MenuItem>
+                    </>
                   )}
 
                   {/* EVM-specific menu items */}
                   {isEvmSelected && (
-                    <MenuItem bg="transparent" _hover={{ bg: 'whiteAlpha.100' }} isDisabled>
-                      <Text color="gray.500">More features coming soon...</Text>
-                    </MenuItem>
+                    <>
+                      <MenuItem
+                        bg="transparent"
+                        _hover={{ bg: 'whiteAlpha.100' }}
+                        as="a"
+                        href={
+                          selectedChainId === 'eth-mainnet'
+                            ? 'https://etherscan.io/gastracker'
+                            : selectedChainId === 'base-mainnet'
+                              ? 'https://basescan.org/gastracker'
+                              : selectedChainId === 'polygon-mainnet'
+                                ? 'https://polygonscan.com/gastracker'
+                                : selectedChainId === 'arbitrum-mainnet'
+                                  ? 'https://arbiscan.io/gastracker'
+                                  : 'https://etherscan.io/gastracker'
+                        }
+                        target="_blank"
+                      >
+                        <HStack justify="space-between" w="full">
+                          <Text>Gas Tracker</Text>
+                          <ExternalLinkIcon boxSize={3} color="gray.500" />
+                        </HStack>
+                      </MenuItem>
+                      <MenuItem bg="transparent" _hover={{ bg: 'whiteAlpha.100' }} isDisabled>
+                        <Text color="gray.500">Token Management (coming soon)</Text>
+                      </MenuItem>
+                    </>
                   )}
                 </MenuList>
               </Menu>
@@ -1277,6 +1920,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                     const usdValue = amount * config.priceUsd;
                     const isUpdating = updatingTokens.has(b.denom);
                     const isZeroBalance = parseInt(b.amount) === 0;
+                    const hasIbcConnections =
+                      isCosmosSelected && ibcConnections.length > 0 && !isZeroBalance;
+
+                    // Find the asset in chainAssets for IBC modal
+                    const registryAsset = chainAssets.find((a) => a.denom === b.denom);
 
                     return (
                       <Box
@@ -1310,16 +1958,55 @@ const Dashboard: React.FC<DashboardProps> = ({
                                   })}
                             </Text>
                           </VStack>
-                          <VStack align="end" spacing={0}>
-                            <Text color={isZeroBalance ? 'gray.600' : 'gray.400'} fontSize="sm">
-                              ${usdValue.toFixed(3)}
-                            </Text>
-                            {isUpdating && (
-                              <Text color="cyan.400" fontSize="xs">
-                                updating...
-                              </Text>
+                          <HStack spacing={3}>
+                            {/* IBC Transfer Button */}
+                            {hasIbcConnections && registryAsset && (
+                              <Tooltip label="IBC Transfer" placement="top">
+                                <Box
+                                  as="button"
+                                  p={2}
+                                  borderRadius="md"
+                                  bg="purple.900"
+                                  color="purple.300"
+                                  _hover={{ bg: 'purple.800', color: 'purple.200' }}
+                                  onClick={() => {
+                                    setSelectedIbcAsset({
+                                      asset: registryAsset,
+                                      balance: b.amount,
+                                    });
+                                    onIBCOpen();
+                                  }}
+                                  cursor="pointer"
+                                  transition="all 0.2s"
+                                >
+                                  <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <path d="M2 12h20" />
+                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                                  </svg>
+                                </Box>
+                              </Tooltip>
                             )}
-                          </VStack>
+                            <VStack align="end" spacing={0}>
+                              <Text color={isZeroBalance ? 'gray.600' : 'gray.400'} fontSize="sm">
+                                ${usdValue.toFixed(3)}
+                              </Text>
+                              {isUpdating && (
+                                <Text color="cyan.400" fontSize="xs">
+                                  updating...
+                                </Text>
+                              )}
+                            </VStack>
+                          </HStack>
                         </HStack>
                       </Box>
                     );
@@ -1382,6 +2069,24 @@ const Dashboard: React.FC<DashboardProps> = ({
           loadPreferences();
         }}
       />
+
+      {/* IBC Transfer Modal */}
+      {selectedIbcAsset && (
+        <IBCTransferModal
+          isOpen={isIBCOpen}
+          onClose={() => {
+            onIBCClose();
+            setSelectedIbcAsset(null);
+          }}
+          sourceChainId={selectedChainId}
+          asset={selectedIbcAsset.asset}
+          balance={selectedIbcAsset.balance}
+          onSuccess={() => {
+            // Refresh balance after successful transfer
+            loadBalance();
+          }}
+        />
+      )}
     </Box>
   );
 };
