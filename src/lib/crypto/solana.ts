@@ -52,6 +52,38 @@ function encodeBase58(buffer: Uint8Array): string {
     .join('');
 }
 
+function decodeBase58(str: string): Uint8Array {
+  if (str.length === 0) return new Uint8Array(0);
+
+  // Convert base58 string to bigint
+  const bytes = [0];
+  for (let i = 0; i < str.length; i++) {
+    const charIndex = BASE58_ALPHABET.indexOf(str[i]);
+    if (charIndex === -1) {
+      throw new Error(`Invalid base58 character: ${str[i]}`);
+    }
+
+    let carry = charIndex;
+    for (let j = 0; j < bytes.length; j++) {
+      carry += bytes[j] * 58;
+      bytes[j] = carry % 256;
+      carry = (carry / 256) | 0;
+    }
+
+    while (carry > 0) {
+      bytes.push(carry % 256);
+      carry = (carry / 256) | 0;
+    }
+  }
+
+  // Count and add leading zeros
+  for (let i = 0; str[i] === '1' && i < str.length - 1; i++) {
+    bytes.push(0);
+  }
+
+  return new Uint8Array(bytes.reverse());
+}
+
 /**
  * Get Solana derivation path for account index
  * @param accountIndex Account index (default: 0)
@@ -155,12 +187,12 @@ export function isValidSolanaAddress(address: string): boolean {
     return false;
   }
 
-  // Check all characters are valid base58
-  for (const char of address) {
-    if (!BASE58_ALPHABET.includes(char)) {
-      return false;
-    }
+  // Try to decode the base58 address and verify it's exactly 32 bytes
+  try {
+    const decoded = decodeBase58(address);
+    return decoded.length === 32;
+  } catch (error) {
+    // Invalid base58 encoding
+    return false;
   }
-
-  return true;
 }

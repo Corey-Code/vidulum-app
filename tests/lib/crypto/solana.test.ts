@@ -171,10 +171,24 @@ describe('Solana Crypto', () => {
       expect(isValidSolanaAddress('abc+def/ghi=jkl'.padEnd(44, '1'))).toBe(false);
     });
 
-    it('should accept valid base58 addresses of correct length', () => {
-      // Valid base58 characters only, correct length
-      expect(isValidSolanaAddress('11111111111111111111111111111111')).toBe(true); // 32 chars
-      expect(isValidSolanaAddress('1'.repeat(44))).toBe(true); // 44 chars
+    it('should accept valid base58 addresses that decode to 32 bytes', () => {
+      // '11111111111111111111111111111111' decodes to 32 bytes of zeros
+      expect(isValidSolanaAddress('11111111111111111111111111111111')).toBe(true);
+    });
+
+    it('should reject valid base58 strings that do not decode to 32 bytes', () => {
+      // This is valid base58 but decodes to 44 bytes, not 32
+      expect(isValidSolanaAddress('1'.repeat(44))).toBe(false);
+      // Too short - decodes to less than 32 bytes
+      expect(isValidSolanaAddress('1'.repeat(32))).toBe(false);
+    });
+
+    it('should handle decode errors gracefully', () => {
+      // These should trigger decode errors and return false
+      expect(isValidSolanaAddress('0' + '1'.repeat(35))).toBe(false); // Invalid char '0'
+      expect(isValidSolanaAddress('O' + '1'.repeat(35))).toBe(false); // Invalid char 'O'
+      expect(isValidSolanaAddress('I' + '1'.repeat(35))).toBe(false); // Invalid char 'I'
+      expect(isValidSolanaAddress('l' + '1'.repeat(35))).toBe(false); // Invalid char 'l'
     });
   });
 
