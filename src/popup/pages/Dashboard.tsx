@@ -21,6 +21,7 @@ import {
   Tabs,
   TabList,
   Tab,
+  Tooltip,
 } from '@chakra-ui/react';
 import {
   CopyIcon,
@@ -40,7 +41,9 @@ import { getExplorerAccountUrl } from '@/lib/networks';
 import SendModal from '../components/SendModal';
 import SwapModal from '../components/SwapModal';
 import NetworkManagerModal from '../components/NetworkManagerModal';
+import IBCTransferModal from '../components/IBCTransferModal';
 import { useNetworkStore } from '@/store/networkStore';
+import { fetchIBCConnections, IBCChannel } from '@/lib/cosmos/ibc-connections';
 
 interface DashboardProps {
   onNavigateToStaking?: () => void;
@@ -147,6 +150,15 @@ const Dashboard: React.FC<DashboardProps> = ({
     onOpen: onNetworkManagerOpen,
     onClose: onNetworkManagerClose,
   } = useDisclosure();
+  const { isOpen: isIBCOpen, onOpen: onIBCOpen, onClose: onIBCClose } = useDisclosure();
+
+  // IBC transfer state
+  const [ibcConnections, setIbcConnections] = useState<IBCChannel[]>([]);
+  const [loadingIbcConnections, setLoadingIbcConnections] = useState(false);
+  const [selectedIbcAsset, setSelectedIbcAsset] = useState<{
+    asset: RegistryAsset;
+    balance: string;
+  } | null>(null);
 
   // Network store for preferences
   const { loadPreferences, isLoaded: networkPrefsLoaded, isNetworkEnabled } = useNetworkStore();
@@ -276,6 +288,26 @@ const Dashboard: React.FC<DashboardProps> = ({
     };
     loadAssets();
   }, [selectedChainId]);
+
+  // Load IBC connections when Cosmos chain is selected
+  useEffect(() => {
+    if (isCosmosSelected) {
+      setLoadingIbcConnections(true);
+      fetchIBCConnections(selectedChainId)
+        .then((connections) => {
+          setIbcConnections(connections);
+        })
+        .catch((error) => {
+          console.warn('Failed to fetch IBC connections:', error);
+          setIbcConnections([]);
+        })
+        .finally(() => {
+          setLoadingIbcConnections(false);
+        });
+    } else {
+      setIbcConnections([]);
+    }
+  }, [selectedChainId, isCosmosSelected]);
 
   // Get token config from chain registry or fallback
   const getTokenConfig = (denom: string) => {
@@ -1686,6 +1718,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                     const usdValue = amount * config.priceUsd;
                     const isUpdating = updatingTokens.has(b.denom);
                     const isZeroBalance = parseInt(b.amount) === 0;
+                    const hasIbcConnections =
+                      isCosmosSelected && ibcConnections.length > 0 && !isZeroBalance;
+
+                    // Find the asset in chainAssets for IBC modal
+                    const registryAsset = chainAssets.find((a) => a.denom === b.denom);
 
                     return (
                       <Box
@@ -1719,16 +1756,55 @@ const Dashboard: React.FC<DashboardProps> = ({
                                   })}
                             </Text>
                           </VStack>
-                          <VStack align="end" spacing={0}>
-                            <Text color={isZeroBalance ? 'gray.600' : 'gray.400'} fontSize="sm">
-                              ${usdValue.toFixed(3)}
-                            </Text>
-                            {isUpdating && (
-                              <Text color="cyan.400" fontSize="xs">
-                                updating...
-                              </Text>
+                          <HStack spacing={3}>
+                            {/* IBC Transfer Button */}
+                            {hasIbcConnections && registryAsset && (
+                              <Tooltip label="IBC Transfer" placement="top">
+                                <Box
+                                  as="button"
+                                  p={2}
+                                  borderRadius="md"
+                                  bg="purple.900"
+                                  color="purple.300"
+                                  _hover={{ bg: 'purple.800', color: 'purple.200' }}
+                                  onClick={() => {
+                                    setSelectedIbcAsset({
+                                      asset: registryAsset,
+                                      balance: b.amount,
+                                    });
+                                    onIBCOpen();
+                                  }}
+                                  cursor="pointer"
+                                  transition="all 0.2s"
+                                >
+                                  <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <path d="M2 12h20" />
+                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                                  </svg>
+                                </Box>
+                              </Tooltip>
                             )}
-                          </VStack>
+                            <VStack align="end" spacing={0}>
+                              <Text color={isZeroBalance ? 'gray.600' : 'gray.400'} fontSize="sm">
+                                ${usdValue.toFixed(3)}
+                              </Text>
+                              {isUpdating && (
+                                <Text color="cyan.400" fontSize="xs">
+                                  updating...
+                                </Text>
+                              )}
+                            </VStack>
+                          </HStack>
                         </HStack>
                       </Box>
                     );
@@ -1791,6 +1867,24 @@ const Dashboard: React.FC<DashboardProps> = ({
           loadPreferences();
         }}
       />
+
+      {/* IBC Transfer Modal */}
+      {selectedIbcAsset && (
+        <IBCTransferModal
+          isOpen={isIBCOpen}
+          onClose={() => {
+            onIBCClose();
+            setSelectedIbcAsset(null);
+          }}
+          sourceChainId={selectedChainId}
+          asset={selectedIbcAsset.asset}
+          balance={selectedIbcAsset.balance}
+          onSuccess={() => {
+            // Refresh balance after successful transfer
+            loadBalance();
+          }}
+        />
+      )}
     </Box>
   );
 };

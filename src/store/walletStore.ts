@@ -14,6 +14,7 @@ import { coin } from '@cosmjs/stargate';
 import { simulateSendFee } from '@/lib/cosmos/fees';
 import { networkRegistry } from '@/lib/networks';
 import { MessageType } from '@/types/messages';
+import { DirectSecp256k1HdWallet, makeCosmoshubPath } from '@cosmjs/proto-signing';
 
 /**
  * Sync keyring state with background service worker
@@ -181,6 +182,18 @@ interface WalletState {
     fee?: { amount: Array<{ denom: string; amount: string }>; gas: string },
     memo?: string
   ) => Promise<string>; // Returns tx hash
+
+  // Sign and broadcast with password (for cross-chain operations when mnemonic not in memory)
+  signAndBroadcastWithPassword: (
+    chainId: string,
+    messages: Array<{ typeUrl: string; value: any }>,
+    password: string,
+    fee?: { amount: Array<{ denom: string; amount: string }>; gas: string },
+    memo?: string
+  ) => Promise<string>; // Returns tx hash
+
+  // Check if mnemonic is available in memory (for cross-chain signing)
+  hasMnemonicInMemory: () => boolean;
 
   // Get address for a specific chain (converts bech32 prefix)
   getAddressForChain: (chainPrefix: string) => string | null;
@@ -1178,12 +1191,17 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       throw new Error(`Chain ${chainId} not supported`);
     }
 
-    // Use the existing wallet from the keyring
-    const wallet = keyring.getWallet();
+    // Get the bech32 prefix for this chain
+    const chainPrefix = chainInfo.bech32Config.bech32PrefixAccAddr;
 
-    // Get all wallet accounts and find the one that matches our selected account
+    // Get a wallet with the correct prefix for this chain, ensuring the selected account's index is included
+    const wallet = await keyring.getWalletForChain(chainPrefix, selectedAccount.accountIndex);
+
+    // Convert selected account address to this chain's prefix
+    const signerAddress = Keyring.convertAddress(selectedAccount.address, chainPrefix);
+
+    // Get all wallet accounts and find the one that matches
     const walletAccounts = await wallet.getAccounts();
-    const signerAddress = selectedAccount.address;
     const matchingWalletAccount = walletAccounts.find((acc) => acc.address === signerAddress);
 
     if (!matchingWalletAccount) {
@@ -1207,6 +1225,103 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     }
 
     return result.transactionHash;
+  },
+
+  signAndBroadcastWithPassword: async (
+    chainId: string,
+    messages: Array<{ typeUrl: string; value: any }>,
+    password: string,
+    fee?: { amount: Array<{ denom: string; amount: string }>; gas: string },
+    memo: string = ''
+  ) => {
+    const { keyring, isLocked, selectedAccount } = get();
+
+    if (isLocked || !keyring) {
+      throw new Error('Wallet is locked');
+    }
+
+    if (!selectedAccount) {
+      throw new Error('No account selected');
+    }
+
+    // Get chain info
+    const chainInfo = SUPPORTED_CHAINS.get(chainId);
+    if (!chainInfo) {
+      throw new Error(`Chain ${chainId} not supported`);
+    }
+
+    // Get the bech32 prefix for this chain
+    const chainPrefix = chainInfo.bech32Config.bech32PrefixAccAddr;
+
+    // Check if this is an imported account (has its own mnemonic)
+    const isImportedAccount = selectedAccount.id.startsWith('imported-');
+
+    let wallet: DirectSecp256k1HdWallet;
+
+    if (isImportedAccount) {
+      // For imported accounts, load their specific mnemonic
+      const importedMnemonic = await EncryptedStorage.getImportedAccountMnemonic(
+        selectedAccount.address,
+        password
+      );
+
+      if (!importedMnemonic) {
+        throw new Error('Failed to decrypt imported account mnemonic - incorrect password?');
+      }
+
+      // Create wallet from imported account's mnemonic with the target chain prefix
+      wallet = await DirectSecp256k1HdWallet.fromMnemonic(importedMnemonic, {
+        prefix: chainPrefix,
+        hdPaths: [makeCosmoshubPath(0)], // Imported accounts always use index 0
+      });
+    } else {
+      // For main wallet accounts, load the main mnemonic if needed
+      if (!keyring.hasMnemonic()) {
+        const storedWallet = await EncryptedStorage.loadWallet(password);
+        if (!storedWallet || !storedWallet.mnemonic) {
+          throw new Error('Incorrect password or wallet not found');
+        }
+        keyring.setMnemonic(storedWallet.mnemonic);
+      }
+
+      // Get a wallet with the correct prefix for this chain
+      const accountIndexToUse = selectedAccount.accountIndex ?? 0;
+      wallet = await keyring.getWalletForChain(chainPrefix, accountIndexToUse);
+    }
+
+    // Convert selected account address to this chain's prefix
+    const signerAddress = Keyring.convertAddress(selectedAccount.address, chainPrefix);
+
+    // Get all wallet accounts and find the one that matches
+    const walletAccounts = await wallet.getAccounts();
+    const matchingWalletAccount = walletAccounts.find((acc) => acc.address === signerAddress);
+
+    if (!matchingWalletAccount) {
+      throw new Error('Selected account not found in wallet');
+    }
+
+    // Use provided fee or default
+    const txFee = fee || {
+      amount: [{ denom: chainInfo.feeCurrencies[0]?.coinMinimalDenom || 'ubze', amount: '5000' }],
+      gas: '200000',
+    };
+
+    // Create signing client
+    const signingClient = await cosmosClient.getSigningClient(chainInfo.rpc, wallet);
+
+    // Sign and broadcast the transaction
+    const result = await signingClient.signAndBroadcast(signerAddress, messages, txFee, memo);
+
+    if (result.code !== 0) {
+      throw new Error(`Transaction failed: ${result.rawLog}`);
+    }
+
+    return result.transactionHash;
+  },
+
+  hasMnemonicInMemory: () => {
+    const { keyring } = get();
+    return keyring ? keyring.hasMnemonic() : false;
   },
 
   getAddressForChain: (chainPrefix: string) => {

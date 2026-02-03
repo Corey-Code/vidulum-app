@@ -332,6 +332,46 @@ export class Keyring {
     return this.wallet;
   }
 
+  /**
+   * Get a wallet instance with a specific chain prefix for signing transactions
+   * This creates a new wallet with the same mnemonic but different prefix
+   * @param prefix - The bech32 prefix for the chain
+   * @param accountIndex - Optional specific account index to include (ensures this account is derived)
+   */
+  async getWalletForChain(prefix: string, accountIndex?: number): Promise<DirectSecp256k1HdWallet> {
+    if (!this.mnemonic) {
+      throw new Error('Mnemonic not available - wallet may need to be unlocked');
+    }
+
+    // If the prefix matches our current wallet and no specific account requested, return it
+    if (prefix === this.prefix && this.wallet && accountIndex === undefined) {
+      return this.wallet;
+    }
+
+    // Create HD paths for all account indices we have
+    let accountIndices = this.accounts.map((acc) => acc.accountIndex);
+
+    // Ensure the requested accountIndex is included
+    if (accountIndex !== undefined && !accountIndices.includes(accountIndex)) {
+      accountIndices = [...accountIndices, accountIndex];
+    }
+
+    // If no accounts, default to account 0
+    if (accountIndices.length === 0) {
+      accountIndices = [0];
+    }
+
+    const hdPaths = accountIndices.map((index) => makeCosmoshubPath(index));
+
+    // Create a new wallet with the requested prefix
+    const wallet = await DirectSecp256k1HdWallet.fromMnemonic(this.mnemonic, {
+      prefix,
+      hdPaths,
+    });
+
+    return wallet;
+  }
+
   // ============================================================================
   // Bitcoin Support
   // ============================================================================
