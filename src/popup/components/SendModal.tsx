@@ -389,6 +389,8 @@ const SendModal: React.FC<SendModalProps> = ({
     if (isBitcoin) {
       // For Bitcoin sweep, we'll use the sweepAll mode which calculates exact fee at send time
       // based on actual UTXO count. Fetch UTXOs to display accurate fee estimate in UI.
+      // Improved fee estimation based on review feedback:
+      // https://github.com/Corey-Code/vidulum-app/pull/52#discussion_r2756997417
       const balanceInSats = Math.floor(availableBalance * Math.pow(10, nativeDecimals));
 
       if (balanceInSats <= 0) {
