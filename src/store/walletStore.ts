@@ -1266,7 +1266,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       );
 
       if (!importedMnemonic) {
-        throw new Error('Failed to decrypt imported account mnemonic - incorrect password?');
+        throw new Error('Failed to decrypt imported account mnemonic: incorrect password or corrupted data');
       }
 
       // Create wallet from imported account's mnemonic with the target chain prefix
