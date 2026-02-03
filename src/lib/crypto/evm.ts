@@ -49,6 +49,7 @@ function deriveChild(
   let currentIndex = index;
 
   const intermediates: Uint8Array[] = [];
+  let pubKey: Uint8Array | null = null;
 
   try {
     // Retry derivation with subsequent indices if we hit invalid values as per BIP32
@@ -65,7 +66,11 @@ function deriveChild(
         data.set(indexBytes, 33);
       } else {
         // Normal derivation: public key || index
-        const pubKey = secp256k1.getPublicKey(parentKey, true);
+        // Clean up old pubKey if this is a retry
+        if (pubKey !== null) {
+          secureZero(pubKey);
+        }
+        pubKey = secp256k1.getPublicKey(parentKey, true);
         data.set(pubKey, 0);
         const indexBytes = new Uint8Array(4);
         new DataView(indexBytes.buffer).setUint32(0, currentIndex, false);
@@ -106,6 +111,9 @@ function deriveChild(
     throw new Error('Unable to derive valid child key after multiple attempts');
   } finally {
     // Zero out all intermediate data
+    if (pubKey !== null) {
+      secureZero(pubKey);
+    }
     for (const arr of intermediates) {
       if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
         crypto.getRandomValues(arr);
