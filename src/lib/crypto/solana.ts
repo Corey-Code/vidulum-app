@@ -33,11 +33,11 @@ function encodeBase58(buffer: Uint8Array): string {
     for (let j = 0; j < digits.length; j++) {
       carry += digits[j] << 8;
       digits[j] = carry % 58;
-      carry = (carry / 58) | 0;
+      carry = Math.floor(carry / 58);
     }
     while (carry > 0) {
       digits.push(carry % 58);
-      carry = (carry / 58) | 0;
+      carry = Math.floor(carry / 58);
     }
   }
 
@@ -67,12 +67,12 @@ function decodeBase58(str: string): Uint8Array {
     for (let j = 0; j < bytes.length; j++) {
       carry += bytes[j] * 58;
       bytes[j] = carry % 256;
-      carry = (carry / 256) | 0;
+      carry = Math.floor(carry / 256);
     }
 
     while (carry > 0) {
       bytes.push(carry % 256);
-      carry = (carry / 256) | 0;
+      carry = Math.floor(carry / 256);
     }
   }
 
