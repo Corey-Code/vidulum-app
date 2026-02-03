@@ -11,6 +11,7 @@ export type {
   CosmosNetworkConfig,
   BitcoinNetworkConfig,
   EvmNetworkConfig,
+  SvmNetworkConfig,
   NetworkConfig,
   EndpointHealth,
 } from './types';
@@ -21,6 +22,17 @@ export { BEEZEE_TESTNET, COSMOS_NETWORKS } from './cosmos';
 export { BITCOIN_MAINNET, BITCOIN_TESTNET, BITCOIN_NETWORKS } from './bitcoin';
 
 export { EVM_NETWORKS } from './evm';
+
+// SVM (Solana) Networks
+export {
+  SVM_NETWORKS,
+  SOLANA_MAINNET,
+  SOLANA_DEVNET,
+  SOLANA_TESTNET,
+  ECLIPSE_MAINNET,
+  getSvmNetworkById,
+  getEnabledSvmNetworks,
+} from './solana';
 
 // EVM Registry (auto-generated from ethereum-lists/chains)
 export {
@@ -42,6 +54,7 @@ export {
   isCosmosNetwork,
   isBitcoinNetwork,
   isEvmNetwork,
+  isSvmNetwork,
   getUINetworks,
 } from './registry';
 

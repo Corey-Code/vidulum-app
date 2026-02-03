@@ -7,7 +7,7 @@
  * - EVM chains: static native asset definitions
  */
 
-import { networkRegistry, isBitcoinNetwork, isEvmNetwork } from '@/lib/networks';
+import { networkRegistry, isBitcoinNetwork, isEvmNetwork, isSvmNetwork } from '@/lib/networks';
 import { COSMOS_REGISTRY_ASSETS } from './cosmos-registry';
 import { COSMOS_REGISTRY_CHAINS } from '@/lib/networks/cosmos-registry';
 
@@ -162,6 +162,15 @@ const bitcoinAssets: Record<string, RegistryAsset[]> = {
 
 // EVM assets
 const evmAssets: Record<string, RegistryAsset[]> = {
+  'eth-mainnet': [
+    {
+      symbol: 'ETH',
+      name: 'Ethereum',
+      denom: 'wei',
+      decimals: 18,
+      coingeckoId: 'ethereum',
+    },
+  ],
   'ethereum-mainnet': [
     {
       symbol: 'ETH',
@@ -180,7 +189,97 @@ const evmAssets: Record<string, RegistryAsset[]> = {
       coingeckoId: 'binancecoin',
     },
   ],
+  'pol-mainnet': [
+    {
+      symbol: 'POL',
+      name: 'POL',
+      denom: 'wei',
+      decimals: 18,
+      coingeckoId: 'polygon-ecosystem-token',
+    },
+  ],
   'base-mainnet': [
+    {
+      symbol: 'ETH',
+      name: 'Ethereum',
+      denom: 'wei',
+      decimals: 18,
+      coingeckoId: 'ethereum',
+    },
+  ],
+  'arb1-mainnet': [
+    {
+      symbol: 'ETH',
+      name: 'Ethereum',
+      denom: 'wei',
+      decimals: 18,
+      coingeckoId: 'ethereum',
+    },
+  ],
+  'oeth-mainnet': [
+    {
+      symbol: 'ETH',
+      name: 'Ethereum',
+      denom: 'wei',
+      decimals: 18,
+      coingeckoId: 'ethereum',
+    },
+  ],
+  'cro-mainnet': [
+    {
+      symbol: 'CRO',
+      name: 'Cronos',
+      denom: 'wei',
+      decimals: 18,
+      coingeckoId: 'crypto-com-chain',
+    },
+  ],
+  'ftm-mainnet': [
+    {
+      symbol: 'FTM',
+      name: 'Fantom',
+      denom: 'wei',
+      decimals: 18,
+      coingeckoId: 'fantom',
+    },
+  ],
+  'gno-mainnet': [
+    {
+      symbol: 'xDAI',
+      name: 'xDAI',
+      denom: 'wei',
+      decimals: 18,
+      coingeckoId: 'xdai',
+    },
+  ],
+  'manta-mainnet': [
+    {
+      symbol: 'ETH',
+      name: 'Ethereum',
+      denom: 'wei',
+      decimals: 18,
+      coingeckoId: 'ethereum',
+    },
+  ],
+  'zksync-mainnet': [
+    {
+      symbol: 'ETH',
+      name: 'Ethereum',
+      denom: 'wei',
+      decimals: 18,
+      coingeckoId: 'ethereum',
+    },
+  ],
+  'metis-andromeda-mainnet': [
+    {
+      symbol: 'METIS',
+      name: 'Metis',
+      denom: 'wei',
+      decimals: 18,
+      coingeckoId: 'metis-token',
+    },
+  ],
+  'zkevm-mainnet': [
     {
       symbol: 'ETH',
       name: 'Ethereum',
@@ -195,6 +294,44 @@ const evmAssets: Record<string, RegistryAsset[]> = {
       name: 'Sepolia ETH',
       denom: 'wei',
       decimals: 18,
+    },
+  ],
+};
+
+// SVM (Solana) assets
+const svmAssets: Record<string, RegistryAsset[]> = {
+  'solana-mainnet': [
+    {
+      symbol: 'SOL',
+      name: 'Solana',
+      denom: 'lamport',
+      decimals: 9,
+      coingeckoId: 'solana',
+    },
+  ],
+  'solana-devnet': [
+    {
+      symbol: 'SOL',
+      name: 'Solana (Devnet)',
+      denom: 'lamport',
+      decimals: 9,
+    },
+  ],
+  'solana-testnet': [
+    {
+      symbol: 'SOL',
+      name: 'Solana (Testnet)',
+      denom: 'lamport',
+      decimals: 9,
+    },
+  ],
+  'eclipse-mainnet': [
+    {
+      symbol: 'ETH',
+      name: 'Ethereum',
+      denom: 'lamport',
+      decimals: 9,
+      coingeckoId: 'ethereum',
     },
   ],
 };
@@ -317,6 +454,8 @@ const fallbackAssets: Record<string, RegistryAsset[]> = {
   ...bitcoinAssets,
   // Include EVM in fallbacks
   ...evmAssets,
+  // Include SVM in fallbacks
+  ...svmAssets,
 };
 
 /**
@@ -345,6 +484,14 @@ export async function fetchChainAssets(networkId: string): Promise<RegistryAsset
   // Handle EVM networks - return static assets
   if (network && isEvmNetwork(network)) {
     const assets = evmAssets[networkId] || [];
+    assetCache.set(networkId, assets);
+    cacheExpiry.set(networkId, Date.now() + CACHE_DURATION);
+    return assets;
+  }
+
+  // Handle SVM networks - return static assets
+  if (network && isSvmNetwork(network)) {
+    const assets = svmAssets[networkId] || [];
     assetCache.set(networkId, assets);
     cacheExpiry.set(networkId, Date.now() + CACHE_DURATION);
     return assets;
@@ -448,6 +595,13 @@ const tokenColors: Record<string, string> = {
   // EVM
   ETH: '#627EEA',
   BNB: '#F0B90B',
+  POL: '#8247E5', // Polygon purple
+  CRO: '#002D74', // Cronos blue
+  FTM: '#1969FF', // Fantom blue
+  xDAI: '#48A9A6', // xDAI teal
+  METIS: '#00DACC', // Metis teal
+  // SVM (Solana)
+  SOL: '#9945FF', // Solana purple
   // Cosmos chains
   BZE: '#3182CE',
   VDL: '#6366F1',

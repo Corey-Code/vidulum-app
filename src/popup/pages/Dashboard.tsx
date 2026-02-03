@@ -75,6 +75,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     getAddressForChain,
     getBitcoinAddress,
     getEvmAddress,
+    getSvmAddress,
     updateActivity,
   } = useWalletStore();
 
@@ -115,35 +116,11 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Cache of EVM addresses for all accounts: cosmosAddress -> networkId -> address
   const evmAddressCacheRef = useRef<Map<string, Map<string, string>>>(new Map());
   const [, setEvmAddressCacheTrigger] = useState(0); // Trigger re-render when cache updates
-  // Network tab: 0 = All, 1 = Cosmos, 2 = UTXO, 3 = EVM
+  // Cache of SVM addresses for all accounts: cosmosAddress -> networkId -> address
+  const svmAddressCacheRef = useRef<Map<string, Map<string, string>>>(new Map());
+  const [, setSvmAddressCacheTrigger] = useState(0); // Trigger re-render when cache updates
+  // Network tab: 0 = All, 1 = Cosmos, 2 = UTXO, 3 = EVM, 4 = SVM
   const [networkTab, setNetworkTab] = useState(0);
-
-  // Handle network tab change - auto-select first network of that type
-  const handleNetworkTabChange = (tabIndex: number) => {
-    setNetworkTab(tabIndex);
-
-    // Auto-select first enabled network of the selected type
-    if (tabIndex === 1) {
-      // Cosmos tab - select first enabled Cosmos network
-      const cosmosNetwork = enabledUIChains.find((n) => n.type === 'cosmos');
-      if (cosmosNetwork) {
-        selectChain(cosmosNetwork.id);
-      }
-    } else if (tabIndex === 2) {
-      // UTXO tab - select first enabled Bitcoin network
-      const bitcoinNetwork = enabledUIChains.find((n) => n.type === 'bitcoin');
-      if (bitcoinNetwork) {
-        selectChain(bitcoinNetwork.id);
-      }
-    } else if (tabIndex === 3) {
-      // EVM tab - select first enabled EVM network
-      const evmNetwork = enabledUIChains.find((n) => n.type === 'evm');
-      if (evmNetwork) {
-        selectChain(evmNetwork.id);
-      }
-    }
-    // All tab (0) - keep current selection
-  };
 
   const toast = useToast();
   const { isOpen: isSendOpen, onOpen: onSendOpen, onClose: onSendClose } = useDisclosure();
@@ -173,10 +150,15 @@ const Dashboard: React.FC<DashboardProps> = ({
   const isCosmosSelected = selectedNetworkType === 'cosmos';
   const isBitcoinSelected = selectedNetworkType === 'bitcoin';
   const isEvmSelected = selectedNetworkType === 'evm';
+  const isSvmSelected = selectedNetworkType === 'svm';
 
   // State for EVM address
   const [evmAddress, setEvmAddress] = useState<string>('');
   const [loadingEvmAddress, setLoadingEvmAddress] = useState(false);
+
+  // State for SVM address
+  const [svmAddress, setSvmAddress] = useState<string>('');
+  const [loadingSvmAddress, setLoadingSvmAddress] = useState(false);
 
   // Clear Bitcoin address display immediately when chain changes to prevent stale address display
   useEffect(() => {
@@ -186,6 +168,11 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Clear EVM address display immediately when chain changes
   useEffect(() => {
     setEvmAddress('');
+  }, [selectedChainId]);
+
+  // Clear SVM address display immediately when chain changes
+  useEffect(() => {
+    setSvmAddress('');
   }, [selectedChainId]);
 
   // Derive Bitcoin address when Bitcoin network is selected
@@ -224,13 +211,32 @@ const Dashboard: React.FC<DashboardProps> = ({
     }
   }, [isEvmSelected, selectedChainId, selectedAccount, getEvmAddress]);
 
+  // Derive SVM address when SVM network is selected
+  useEffect(() => {
+    if (isSvmSelected && selectedAccount) {
+      setLoadingSvmAddress(true);
+      getSvmAddress(selectedChainId)
+        .then((addr) => {
+          setSvmAddress(addr || '');
+        })
+        .catch((err) => {
+          console.error('Failed to get SVM address:', err);
+          setSvmAddress('');
+        })
+        .finally(() => {
+          setLoadingSvmAddress(false);
+        });
+    }
+  }, [isSvmSelected, selectedChainId, selectedAccount, getSvmAddress]);
+
   // Derive Bitcoin addresses for all accounts when Bitcoin network is selected
   useEffect(() => {
     if (isBitcoinSelected && accounts.length > 0) {
       const deriveAllBitcoinAddresses = async () => {
         // Check current cache and collect addresses to derive
-        const addressesToDerive: Array<{ account: typeof accounts[0]; cosmosAddress: string }> = [];
-        
+        const addressesToDerive: Array<{ account: (typeof accounts)[0]; cosmosAddress: string }> =
+          [];
+
         for (const account of accounts) {
           const accountCache = bitcoinAddressCacheRef.current.get(account.address);
           if (!accountCache?.has(selectedChainId)) {
@@ -238,7 +244,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             addressesToDerive.push({ account, cosmosAddress: account.address });
           }
         }
-        
+
         // Derive missing addresses
         if (addressesToDerive.length > 0) {
           const derivedAddresses = new Map<string, string>();
@@ -257,12 +263,14 @@ const Dashboard: React.FC<DashboardProps> = ({
               console.error(`Failed to derive Bitcoin address for account ${cosmosAddress}:`, err);
             }
           }
-          
+
           // Update cache with newly derived addresses
           if (derivedAddresses.size > 0) {
             for (const [cosmosAddress, address] of derivedAddresses) {
               const accountCache = bitcoinAddressCacheRef.current.get(cosmosAddress);
-              const updatedAccountCache = accountCache ? new Map(accountCache) : new Map<string, string>();
+              const updatedAccountCache = accountCache
+                ? new Map(accountCache)
+                : new Map<string, string>();
               updatedAccountCache.set(selectedChainId, address);
               bitcoinAddressCacheRef.current.set(cosmosAddress, updatedAccountCache);
             }
@@ -280,8 +288,9 @@ const Dashboard: React.FC<DashboardProps> = ({
     if (isEvmSelected && accounts.length > 0) {
       const deriveAllEvmAddresses = async () => {
         // Check current cache and collect addresses to derive
-        const addressesToDerive: Array<{ account: typeof accounts[0]; cosmosAddress: string }> = [];
-        
+        const addressesToDerive: Array<{ account: (typeof accounts)[0]; cosmosAddress: string }> =
+          [];
+
         for (const account of accounts) {
           const accountCache = evmAddressCacheRef.current.get(account.address);
           if (!accountCache?.has(selectedChainId)) {
@@ -289,7 +298,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             addressesToDerive.push({ account, cosmosAddress: account.address });
           }
         }
-        
+
         // Derive missing addresses
         if (addressesToDerive.length > 0) {
           const derivedAddresses = new Map<string, string>();
@@ -308,12 +317,14 @@ const Dashboard: React.FC<DashboardProps> = ({
               console.error(`Failed to derive EVM address for account ${cosmosAddress}:`, err);
             }
           }
-          
+
           // Update cache with newly derived addresses
           if (derivedAddresses.size > 0) {
             for (const [cosmosAddress, address] of derivedAddresses) {
               const accountCache = evmAddressCacheRef.current.get(cosmosAddress);
-              const updatedAccountCache = accountCache ? new Map(accountCache) : new Map<string, string>();
+              const updatedAccountCache = accountCache
+                ? new Map(accountCache)
+                : new Map<string, string>();
               updatedAccountCache.set(selectedChainId, address);
               evmAddressCacheRef.current.set(cosmosAddress, updatedAccountCache);
             }
@@ -325,6 +336,60 @@ const Dashboard: React.FC<DashboardProps> = ({
       deriveAllEvmAddresses();
     }
   }, [isEvmSelected, selectedChainId, accounts, getEvmAddress]);
+
+  // Derive SVM addresses for all accounts when SVM network is selected
+  useEffect(() => {
+    if (isSvmSelected && accounts.length > 0) {
+      const deriveAllSvmAddresses = async () => {
+        // Check current cache and collect addresses to derive
+        const addressesToDerive: Array<{ account: (typeof accounts)[0]; cosmosAddress: string }> =
+          [];
+
+        for (const account of accounts) {
+          const accountCache = svmAddressCacheRef.current.get(account.address);
+          if (!accountCache?.has(selectedChainId)) {
+            // Mark this address for derivation
+            addressesToDerive.push({ account, cosmosAddress: account.address });
+          }
+        }
+
+        // Derive missing addresses
+        if (addressesToDerive.length > 0) {
+          const derivedAddresses = new Map<string, string>();
+          for (const { account, cosmosAddress } of addressesToDerive) {
+            try {
+              // Pass cosmosAddress to identify imported accounts
+              const addr = await getSvmAddress(
+                selectedChainId,
+                account.accountIndex,
+                cosmosAddress
+              );
+              if (addr) {
+                derivedAddresses.set(cosmosAddress, addr);
+              }
+            } catch (err) {
+              console.error(`Failed to derive SVM address for account ${cosmosAddress}:`, err);
+            }
+          }
+
+          // Update cache with newly derived addresses
+          if (derivedAddresses.size > 0) {
+            for (const [cosmosAddress, address] of derivedAddresses) {
+              const accountCache = svmAddressCacheRef.current.get(cosmosAddress);
+              const updatedAccountCache = accountCache
+                ? new Map(accountCache)
+                : new Map<string, string>();
+              updatedAccountCache.set(selectedChainId, address);
+              svmAddressCacheRef.current.set(cosmosAddress, updatedAccountCache);
+            }
+            // Trigger re-render to update UI
+            setSvmAddressCacheTrigger((prev) => prev + 1);
+          }
+        }
+      };
+      deriveAllSvmAddresses();
+    }
+  }, [isSvmSelected, selectedChainId, accounts, getSvmAddress]);
 
   // Token config with colors and mock prices
   // Load chain assets from registry when chain changes
@@ -401,6 +466,12 @@ const Dashboard: React.FC<DashboardProps> = ({
       return evmAddress || 'Deriving address...';
     }
 
+    // For SVM, use the derived SVM address
+    if (isSvmSelected) {
+      if (loadingSvmAddress) return 'Loading...';
+      return svmAddress || 'Deriving address...';
+    }
+
     return selectedAccount.address;
   };
 
@@ -416,6 +487,13 @@ const Dashboard: React.FC<DashboardProps> = ({
     // For EVM, use cached derived address (keyed by cosmos address)
     if (isEvmSelected) {
       const accountCache = evmAddressCacheRef.current.get(account.address);
+      const cachedAddr = accountCache?.get(selectedChainId);
+      return cachedAddr || 'Deriving...';
+    }
+
+    // For SVM, use cached derived address (keyed by cosmos address)
+    if (isSvmSelected) {
+      const accountCache = svmAddressCacheRef.current.get(account.address);
       const cachedAddr = accountCache?.get(selectedChainId);
       return cachedAddr || 'Deriving...';
     }
@@ -458,6 +536,39 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Filter UI_CHAINS based on network preferences
   const enabledUIChains = UI_CHAINS.filter((chain) => isNetworkEnabled(chain.id));
 
+  // Handle network tab change - auto-select first network of that type
+  const handleNetworkTabChange = (tabIndex: number) => {
+    setNetworkTab(tabIndex);
+
+    // Auto-select first enabled network of the selected type
+    if (tabIndex === 1) {
+      // Cosmos tab - select first enabled Cosmos network
+      const cosmosNetwork = enabledUIChains.find((n) => n.type === 'cosmos');
+      if (cosmosNetwork) {
+        selectChain(cosmosNetwork.id);
+      }
+    } else if (tabIndex === 2) {
+      // UTXO tab - select first enabled Bitcoin network
+      const bitcoinNetwork = enabledUIChains.find((n) => n.type === 'bitcoin');
+      if (bitcoinNetwork) {
+        selectChain(bitcoinNetwork.id);
+      }
+    } else if (tabIndex === 3) {
+      // EVM tab - select first enabled EVM network
+      const evmNetwork = enabledUIChains.find((n) => n.type === 'evm');
+      if (evmNetwork) {
+        selectChain(evmNetwork.id);
+      }
+    } else if (tabIndex === 4) {
+      // SVM tab - select first enabled SVM network
+      const svmNetwork = enabledUIChains.find((n) => n.type === 'svm');
+      if (svmNetwork) {
+        selectChain(svmNetwork.id);
+      }
+    }
+    // All tab (0) - keep current selection
+  };
+
   // Track activity on any click
   useEffect(() => {
     const handleActivity = () => updateActivity();
@@ -467,13 +578,16 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   useEffect(() => {
     if (selectedAccount) {
-      // For Bitcoin/EVM, only load balance when we have a valid address for the current network
+      // For Bitcoin/EVM/SVM, only load balance when we have a valid address for the current network
       // This prevents using stale addresses from previous network selections
       if (isBitcoinSelected && !bitcoinAddress) {
         return; // Wait for Bitcoin address to be derived
       }
       if (isEvmSelected && !evmAddress) {
         return; // Wait for EVM address to be derived
+      }
+      if (isSvmSelected && !svmAddress) {
+        return; // Wait for SVM address to be derived
       }
 
       loadBalance();
@@ -497,8 +611,10 @@ const Dashboard: React.FC<DashboardProps> = ({
     isCosmosSelected,
     isBitcoinSelected,
     isEvmSelected,
+    isSvmSelected,
     bitcoinAddress,
     evmAddress,
+    svmAddress,
   ]);
 
   const loadBalance = async () => {
@@ -622,6 +738,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 resetAddAccountFlow();
               }}
               closeOnSelect={false}
+              placement="bottom-start"
             >
               <MenuButton as={Box} cursor="pointer" w="full">
                 <VStack align="start" spacing={1}>
@@ -656,7 +773,27 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </VStack>
               </MenuButton>
 
-              <MenuList bg="#1a1a1a" borderColor="#2a2a2a" minW="280px">
+              <MenuList
+                bg="#1a1a1a"
+                borderColor="#2a2a2a"
+                width="325px"
+                maxH="350px"
+                overflowY="auto"
+                overflowX="hidden"
+                sx={{
+                  minWidth: '325px !important',
+                  '&::-webkit-scrollbar': {
+                    width: '6px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: '#1a1a1a',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: '#3a3a3a',
+                    borderRadius: '3px',
+                  },
+                }}
+              >
                 {/* Add Account */}
                 {addAccountStep === 'none' && (
                   <MenuItem
@@ -1358,6 +1495,16 @@ const Dashboard: React.FC<DashboardProps> = ({
                   >
                     EVM
                   </Tab>
+                  <Tab
+                    fontSize="xs"
+                    px={2}
+                    py={1}
+                    borderRadius="full"
+                    color="gray.500"
+                    _selected={{ bg: 'green.600', color: 'white' }}
+                  >
+                    SVM
+                  </Tab>
                 </TabList>
               </Tabs>
             </HStack>
@@ -1411,22 +1558,28 @@ const Dashboard: React.FC<DashboardProps> = ({
                       if (networkTab === 1) return network.type === 'cosmos'; // Cosmos only
                       if (networkTab === 2) return network.type === 'bitcoin'; // UTXO only
                       if (networkTab === 3) return network.type === 'evm'; // EVM only
+                      if (networkTab === 4) return network.type === 'svm'; // SVM only
                       return true;
                     })
                     .map((network) => {
                       const isActive = selectedChainId === network.id;
                       const isBitcoin = network.type === 'bitcoin';
                       const isEvm = network.type === 'evm';
+                      const isSvm = network.type === 'svm';
                       const borderActiveColor = isBitcoin
                         ? 'orange.500'
                         : isEvm
                           ? 'blue.500'
-                          : 'cyan.500';
+                          : isSvm
+                            ? 'green.500'
+                            : 'cyan.500';
                       const borderHoverColor = isBitcoin
                         ? 'orange.400'
                         : isEvm
                           ? 'blue.400'
-                          : 'cyan.400';
+                          : isSvm
+                            ? 'green.400'
+                            : 'cyan.400';
                       return (
                         <Button
                           key={network.id}
