@@ -1,9 +1,4 @@
-import { Buffer } from 'buffer';
-// Polyfill Buffer for browser environment (needed by bip39)
-if (typeof globalThis.Buffer === 'undefined') {
-  globalThis.Buffer = Buffer;
-}
-
+import { ensureBuffer } from '../buffer-polyfill';
 import { DirectSecp256k1HdWallet, makeCosmoshubPath } from '@cosmjs/proto-signing';
 import {
   AminoSignResponse,
@@ -28,6 +23,9 @@ import {
 } from './bitcoin';
 import { deriveEvmKeyPair, getEvmDerivationPath } from './evm';
 import { networkRegistry } from '@/lib/networks';
+
+// Ensure Buffer is available at module load time
+const BufferImpl = ensureBuffer();
 
 export interface KeyringAccount {
   id: string;
@@ -238,7 +236,7 @@ export class Keyring {
       signature: response.signature.signature,
       pub_key: {
         type: 'tendermint/PubKeySecp256k1',
-        value: Buffer.from(account.pubKey).toString('base64'),
+        value: BufferImpl.from(account.pubKey).toString('base64'),
       },
     };
   }
@@ -254,15 +252,15 @@ export class Keyring {
   ): Promise<boolean> {
     try {
       // Decode the signature and public key from base64
-      const signatureBytes = Buffer.from(signature.signature, 'base64');
-      const pubKeyBytes = Buffer.from(signature.pub_key.value, 'base64');
+      const signatureBytes = BufferImpl.from(signature.signature, 'base64');
+      const pubKeyBytes = BufferImpl.from(signature.pub_key.value, 'base64');
 
       // Verify the public key matches the signer address
       // Derive address from public key and compare
       const account = this.accounts.find((acc) => acc.address === signerAddress);
       if (account) {
         // If we have the account, verify the pubkey matches
-        const storedPubKeyBase64 = Buffer.from(account.pubKey).toString('base64');
+        const storedPubKeyBase64 = BufferImpl.from(account.pubKey).toString('base64');
         if (storedPubKeyBase64 !== signature.pub_key.value) {
           return false;
         }

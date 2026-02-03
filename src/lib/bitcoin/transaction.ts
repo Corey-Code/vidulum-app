@@ -17,17 +17,11 @@
  * - Legacy signature scripts
  */
 
-import { Buffer } from 'buffer';
 import { sha256 } from '@noble/hashes/sha256';
 import { ripemd160 } from '@noble/hashes/ripemd160';
 import * as secp256k1 from '@noble/secp256k1';
 import { UTXO } from './client';
 import { BitcoinNetworkConfig } from '../networks/types';
-
-// Ensure Buffer is available
-if (typeof globalThis.Buffer === 'undefined') {
-  globalThis.Buffer = Buffer;
-}
 
 // ============================================================================
 // Types

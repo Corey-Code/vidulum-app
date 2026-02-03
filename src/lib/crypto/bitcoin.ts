@@ -6,17 +6,15 @@
  * BIP84 (native SegWit), and BIP141 (SegWit encoding).
  */
 
-import { Buffer } from 'buffer';
-// Polyfill Buffer for browser environment
-if (typeof globalThis.Buffer === 'undefined') {
-  globalThis.Buffer = Buffer;
-}
-
+import { ensureBuffer } from '../buffer-polyfill';
 import { sha256 } from '@noble/hashes/sha256';
 import { ripemd160 } from '@noble/hashes/ripemd160';
 import * as secp256k1 from '@noble/secp256k1';
 import { hmac } from '@noble/hashes/hmac';
 import { sha512 } from '@noble/hashes/sha512';
+
+// Ensure Buffer is available at module load time
+const BufferImpl = ensureBuffer();
 
 // UTXO network parameters for address generation
 export const UTXO_NETWORKS = {
@@ -293,13 +291,13 @@ function deriveChild(
 
     // Add IL to parent key (mod n)
     const n = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
-    const parentBig = BigInt('0x' + Buffer.from(parentKey).toString('hex'));
-    const ILBig = BigInt('0x' + Buffer.from(IL).toString('hex'));
+    const parentBig = BigInt('0x' + BufferImpl.from(parentKey).toString('hex'));
+    const ILBig = BigInt('0x' + BufferImpl.from(IL).toString('hex'));
     const childKey = (parentBig + ILBig) % n;
 
     const keyHex = childKey.toString(16).padStart(64, '0');
     return {
-      key: new Uint8Array(Buffer.from(keyHex, 'hex')),
+      key: new Uint8Array(BufferImpl.from(keyHex, 'hex')),
       chainCode: new Uint8Array(IR), // Return copy
     };
   } finally {
@@ -333,7 +331,7 @@ function isValidPrivateKey(key: Uint8Array): boolean {
 
   // Check if less than curve order n
   const n = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
-  const keyBig = BigInt('0x' + Buffer.from(key).toString('hex'));
+  const keyBig = BigInt('0x' + BufferImpl.from(key).toString('hex'));
   return keyBig < n;
 }
 
@@ -564,7 +562,7 @@ function base58CheckEncode(payload: Uint8Array, version: number | number[]): str
   const bytes = new Uint8Array([...data, ...checksum]);
 
   // Convert to base58
-  let num = BigInt('0x' + Buffer.from(bytes).toString('hex'));
+  let num = BigInt('0x' + BufferImpl.from(bytes).toString('hex'));
   let result = '';
 
   while (num > 0n) {
