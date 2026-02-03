@@ -154,7 +154,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // IBC transfer state
   const [ibcConnections, setIbcConnections] = useState<IBCChannel[]>([]);
-  const [loadingIbcConnections, setLoadingIbcConnections] = useState(false);
+  const [, setLoadingIbcConnections] = useState(false);
   const [selectedIbcAsset, setSelectedIbcAsset] = useState<{
     asset: RegistryAsset;
     balance: string;
