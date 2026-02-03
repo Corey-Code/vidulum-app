@@ -16,6 +16,11 @@ if (typeof globalThis.Buffer === 'undefined') {
  * Runtime check to ensure Buffer is available
  * This provides a safeguard against initialization order issues
  *
+ * Note: While the module-level check (lines 11-13) should guarantee Buffer
+ * is available, this function provides an additional safety layer for edge cases
+ * where modules might be loaded in unexpected order or the module initialization
+ * is bypassed (e.g., dynamic imports, circular dependencies).
+ *
  * @returns The Buffer constructor, guaranteed to be available
  */
 export function ensureBuffer(): typeof Buffer {
