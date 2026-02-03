@@ -187,10 +187,11 @@ describe('Solana Crypto', () => {
 
     it('should handle decode errors gracefully', () => {
       // These should trigger decode errors and return false
-      expect(isValidSolanaAddress('0' + '1'.repeat(35))).toBe(false); // Invalid char '0'
-      expect(isValidSolanaAddress('O' + '1'.repeat(35))).toBe(false); // Invalid char 'O'
-      expect(isValidSolanaAddress('I' + '1'.repeat(35))).toBe(false); // Invalid char 'I'
-      expect(isValidSolanaAddress('l' + '1'.repeat(35))).toBe(false); // Invalid char 'l'
+      // All strings are within valid length range (32-44) to specifically test decode error handling
+      expect(isValidSolanaAddress('0' + '1'.repeat(31))).toBe(false); // Invalid char '0'
+      expect(isValidSolanaAddress('O' + '1'.repeat(31))).toBe(false); // Invalid char 'O'
+      expect(isValidSolanaAddress('I' + '1'.repeat(31))).toBe(false); // Invalid char 'I'
+      expect(isValidSolanaAddress('l' + '1'.repeat(31))).toBe(false); // Invalid char 'l'
     });
   });
 

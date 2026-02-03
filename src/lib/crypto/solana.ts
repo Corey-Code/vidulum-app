@@ -52,6 +52,12 @@ function encodeBase58(buffer: Uint8Array): string {
     .join('');
 }
 
+/**
+ * Decode a base58-encoded string to bytes
+ * @param str Base58-encoded string
+ * @returns Decoded bytes as Uint8Array
+ * @throws Error if string contains invalid base58 characters
+ */
 function decodeBase58(str: string): Uint8Array {
   if (str.length === 0) return new Uint8Array(0);
 
