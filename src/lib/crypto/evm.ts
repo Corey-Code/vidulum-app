@@ -5,28 +5,12 @@
  * Uses BIP32/BIP44 with coin type 60 for Ethereum-compatible chains.
  */
 
-import { Buffer } from 'buffer';
+import { ensureBuffer } from '../buffer-polyfill';
 import * as bip39 from 'bip39';
 import * as secp256k1 from '@noble/secp256k1';
 import { hmac } from '@noble/hashes/hmac';
 import { sha512 } from '@noble/hashes/sha512';
 import { keccak_256 } from '@noble/hashes/sha3';
-
-// Polyfill Buffer for browser environment
-if (typeof globalThis.Buffer === 'undefined') {
-  globalThis.Buffer = Buffer;
-}
-
-/**
- * Runtime check to ensure Buffer is available
- * This provides a safeguard against initialization order issues
- */
-function ensureBuffer(): typeof Buffer {
-  if (typeof globalThis.Buffer === 'undefined') {
-    globalThis.Buffer = Buffer;
-  }
-  return globalThis.Buffer;
-}
 
 /**
  * EVM Key Pair
@@ -97,7 +81,6 @@ function deriveChild(
       const IR = I.slice(32);
       intermediates.push(IL);
 
-      const BufferImpl = ensureBuffer();
       const ILBig = BigInt('0x' + BufferImpl.from(IL).toString('hex'));
 
       // BIP32: if IL == 0 or IL >= n, discard this child and try next index

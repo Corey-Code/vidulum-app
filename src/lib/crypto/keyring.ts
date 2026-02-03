@@ -1,20 +1,4 @@
-import { Buffer } from 'buffer';
-// Polyfill Buffer for browser environment (needed by bip39)
-if (typeof globalThis.Buffer === 'undefined') {
-  globalThis.Buffer = Buffer;
-}
-
-/**
- * Runtime check to ensure Buffer is available
- * This provides a safeguard against initialization order issues
- */
-function ensureBuffer(): typeof Buffer {
-  if (typeof globalThis.Buffer === 'undefined') {
-    globalThis.Buffer = Buffer;
-  }
-  return globalThis.Buffer;
-}
-
+import { ensureBuffer } from '../buffer-polyfill';
 import { DirectSecp256k1HdWallet, makeCosmoshubPath } from '@cosmjs/proto-signing';
 import {
   AminoSignResponse,

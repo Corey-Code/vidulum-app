@@ -6,28 +6,12 @@
  * BIP84 (native SegWit), and BIP141 (SegWit encoding).
  */
 
-import { Buffer } from 'buffer';
-// Polyfill Buffer for browser environment
-if (typeof globalThis.Buffer === 'undefined') {
-  globalThis.Buffer = Buffer;
-}
-
+import { ensureBuffer } from '../buffer-polyfill';
 import { sha256 } from '@noble/hashes/sha256';
 import { ripemd160 } from '@noble/hashes/ripemd160';
 import * as secp256k1 from '@noble/secp256k1';
 import { hmac } from '@noble/hashes/hmac';
 import { sha512 } from '@noble/hashes/sha512';
-
-/**
- * Runtime check to ensure Buffer is available
- * This provides a safeguard against initialization order issues
- */
-function ensureBuffer(): typeof Buffer {
-  if (typeof globalThis.Buffer === 'undefined') {
-    globalThis.Buffer = Buffer;
-  }
-  return globalThis.Buffer;
-}
 
 // UTXO network parameters for address generation
 export const UTXO_NETWORKS = {

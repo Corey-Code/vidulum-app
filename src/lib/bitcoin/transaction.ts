@@ -17,28 +17,12 @@
  * - Legacy signature scripts
  */
 
-import { Buffer } from 'buffer';
+import { ensureBuffer } from '../buffer-polyfill';
 import { sha256 } from '@noble/hashes/sha256';
 import { ripemd160 } from '@noble/hashes/ripemd160';
 import * as secp256k1 from '@noble/secp256k1';
 import { UTXO } from './client';
 import { BitcoinNetworkConfig } from '../networks/types';
-
-// Ensure Buffer is available
-if (typeof globalThis.Buffer === 'undefined') {
-  globalThis.Buffer = Buffer;
-}
-
-/**
- * Runtime check to ensure Buffer is available
- * This provides a safeguard against initialization order issues
- */
-function ensureBuffer(): typeof Buffer {
-  if (typeof globalThis.Buffer === 'undefined') {
-    globalThis.Buffer = Buffer;
-  }
-  return globalThis.Buffer;
-}
 
 // ============================================================================
 // Types
