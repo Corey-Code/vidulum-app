@@ -125,14 +125,18 @@ describe('Bitcoin Crypto', () => {
       expect(path).toBe("m/84'/1'/0'/0/0");
     });
 
-    it('should increment account index', () => {
+    it('should increment account index in address position (Keplr-compatible)', () => {
+      // Keplr compatibility: accountIndex goes in the last position (address index)
+      // Path: m/purpose'/coinType'/0'/change/accountIndex
       const path = getBitcoinDerivationPath(5, 0, false, 'p2wpkh', 'mainnet');
-      expect(path).toBe("m/84'/0'/5'/0/0");
+      expect(path).toBe("m/84'/0'/0'/0/5");
     });
 
-    it('should increment address index', () => {
+    it('should ignore addressIndex parameter (uses accountIndex in last position)', () => {
+      // In Keplr-compatible mode, addressIndex parameter is effectively ignored
+      // since accountIndex takes the last position
       const path = getBitcoinDerivationPath(0, 3, false, 'p2wpkh', 'mainnet');
-      expect(path).toBe("m/84'/0'/0'/0/3");
+      expect(path).toBe("m/84'/0'/0'/0/0");
     });
 
     it('should use change path when isChange is true', () => {
@@ -142,34 +146,49 @@ describe('Bitcoin Crypto', () => {
   });
 
   describe('getUtxoDerivationPath', () => {
-    it('should generate BIP44 path for Bitcoin', () => {
-      const path = getUtxoDerivationPath('bitcoin-mainnet', 0, 0);
+    it('should generate BIP84 path for Bitcoin with p2wpkh (native SegWit)', () => {
+      const path = getUtxoDerivationPath('bitcoin-mainnet', 0, 0, false, 'p2wpkh');
+      expect(path).toBe("m/84'/0'/0'/0/0");
+    });
+
+    it('should generate BIP44 path for Bitcoin with p2pkh (legacy)', () => {
+      const path = getUtxoDerivationPath('bitcoin-mainnet', 0, 0, false, 'p2pkh');
       expect(path).toBe("m/44'/0'/0'/0/0");
     });
 
-    it('should use correct coin type for Litecoin', () => {
-      const path = getUtxoDerivationPath('litecoin-mainnet', 0, 0);
+    it('should use correct coin type for Litecoin with legacy', () => {
+      const path = getUtxoDerivationPath('litecoin-mainnet', 0, 0, false, 'p2pkh');
       expect(path).toBe("m/44'/2'/0'/0/0");
     });
 
     it('should use correct coin type for Zcash', () => {
-      const path = getUtxoDerivationPath('zcash-mainnet', 0, 0);
+      const path = getUtxoDerivationPath('zcash-mainnet', 0, 0, false, 'p2pkh');
       expect(path).toBe("m/44'/133'/0'/0/0");
     });
 
     it('should use correct coin type for Ravencoin', () => {
-      const path = getUtxoDerivationPath('ravencoin-mainnet', 0, 0);
+      const path = getUtxoDerivationPath('ravencoin-mainnet', 0, 0, false, 'p2pkh');
       expect(path).toBe("m/44'/175'/0'/0/0");
     });
 
     it('should use correct coin type for Dogecoin', () => {
-      const path = getUtxoDerivationPath('dogecoin-mainnet', 0, 0);
+      const path = getUtxoDerivationPath('dogecoin-mainnet', 0, 0, false, 'p2pkh');
       expect(path).toBe("m/44'/3'/0'/0/0");
     });
 
     it('should use change path', () => {
-      const path = getUtxoDerivationPath('bitcoin-mainnet', 0, 0, true);
+      const path = getUtxoDerivationPath('bitcoin-mainnet', 0, 0, true, 'p2pkh');
       expect(path).toBe("m/44'/0'/0'/1/0");
+    });
+
+    it('should use BIP49 for nested SegWit', () => {
+      const path = getUtxoDerivationPath('bitcoin-mainnet', 0, 0, false, 'p2sh-p2wpkh');
+      expect(path).toBe("m/49'/0'/0'/0/0");
+    });
+
+    it('should use BIP86 for taproot', () => {
+      const path = getUtxoDerivationPath('bitcoin-mainnet', 0, 0, false, 'taproot');
+      expect(path).toBe("m/86'/0'/0'/0/0");
     });
   });
 

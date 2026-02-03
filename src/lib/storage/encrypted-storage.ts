@@ -19,6 +19,16 @@ interface ImportedAccount {
   account: SerializedAccount;
   encryptedMnemonic: string;
   salt: string;
+  // Pre-derived addresses for non-Cosmos chains (so we don't need mnemonic to display them)
+  derivedAddresses?: {
+    bitcoin?: Record<string, string>; // networkId -> address
+    evm?: Record<string, string>; // networkId -> address
+  };
+}
+
+// Extended interface for accounts derived from another imported account
+interface ImportedAccountWithSource extends ImportedAccount {
+  sourceAddress: string; // The cosmos address of the wallet this was derived from
 }
 
 interface StoredWallet {
@@ -214,6 +224,42 @@ export class EncryptedStorage {
     return !!result[this.WALLET_KEY];
   }
 
+  // Verify the password is correct for the main wallet
+  static async verifyPassword(password: string): Promise<boolean> {
+    const result = await browser.storage.local.get(this.WALLET_KEY);
+    const wallet = result[this.WALLET_KEY] as StoredWallet | LegacyStoredWallet | undefined;
+
+    if (!wallet) {
+      console.error('verifyPassword: No wallet found in storage');
+      throw new Error('No wallet found');
+    }
+
+    const migratedWallet = migrateWalletData(wallet);
+
+    try {
+      const key = await this.deriveKey(password, migratedWallet.salt);
+      await this.decrypt(migratedWallet.encryptedMnemonic, key);
+      return true;
+    } catch (error) {
+      console.error('verifyPassword: Decryption failed', error);
+
+      // Heuristically treat known authentication failures as "wrong password"
+      if (error instanceof Error) {
+        const message = error.message.toLowerCase();
+        if (
+          message.includes('wrong password') ||
+          message.includes('invalid password') ||
+          message.includes('authentication failed')
+        ) {
+          return false;
+        }
+      }
+
+      // For all other errors (e.g. corrupted data, unexpected failures), rethrow
+      throw error;
+    }
+  }
+
   // Load just the account metadata (no password required - no mnemonic returned)
   static async loadWalletMetadata(): Promise<{ accounts: KeyringAccount[] } | null> {
     const result = await browser.storage.local.get(this.WALLET_KEY);
@@ -255,7 +301,11 @@ export class EncryptedStorage {
   static async addImportedAccount(
     mnemonic: string,
     password: string,
-    account: KeyringAccount
+    account: KeyringAccount,
+    derivedAddresses?: {
+      bitcoin?: Record<string, string>;
+      evm?: Record<string, string>;
+    }
   ): Promise<void> {
     const result = await browser.storage.local.get(this.WALLET_KEY);
     let wallet = result[this.WALLET_KEY] as StoredWallet | LegacyStoredWallet | undefined;
@@ -275,6 +325,7 @@ export class EncryptedStorage {
       account: this.serializeAccount(account),
       encryptedMnemonic,
       salt,
+      derivedAddresses,
     };
 
     migratedWallet.importedAccounts = migratedWallet.importedAccounts || [];
@@ -321,16 +372,108 @@ export class EncryptedStorage {
       return null;
     }
 
-    const imported = migratedWallet.importedAccounts.find(
-      (imp) => imp.account.address === address
-    );
+    const imported = migratedWallet.importedAccounts.find((imp) => imp.account.address === address);
 
     if (!imported) {
+      console.error('getImportedAccountMnemonic: Account not found in importedAccounts');
       return null;
     }
 
-    const key = await this.deriveKey(password, imported.salt);
-    return await this.decrypt(imported.encryptedMnemonic, key);
+    try {
+      const key = await this.deriveKey(password, imported.salt);
+      return await this.decrypt(imported.encryptedMnemonic, key);
+    } catch (error) {
+      console.error('getImportedAccountMnemonic: Failed to decrypt (wrong password?)', error);
+      return null;
+    }
+  }
+
+  // Get pre-derived addresses for an imported account (no password required)
+  static async getImportedAccountDerivedAddresses(
+    cosmosAddress: string
+  ): Promise<{ bitcoin?: Record<string, string>; evm?: Record<string, string> } | null> {
+    const result = await browser.storage.local.get(this.WALLET_KEY);
+    const wallet = result[this.WALLET_KEY] as StoredWallet | LegacyStoredWallet | undefined;
+
+    if (!wallet) {
+      return null;
+    }
+
+    const migratedWallet = migrateWalletData(wallet);
+
+    if (!migratedWallet.importedAccounts) {
+      return null;
+    }
+
+    const imported = migratedWallet.importedAccounts.find(
+      (imp) => imp.account.address === cosmosAddress
+    );
+
+    return imported?.derivedAddresses || null;
+  }
+
+  // Get all imported accounts that were derived from a specific source wallet
+  static async getImportedAccountsFromSource(sourceAddress: string): Promise<KeyringAccount[]> {
+    const result = await browser.storage.local.get(this.WALLET_KEY);
+    const wallet = result[this.WALLET_KEY] as StoredWallet | LegacyStoredWallet | undefined;
+
+    if (!wallet) {
+      return [];
+    }
+
+    const migratedWallet = migrateWalletData(wallet);
+
+    if (!migratedWallet.importedAccounts) {
+      return [];
+    }
+
+    // Filter accounts that have this source address
+    // Include the source itself (sourceAddress matches the account) + any derived from it
+    return migratedWallet.importedAccounts
+      .filter(
+        (imp) =>
+          imp.account.address === sourceAddress ||
+          (imp as ImportedAccountWithSource).sourceAddress === sourceAddress
+      )
+      .map((imp) => this.deserializeAccount(imp.account));
+  }
+
+  // Add an imported account that was derived from another imported account
+  static async addImportedAccountFromSource(
+    mnemonic: string,
+    password: string,
+    account: KeyringAccount,
+    derivedAddresses: {
+      bitcoin?: Record<string, string>;
+      evm?: Record<string, string>;
+    },
+    sourceAddress: string
+  ): Promise<void> {
+    const result = await browser.storage.local.get(this.WALLET_KEY);
+    let wallet = result[this.WALLET_KEY] as StoredWallet | LegacyStoredWallet | undefined;
+
+    if (!wallet) {
+      throw new Error('No wallet found');
+    }
+
+    const migratedWallet = migrateWalletData(wallet);
+
+    const salt = this.generateSalt();
+    const key = await this.deriveKey(password, salt);
+    const encryptedMnemonic = await this.encrypt(mnemonic, key);
+
+    const importedAccount: ImportedAccountWithSource = {
+      account: this.serializeAccount(account),
+      encryptedMnemonic,
+      salt,
+      derivedAddresses,
+      sourceAddress, // Track which wallet this was derived from
+    };
+
+    migratedWallet.importedAccounts = migratedWallet.importedAccounts || [];
+    migratedWallet.importedAccounts.push(importedAccount);
+
+    await browser.storage.local.set({ [this.WALLET_KEY]: migratedWallet });
   }
 
   static async setSession(sessionId: string, serializedWallet?: string): Promise<void> {

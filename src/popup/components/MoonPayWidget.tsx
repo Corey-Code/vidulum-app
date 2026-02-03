@@ -6,8 +6,8 @@ const MoonPaySDKWidgetLazy = __IS_WEB_BUILD__ ? lazy(() => import('./MoonPaySDKW
 
 interface MoonPayWidgetProps {
   flow: 'buy' | 'sell';
-  cryptoCode: string;
-  walletAddress: string;
+  cryptoCode?: string;
+  walletAddress?: string;
   amount?: string;
   colorCode?: string;
   onClose?: () => void;
@@ -63,8 +63,8 @@ const MoonPayWidget: React.FC<MoonPayWidgetProps> = (props) => {
  */
 const MoonPayIframeWidget: React.FC<MoonPayWidgetProps> = ({
   flow,
-  cryptoCode,
-  walletAddress,
+  cryptoCode = 'usdc_base',
+  walletAddress = '',
   amount,
   colorCode = '#3182CE',
   onClose,

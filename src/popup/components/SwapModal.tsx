@@ -497,8 +497,6 @@ const SwapModal: React.FC<SwapModalProps> = ({
         memo: '',
       };
 
-      console.log('Sign doc:', JSON.stringify(signDoc, null, 2));
-
       // Sign using Amino
       const signResponse = await keyring.signAmino(chainAddress, signDoc);
 
@@ -570,8 +568,6 @@ const SwapModal: React.FC<SwapModalProps> = ({
       // Encode to bytes and then base64
       const txBytes = TxRaw.encode(txRaw).finish();
       const txBytesBase64 = toBase64(txBytes);
-
-      console.log('Broadcasting tx bytes:', txBytesBase64);
 
       // Broadcast via cosmos/tx/v1beta1/txs endpoint
       const broadcastResponse = await fetch('https://rest.getbze.com/cosmos/tx/v1beta1/txs', {

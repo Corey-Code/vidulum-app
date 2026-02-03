@@ -1,9 +1,4 @@
-import { Buffer } from 'buffer';
-// Polyfill Buffer for browser environment (needed by bip39)
-if (typeof globalThis.Buffer === 'undefined') {
-  globalThis.Buffer = Buffer;
-}
-
+import { ensureBuffer } from '../buffer-polyfill';
 import { DirectSecp256k1HdWallet, makeCosmoshubPath } from '@cosmjs/proto-signing';
 import {
   AminoSignResponse,
@@ -26,7 +21,11 @@ import {
   UtxoNetworkId,
   UTXO_NETWORKS,
 } from './bitcoin';
-import { deriveEvmKeyPair, getEvmDerivationPath, EvmKeyPair } from './evm';
+import { deriveEvmKeyPair, getEvmDerivationPath } from './evm';
+import { networkRegistry } from '@/lib/networks';
+
+// Ensure Buffer is available at module load time
+const BufferImpl = ensureBuffer();
 
 export interface KeyringAccount {
   id: string;
@@ -237,7 +236,7 @@ export class Keyring {
       signature: response.signature.signature,
       pub_key: {
         type: 'tendermint/PubKeySecp256k1',
-        value: Buffer.from(account.pubKey).toString('base64'),
+        value: BufferImpl.from(account.pubKey).toString('base64'),
       },
     };
   }
@@ -253,15 +252,15 @@ export class Keyring {
   ): Promise<boolean> {
     try {
       // Decode the signature and public key from base64
-      const signatureBytes = Buffer.from(signature.signature, 'base64');
-      const pubKeyBytes = Buffer.from(signature.pub_key.value, 'base64');
+      const signatureBytes = BufferImpl.from(signature.signature, 'base64');
+      const pubKeyBytes = BufferImpl.from(signature.pub_key.value, 'base64');
 
       // Verify the public key matches the signer address
       // Derive address from public key and compare
       const account = this.accounts.find((acc) => acc.address === signerAddress);
       if (account) {
         // If we have the account, verify the pubkey matches
-        const storedPubKeyBase64 = Buffer.from(account.pubKey).toString('base64');
+        const storedPubKeyBase64 = BufferImpl.from(account.pubKey).toString('base64');
         if (storedPubKeyBase64 !== signature.pub_key.value) {
           return false;
         }
@@ -331,6 +330,46 @@ export class Keyring {
     return this.wallet;
   }
 
+  /**
+   * Get a wallet instance with a specific chain prefix for signing transactions
+   * This creates a new wallet with the same mnemonic but different prefix
+   * @param prefix - The bech32 prefix for the chain
+   * @param accountIndex - Optional specific account index to include (ensures this account is derived)
+   */
+  async getWalletForChain(prefix: string, accountIndex?: number): Promise<DirectSecp256k1HdWallet> {
+    if (!this.mnemonic) {
+      throw new Error('Mnemonic not available - wallet may need to be unlocked');
+    }
+
+    // If the prefix matches our current wallet and no specific account requested, return it
+    if (prefix === this.prefix && this.wallet && accountIndex === undefined) {
+      return this.wallet;
+    }
+
+    // Create HD paths for all account indices we have
+    let accountIndices = this.accounts.map((acc) => acc.accountIndex);
+
+    // Ensure the requested accountIndex is included
+    if (accountIndex !== undefined && !accountIndices.includes(accountIndex)) {
+      accountIndices = [...accountIndices, accountIndex];
+    }
+
+    // If no accounts, default to account 0
+    if (accountIndices.length === 0) {
+      accountIndices = [0];
+    }
+
+    const hdPaths = accountIndices.map((index) => makeCosmoshubPath(index));
+
+    // Create a new wallet with the requested prefix
+    const wallet = await DirectSecp256k1HdWallet.fromMnemonic(this.mnemonic, {
+      prefix,
+      hdPaths,
+    });
+
+    return wallet;
+  }
+
   // ============================================================================
   // Bitcoin Support
   // ============================================================================
@@ -352,12 +391,15 @@ export class Keyring {
     // Check if already derived using composite key
     const accountKey = this.getAccountKey(networkId, accountIndex);
     const existing = this.bitcoinAccounts.get(accountKey);
-    if (existing) {
+
+    // Return existing if it has valid keys (non-empty)
+    if (existing && existing.privateKey.length > 0) {
       return existing;
     }
 
-    // Derive keys
-    const seed = await bip39.mnemonicToSeed(this.mnemonic);
+    // Derive keys - ensure seed is a proper Uint8Array
+    const seedBuffer = await bip39.mnemonicToSeed(this.mnemonic);
+    const seed = new Uint8Array(seedBuffer);
 
     let path: string;
     let address: string;
@@ -366,7 +408,8 @@ export class Keyring {
     if (networkId in UTXO_NETWORKS) {
       // Use UTXO-specific derivation path and address generation
       const utxoNetworkId = networkId as UtxoNetworkId;
-      path = getUtxoDerivationPath(utxoNetworkId, accountIndex, 0, false);
+      // Pass addressType to get correct BIP purpose (84 for native SegWit, 44 for legacy, etc.)
+      path = getUtxoDerivationPath(utxoNetworkId, accountIndex, 0, false, addressType);
       const keyPair = await deriveBitcoinKeyPairFromSeed(seed, path);
       address = getUtxoAddress(keyPair.publicKey, utxoNetworkId, addressType);
 
@@ -445,18 +488,58 @@ export class Keyring {
 
   /**
    * Get Bitcoin private key for signing (use carefully!)
+   * Will re-derive keys if they were restored from session without keys
    */
-  getBitcoinPrivateKey(networkId: string, accountIndex: number = 0): Uint8Array | undefined {
+  async getBitcoinPrivateKey(
+    networkId: string,
+    accountIndex: number = 0
+  ): Promise<Uint8Array | undefined> {
     const accountKey = this.getAccountKey(networkId, accountIndex);
-    return this.bitcoinAccounts.get(accountKey)?.privateKey;
+    let account = this.bitcoinAccounts.get(accountKey);
+
+    // If account doesn't exist or keys are empty, try to derive
+    if ((!account || account.privateKey.length === 0) && this.mnemonic) {
+      const network = networkRegistry.getBitcoin(networkId);
+      if (network) {
+        const reDerived = await this.deriveBitcoinAccount(
+          networkId,
+          network.network,
+          accountIndex,
+          network.addressType as 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent'
+        );
+        return reDerived?.privateKey;
+      }
+    }
+
+    return account?.privateKey;
   }
 
   /**
    * Get Bitcoin public key
+   * Will re-derive keys if they were restored from session without keys
    */
-  getBitcoinPublicKey(networkId: string, accountIndex: number = 0): Uint8Array | undefined {
+  async getBitcoinPublicKey(
+    networkId: string,
+    accountIndex: number = 0
+  ): Promise<Uint8Array | undefined> {
     const accountKey = this.getAccountKey(networkId, accountIndex);
-    return this.bitcoinAccounts.get(accountKey)?.publicKey;
+    let account = this.bitcoinAccounts.get(accountKey);
+
+    // If account doesn't exist or keys are empty, try to derive
+    if ((!account || account.publicKey.length === 0) && this.mnemonic) {
+      const network = networkRegistry.getBitcoin(networkId);
+      if (network) {
+        const reDerived = await this.deriveBitcoinAccount(
+          networkId,
+          network.network,
+          accountIndex,
+          network.addressType as 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent'
+        );
+        return reDerived?.publicKey;
+      }
+    }
+
+    return account?.publicKey;
   }
 
   // ============================================================================
