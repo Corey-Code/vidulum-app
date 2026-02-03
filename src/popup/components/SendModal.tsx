@@ -74,6 +74,7 @@ const SendModal: React.FC<SendModalProps> = ({
   const [estimatedFee, setEstimatedFee] = useState<FeeEstimate | null>(null);
   const [simulatingFee, setSimulatingFee] = useState(false);
   const [isSweepAll, setIsSweepAll] = useState(false);
+  const [calculatingMax, setCalculatingMax] = useState(false);
 
   const toast = useToast();
 
@@ -385,10 +386,15 @@ const SendModal: React.FC<SendModalProps> = ({
     return address.startsWith(addressPrefix) && address.length >= 39;
   };
 
-  const handleMaxAmount = () => {
+  const handleMaxAmount = async () => {
+    // Prevent concurrent executions
+    if (calculatingMax) return;
+
     if (isBitcoin) {
       // For Bitcoin sweep, we'll use the sweepAll mode which calculates exact fee at send time
-      // based on actual UTXO count. Display estimated max for UI.
+      // based on actual UTXO count. Fetch UTXOs to display accurate fee estimate in UI.
+      // Improved fee estimation based on review feedback:
+      // https://github.com/Corey-Code/vidulum-app/pull/52#discussion_r2756997417
       const balanceInSats = Math.floor(availableBalance * Math.pow(10, nativeDecimals));
 
       if (balanceInSats <= 0) {
@@ -397,17 +403,50 @@ const SendModal: React.FC<SendModalProps> = ({
         return;
       }
 
-      // Estimate fee for UI display (actual sweep will calculate exact fee)
-      // For SegWit P2WPKH: ~68 vbytes per input + ~31 vbytes for output + 10.5 vbytes overhead
-      const feeRate = estimatedFee ? Math.ceil(parseInt(estimatedFee.amount) / 140) : 10; // sats/vbyte
-      const estimatedVbytes = 110; // Single input estimate for display
-      const feeInSats = feeRate * estimatedVbytes;
+      // Helper function to calculate and set max amount
+      const calculateAndSetMaxAmount = (vbytes: number) => {
+        // Extract fee rate from estimated fee
+        // The estimatedFee.amount represents the total fee in satoshis for a baseline transaction
+        // of ~140 vbytes (1 SegWit P2WPKH input + 2 P2WPKH outputs + overhead). We divide by 140
+        // to derive the sats/vbyte rate, which we then apply to our actual transaction size.
+        const feeRate = estimatedFee ? Math.ceil(parseInt(estimatedFee.amount) / 140) : 10; // sats/vbyte
+        const feeInSats = feeRate * vbytes;
 
-      // Show estimated max (actual sweep will send everything minus exact fee)
-      const maxSats = Math.max(0, balanceInSats - feeInSats);
-      const maxAmount = maxSats / Math.pow(10, nativeDecimals);
-      setAmount(maxAmount.toFixed(8));
-      setIsSweepAll(true); // Enable sweep mode for exact max
+        // Show estimated max (actual sweep will send everything minus exact fee)
+        const maxSats = Math.max(0, balanceInSats - feeInSats);
+        const maxAmount = maxSats / Math.pow(10, nativeDecimals);
+        setAmount(maxAmount.toFixed(8));
+        setIsSweepAll(true); // Enable sweep mode for exact max
+      };
+
+      setCalculatingMax(true);
+      try {
+        // Fetch actual UTXOs to calculate accurate fee estimate for UI display
+        const client = getBitcoinClient(chainId);
+        const utxos = await client.getConfirmedUTXOs(chainAddress);
+        const utxoCount = utxos.length;
+
+        // Determine if network supports SegWit for accurate size calculation
+        const btcNetwork = networkRegistry.getBitcoin(chainId);
+        const isSegWit = btcNetwork?.addressType === 'p2wpkh' || btcNetwork?.addressType === 'p2sh-p2wpkh';
+
+        // Calculate estimated transaction size based on actual UTXO count
+        // For SegWit P2WPKH: ~68 vbytes per input + ~31 vbytes for output + 11 vbytes overhead
+        // For legacy P2PKH: ~148 vbytes per input + ~34 vbytes for output + 10 vbytes overhead
+        const inputSize = isSegWit ? 68 : 148;
+        const outputSize = isSegWit ? 31 : 34;
+        const overhead = isSegWit ? 11 : 10;
+        const estimatedVbytes = overhead + (utxoCount * inputSize) + outputSize;
+
+        calculateAndSetMaxAmount(estimatedVbytes);
+      } catch (error) {
+        console.warn('Failed to fetch UTXOs for accurate fee calculation, using conservative single-input estimate instead:', error);
+        // Fallback to single input estimate if UTXO fetch fails
+        const estimatedVbytes = 110; // Conservative single SegWit input estimate
+        calculateAndSetMaxAmount(estimatedVbytes);
+      } finally {
+        setCalculatingMax(false);
+      }
       return;
     }
 
