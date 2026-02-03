@@ -12,6 +12,9 @@ import { hmac } from '@noble/hashes/hmac';
 import { sha512 } from '@noble/hashes/sha512';
 import { keccak_256 } from '@noble/hashes/sha3';
 
+// Ensure Buffer is available at module load time
+const BufferImpl = ensureBuffer();
+
 /**
  * EVM Key Pair
  */
@@ -41,7 +44,6 @@ function deriveChild(
 ): { key: Uint8Array; chainCode: Uint8Array } {
   // Curve order for secp256k1
   const n = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
-  const BufferImpl = ensureBuffer();
   const parentBig = BigInt('0x' + BufferImpl.from(parentKey).toString('hex'));
   let currentIndex = index;
 
@@ -145,7 +147,6 @@ function isValidPrivateKey(key: Uint8Array): boolean {
 
   // Check if less than curve order n
   const n = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
-  const BufferImpl = ensureBuffer();
   const keyBig = BigInt('0x' + BufferImpl.from(key).toString('hex'));
   return keyBig < n;
 }
@@ -233,7 +234,6 @@ export async function deriveEvmKeyPairFromSeed(
     const addressBytes = addressHash.slice(-20);
 
     // Convert to checksummed address
-    const BufferImpl = ensureBuffer();
     const address = toChecksumAddress('0x' + BufferImpl.from(addressBytes).toString('hex'));
 
     // Create copies for return (originals will be zeroed)
@@ -273,7 +273,6 @@ export async function deriveEvmKeyPair(
  */
 export function toChecksumAddress(address: string): string {
   const addr = address.toLowerCase().replace('0x', '');
-  const BufferImpl = ensureBuffer();
   const hash = BufferImpl.from(keccak_256(new TextEncoder().encode(addr))).toString('hex');
 
   let checksumAddress = '0x';
@@ -359,7 +358,6 @@ export function hasValidChecksum(address: string): boolean {
  * Get private key as hex string
  */
 export function privateKeyToHex(privateKey: Uint8Array): string {
-  const BufferImpl = ensureBuffer();
   return '0x' + BufferImpl.from(privateKey).toString('hex');
 }
 
@@ -368,6 +366,5 @@ export function privateKeyToHex(privateKey: Uint8Array): string {
  */
 export function hexToPrivateKey(hex: string): Uint8Array {
   const cleanHex = hex.startsWith('0x') ? hex.slice(2) : hex;
-  const BufferImpl = ensureBuffer();
   return new Uint8Array(BufferImpl.from(cleanHex, 'hex'));
 }

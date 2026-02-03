@@ -17,7 +17,6 @@
  * - Legacy signature scripts
  */
 
-import { ensureBuffer } from '../buffer-polyfill';
 import { sha256 } from '@noble/hashes/sha256';
 import { ripemd160 } from '@noble/hashes/ripemd160';
 import * as secp256k1 from '@noble/secp256k1';

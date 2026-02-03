@@ -15,7 +15,7 @@ if (typeof globalThis.Buffer === 'undefined') {
 /**
  * Runtime check to ensure Buffer is available
  * This provides a safeguard against initialization order issues
- * 
+ *
  * @returns The Buffer constructor, guaranteed to be available
  */
 export function ensureBuffer(): typeof Buffer {

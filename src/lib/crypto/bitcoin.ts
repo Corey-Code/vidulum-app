@@ -13,6 +13,9 @@ import * as secp256k1 from '@noble/secp256k1';
 import { hmac } from '@noble/hashes/hmac';
 import { sha512 } from '@noble/hashes/sha512';
 
+// Ensure Buffer is available at module load time
+const BufferImpl = ensureBuffer();
+
 // UTXO network parameters for address generation
 export const UTXO_NETWORKS = {
   // Bitcoin
@@ -288,7 +291,6 @@ function deriveChild(
 
     // Add IL to parent key (mod n)
     const n = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
-    const BufferImpl = ensureBuffer();
     const parentBig = BigInt('0x' + BufferImpl.from(parentKey).toString('hex'));
     const ILBig = BigInt('0x' + BufferImpl.from(IL).toString('hex'));
     const childKey = (parentBig + ILBig) % n;
@@ -329,7 +331,6 @@ function isValidPrivateKey(key: Uint8Array): boolean {
 
   // Check if less than curve order n
   const n = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
-  const BufferImpl = ensureBuffer();
   const keyBig = BigInt('0x' + BufferImpl.from(key).toString('hex'));
   return keyBig < n;
 }
@@ -561,7 +562,6 @@ function base58CheckEncode(payload: Uint8Array, version: number | number[]): str
   const bytes = new Uint8Array([...data, ...checksum]);
 
   // Convert to base58
-  const BufferImpl = ensureBuffer();
   let num = BigInt('0x' + BufferImpl.from(bytes).toString('hex'));
   let result = '';
 

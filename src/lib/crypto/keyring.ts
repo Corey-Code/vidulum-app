@@ -24,6 +24,9 @@ import {
 import { deriveEvmKeyPair, getEvmDerivationPath } from './evm';
 import { networkRegistry } from '@/lib/networks';
 
+// Ensure Buffer is available at module load time
+const BufferImpl = ensureBuffer();
+
 export interface KeyringAccount {
   id: string;
   name: string;
@@ -229,7 +232,6 @@ export class Keyring {
 
     const response = await this.signAmino(signerAddress, signDoc);
 
-    const BufferImpl = ensureBuffer();
     return {
       signature: response.signature.signature,
       pub_key: {
@@ -250,7 +252,6 @@ export class Keyring {
   ): Promise<boolean> {
     try {
       // Decode the signature and public key from base64
-      const BufferImpl = ensureBuffer();
       const signatureBytes = BufferImpl.from(signature.signature, 'base64');
       const pubKeyBytes = BufferImpl.from(signature.pub_key.value, 'base64');
 
