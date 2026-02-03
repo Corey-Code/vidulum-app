@@ -116,12 +116,9 @@ function deriveChild(
 }
 
 /**
- * Securely zero out a Uint8Array to prevent sensitive data from lingering in memory
+ * Clear a Uint8Array to reduce the likelihood of sensitive data lingering in memory
  */
 function secureZero(arr: Uint8Array): void {
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    crypto.getRandomValues(arr);
-  }
   arr.fill(0);
 }
 
