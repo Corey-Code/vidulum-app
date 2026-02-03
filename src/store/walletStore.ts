@@ -66,13 +66,9 @@ async function lockBackground(): Promise<void> {
  * Pre-derive all addresses (Cosmos, Bitcoin, EVM) for all accounts
  * Called on wallet create/import/unlock to ensure all addresses are ready
  * Also handles new networks added after wallet was created
- *
- * @param forceReDerive - If true, re-derive all addresses even if they exist.
- *                        Use this after BIP32 derivation fixes to ensure correct addresses.
  */
 async function preDeriveAllAccounts(
-  keyring: Keyring,
-  forceReDerive: boolean = false
+  keyring: Keyring
 ): Promise<void> {
   const accounts = keyring.getAccounts();
   const bitcoinNetworks = networkRegistry.getEnabledByType('bitcoin');
@@ -83,16 +79,15 @@ async function preDeriveAllAccounts(
 
     // Derive all Bitcoin/UTXO addresses
     for (const network of bitcoinNetworks) {
-      // Skip if already derived (unless forcing re-derivation)
-      if (!forceReDerive && keyring.getBitcoinAddress(network.id, accountIndex)) continue;
+      // Skip if already derived
+      if (keyring.getBitcoinAddress(network.id, accountIndex)) continue;
 
       try {
         await keyring.deriveBitcoinAccount(
           network.id,
           network.network,
           accountIndex,
-          network.addressType,
-          forceReDerive // Pass forceReDerive to ensure correct BIP32 derivation
+          network.addressType
         );
       } catch (error) {
         console.warn(`Could not derive ${network.id} address for account ${accountIndex}:`, error);
@@ -417,8 +412,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     keyring.setMnemonic(wallet.mnemonic);
 
     // Pre-derive all addresses for all accounts (handles new networks added after wallet creation)
-    // Force re-derivation to ensure correct BIP32 derivation (fixes addresses after derivation bugfix)
-    await preDeriveAllAccounts(keyring, true);
+    await preDeriveAllAccounts(keyring);
 
     // Restore account names from storage
     const keyringAccounts = keyring.getAccounts();
