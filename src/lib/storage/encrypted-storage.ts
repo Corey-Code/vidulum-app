@@ -242,7 +242,21 @@ export class EncryptedStorage {
       return true;
     } catch (error) {
       console.error('verifyPassword: Decryption failed', error);
-      return false;
+
+      // Heuristically treat known authentication failures as "wrong password"
+      if (error instanceof Error) {
+        const message = error.message.toLowerCase();
+        if (
+          message.includes('wrong password') ||
+          message.includes('invalid password') ||
+          message.includes('authentication failed')
+        ) {
+          return false;
+        }
+      }
+
+      // For all other errors (e.g. corrupted data, unexpected failures), rethrow
+      throw error;
     }
   }
 
