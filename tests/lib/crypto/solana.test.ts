@@ -174,13 +174,15 @@ describe('Solana Crypto', () => {
     it('should accept valid base58 addresses that decode to 32 bytes', () => {
       // '11111111111111111111111111111111' decodes to 32 bytes of zeros
       expect(isValidSolanaAddress('11111111111111111111111111111111')).toBe(true);
+      // '1'.repeat(32) also decodes to 32 bytes of zeros
+      expect(isValidSolanaAddress('1'.repeat(32))).toBe(true);
     });
 
     it('should reject valid base58 strings that do not decode to 32 bytes', () => {
       // This is valid base58 but decodes to 44 bytes, not 32
       expect(isValidSolanaAddress('1'.repeat(44))).toBe(false);
       // Too short - decodes to less than 32 bytes
-      expect(isValidSolanaAddress('1'.repeat(32))).toBe(false);
+      expect(isValidSolanaAddress('1'.repeat(31))).toBe(false);
     });
 
     it('should handle decode errors gracefully', () => {

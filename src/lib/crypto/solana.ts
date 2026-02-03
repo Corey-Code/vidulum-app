@@ -55,7 +55,7 @@ function encodeBase58(buffer: Uint8Array): string {
 function decodeBase58(str: string): Uint8Array {
   if (str.length === 0) return new Uint8Array(0);
 
-  // Convert base58 string to bigint
+  // Convert base58 string to bytes
   const bytes = [0];
   for (let i = 0; i < str.length; i++) {
     const charIndex = BASE58_ALPHABET.indexOf(str[i]);
@@ -76,8 +76,21 @@ function decodeBase58(str: string): Uint8Array {
     }
   }
 
-  // Count and add leading zeros
-  for (let i = 0; str[i] === '1' && i < str.length - 1; i++) {
+  // Handle leading '1' characters (which represent leading zero bytes)
+  // Count leading '1's in the input
+  let leadingOnes = 0;
+  for (let i = 0; i < str.length && str[i] === '1'; i++) {
+    leadingOnes++;
+  }
+
+  // Count trailing zeros already in bytes (these will become leading zeros after reverse)
+  let trailingZeros = 0;
+  for (let i = bytes.length - 1; i >= 0 && bytes[i] === 0; i--) {
+    trailingZeros++;
+  }
+
+  // Add additional zeros needed for leading '1's
+  for (let i = trailingZeros; i < leadingOnes; i++) {
     bytes.push(0);
   }
 
