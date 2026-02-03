@@ -399,6 +399,21 @@ const SendModal: React.FC<SendModalProps> = ({
         return;
       }
 
+      // Helper function to calculate and set max amount
+      const calculateAndSetMaxAmount = (vbytes: number) => {
+        // Extract fee rate from estimated fee
+        // The estimatedFee.amount is the total fee in sats for a ~140 vbyte transaction
+        // Divide by 140 to get sats/vbyte rate
+        const feeRate = estimatedFee ? Math.ceil(parseInt(estimatedFee.amount) / 140) : 10; // sats/vbyte
+        const feeInSats = feeRate * vbytes;
+
+        // Show estimated max (actual sweep will send everything minus exact fee)
+        const maxSats = Math.max(0, balanceInSats - feeInSats);
+        const maxAmount = maxSats / Math.pow(10, nativeDecimals);
+        setAmount(maxAmount.toFixed(8));
+        setIsSweepAll(true); // Enable sweep mode for exact max
+      };
+
       try {
         // Fetch actual UTXOs to calculate accurate fee estimate for UI display
         const client = getBitcoinClient(chainId);
@@ -417,25 +432,12 @@ const SendModal: React.FC<SendModalProps> = ({
         const overhead = isSegWit ? 11 : 10;
         const estimatedVbytes = overhead + (utxoCount * inputSize) + outputSize;
 
-        // Estimate fee for UI display (actual sweep will calculate exact fee at send time)
-        const feeRate = estimatedFee ? Math.ceil(parseInt(estimatedFee.amount) / 140) : 10; // sats/vbyte
-        const feeInSats = feeRate * estimatedVbytes;
-
-        // Show estimated max (actual sweep will send everything minus exact fee)
-        const maxSats = Math.max(0, balanceInSats - feeInSats);
-        const maxAmount = maxSats / Math.pow(10, nativeDecimals);
-        setAmount(maxAmount.toFixed(8));
-        setIsSweepAll(true); // Enable sweep mode for exact max
+        calculateAndSetMaxAmount(estimatedVbytes);
       } catch (error) {
         console.warn('Failed to fetch UTXOs for max amount calculation, using fallback:', error);
         // Fallback to single input estimate if UTXO fetch fails
-        const feeRate = estimatedFee ? Math.ceil(parseInt(estimatedFee.amount) / 140) : 10;
         const estimatedVbytes = 110; // Single input estimate
-        const feeInSats = feeRate * estimatedVbytes;
-        const maxSats = Math.max(0, balanceInSats - feeInSats);
-        const maxAmount = maxSats / Math.pow(10, nativeDecimals);
-        setAmount(maxAmount.toFixed(8));
-        setIsSweepAll(true);
+        calculateAndSetMaxAmount(estimatedVbytes);
       }
       return;
     }
