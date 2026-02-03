@@ -93,9 +93,30 @@ describe('Known Assets', () => {
       expect(tokens).toEqual([]);
     });
 
-    it('should return empty array for non-Ethereum chains', () => {
-      expect(getKnownErc20Tokens(56)).toEqual([]); // BSC
-      expect(getKnownErc20Tokens(137)).toEqual([]); // Polygon
+    it('should return tokens for BSC (chainId 56)', () => {
+      const tokens = getKnownErc20Tokens(56);
+      expect(tokens.length).toBeGreaterThan(0);
+      tokens.forEach((token) => {
+        expect(token.denom).toBeDefined();
+        expect(token.symbol).toBeDefined();
+        expect(token.name).toBeDefined();
+        expect(typeof token.decimals).toBe('number');
+        expect(token.contractAddress).toBeDefined();
+        expect(token.chainId).toBe(56);
+      });
+    });
+
+    it('should return tokens for Polygon (chainId 137)', () => {
+      const tokens = getKnownErc20Tokens(137);
+      expect(tokens.length).toBeGreaterThan(0);
+      tokens.forEach((token) => {
+        expect(token.denom).toBeDefined();
+        expect(token.symbol).toBeDefined();
+        expect(token.name).toBeDefined();
+        expect(typeof token.decimals).toBe('number');
+        expect(token.contractAddress).toBeDefined();
+        expect(token.chainId).toBe(137);
+      });
     });
   });
 
