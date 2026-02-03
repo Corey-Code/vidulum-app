@@ -379,14 +379,12 @@ export class Keyring {
   /**
    * Derive a UTXO account from the mnemonic
    * Supports Bitcoin, Zcash, Flux, Ravencoin, and other UTXO chains
-   * @param forceReDerive - If true, re-derive keys even if account exists (useful after session restore)
    */
   async deriveBitcoinAccount(
     networkId: string,
     network: BitcoinNetwork = 'mainnet',
     accountIndex: number = 0,
-    addressType: 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent' = 'p2wpkh',
-    forceReDerive: boolean = false
+    addressType: 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent' = 'p2wpkh'
   ): Promise<BitcoinKeyringAccount> {
     if (!this.mnemonic) {
       throw new Error('Wallet not initialized');
@@ -396,8 +394,8 @@ export class Keyring {
     const accountKey = this.getAccountKey(networkId, accountIndex);
     const existing = this.bitcoinAccounts.get(accountKey);
 
-    // Return existing if it has valid keys (non-empty) and we're not forcing re-derivation
-    if (existing && existing.privateKey.length > 0 && !forceReDerive) {
+    // Return existing if it has valid keys (non-empty)
+    if (existing && existing.privateKey.length > 0) {
       return existing;
     }
 
@@ -509,8 +507,7 @@ export class Keyring {
           networkId,
           network.network,
           accountIndex,
-          network.addressType as 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent',
-          true // forceReDerive
+          network.addressType as 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent'
         );
         return reDerived?.privateKey;
       }
@@ -538,8 +535,7 @@ export class Keyring {
           networkId,
           network.network,
           accountIndex,
-          network.addressType as 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent',
-          true // forceReDerive
+          network.addressType as 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent'
         );
         return reDerived?.publicKey;
       }
