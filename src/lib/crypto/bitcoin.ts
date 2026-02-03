@@ -247,13 +247,10 @@ export function getBitcoinDerivationPath(
 
 /**
  * Securely zero out a Uint8Array to prevent sensitive data from lingering in memory
- * Uses multiple overwrites to help defeat memory forensics
+ * Uses a single overwrite with zeros; actual guarantees depend on the JS engine.
  */
 function secureZero(arr: Uint8Array): void {
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    crypto.getRandomValues(arr); // Overwrite with random data first
-  }
-  arr.fill(0); // Then zero out
+  arr.fill(0);
 }
 
 /**
