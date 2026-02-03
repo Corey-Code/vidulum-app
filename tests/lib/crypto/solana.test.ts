@@ -18,7 +18,6 @@ describe('Solana Crypto', () => {
 
   // Known expected values for test mnemonic
   // These are derived using standard Solana derivation (m/44'/501'/0'/0')
-  const EXPECTED_ACCOUNT_0_ADDRESS_PREFIX = ''; // Will be set after first derivation
 
   describe('getSolanaDerivationPath', () => {
     it('should return correct path for account 0', () => {
