@@ -415,21 +415,27 @@ export async function deriveBitcoinKeyPairFromSeed(
     // Generate public key
     const publicKey = secp256k1.getPublicKey(key, true);
 
-    // Create copies for return (originals will be zeroed)
-    // Use slice() to create proper ArrayBuffer copies
+    // Create copies for return using slice() to create proper ArrayBuffer copies
+    // These copies will be returned to the caller
     const privateKeyCopy = key.slice() as Uint8Array;
     const publicKeyCopy = new Uint8Array(publicKey) as Uint8Array;
 
+    // Immediately zero the originals after creating copies to minimize
+    // the window where sensitive data exists in memory
+    secureZero(key);
+    secureZero(chainCode);
+
+    // Return copies (originals are now zeroed)
     return {
       privateKey: privateKeyCopy,
       publicKey: publicKeyCopy,
     };
   } finally {
     // Securely zero all intermediate keys
+    // Note: key and chainCode are already zeroed above, but zeroing again is safe
     for (const k of keysToZero) {
       secureZero(k);
     }
-    // Zero the final key and chainCode (we returned copies)
     secureZero(key);
     secureZero(chainCode);
   }
