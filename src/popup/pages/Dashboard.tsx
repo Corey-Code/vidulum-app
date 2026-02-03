@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Box,
   VStack,
@@ -108,10 +108,13 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [addingLoading, setAddingLoading] = useState(false);
   const [bitcoinAddress, setBitcoinAddress] = useState<string>('');
   const [loadingBtcAddress, setLoadingBtcAddress] = useState(false);
-  // Cache of Bitcoin addresses for all accounts: cosmosAddress -> address
-  const [bitcoinAddressCache, setBitcoinAddressCache] = useState<Map<string, string>>(new Map());
-  // Cache of EVM addresses for all accounts: cosmosAddress -> address
-  const [evmAddressCache, setEvmAddressCache] = useState<Map<string, string>>(new Map());
+  // Cache of Bitcoin addresses for all accounts: cosmosAddress -> networkId -> address
+  // Using refs to avoid including in dependencies while maintaining cache across renders
+  const bitcoinAddressCacheRef = useRef<Map<string, Map<string, string>>>(new Map());
+  const [, setBitcoinAddressCacheTrigger] = useState(0); // Trigger re-render when cache updates
+  // Cache of EVM addresses for all accounts: cosmosAddress -> networkId -> address
+  const evmAddressCacheRef = useRef<Map<string, Map<string, string>>>(new Map());
+  const [, setEvmAddressCacheTrigger] = useState(0); // Trigger re-render when cache updates
   // Network tab: 0 = All, 1 = Cosmos, 2 = UTXO, 3 = EVM
   const [networkTab, setNetworkTab] = useState(0);
 
@@ -175,16 +178,14 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [evmAddress, setEvmAddress] = useState<string>('');
   const [loadingEvmAddress, setLoadingEvmAddress] = useState(false);
 
-  // Clear Bitcoin address immediately when chain changes to prevent stale address usage
+  // Clear Bitcoin address display immediately when chain changes to prevent stale address display
   useEffect(() => {
     setBitcoinAddress('');
-    setBitcoinAddressCache(new Map());
   }, [selectedChainId]);
 
-  // Clear EVM address immediately when chain changes
+  // Clear EVM address display immediately when chain changes
   useEffect(() => {
     setEvmAddress('');
-    setEvmAddressCache(new Map());
   }, [selectedChainId]);
 
   // Derive Bitcoin address when Bitcoin network is selected
@@ -227,27 +228,50 @@ const Dashboard: React.FC<DashboardProps> = ({
   useEffect(() => {
     if (isBitcoinSelected && accounts.length > 0) {
       const deriveAllBitcoinAddresses = async () => {
-        const newCache = new Map<string, string>();
+        // Check current cache and collect addresses to derive
+        const addressesToDerive: Array<{ account: typeof accounts[0]; cosmosAddress: string }> = [];
+        
         for (const account of accounts) {
-          try {
-            // Pass cosmosAddress to identify imported accounts
-            const addr = await getBitcoinAddress(
-              selectedChainId,
-              account.accountIndex,
-              account.address
-            );
-            if (addr) {
-              newCache.set(account.address, addr);
-            }
-          } catch (err) {
-            console.error(`Failed to derive Bitcoin address for account ${account.address}:`, err);
+          const accountCache = bitcoinAddressCacheRef.current.get(account.address);
+          if (!accountCache?.has(selectedChainId)) {
+            // Mark this address for derivation
+            addressesToDerive.push({ account, cosmosAddress: account.address });
           }
         }
-        setBitcoinAddressCache(newCache);
+        
+        // Derive missing addresses
+        if (addressesToDerive.length > 0) {
+          const derivedAddresses = new Map<string, string>();
+          for (const { account, cosmosAddress } of addressesToDerive) {
+            try {
+              // Pass cosmosAddress to identify imported accounts
+              const addr = await getBitcoinAddress(
+                selectedChainId,
+                account.accountIndex,
+                cosmosAddress
+              );
+              if (addr) {
+                derivedAddresses.set(cosmosAddress, addr);
+              }
+            } catch (err) {
+              console.error(`Failed to derive Bitcoin address for account ${cosmosAddress}:`, err);
+            }
+          }
+          
+          // Update cache with newly derived addresses
+          if (derivedAddresses.size > 0) {
+            for (const [cosmosAddress, address] of derivedAddresses) {
+              const accountCache = bitcoinAddressCacheRef.current.get(cosmosAddress);
+              const updatedAccountCache = accountCache ? new Map(accountCache) : new Map<string, string>();
+              updatedAccountCache.set(selectedChainId, address);
+              bitcoinAddressCacheRef.current.set(cosmosAddress, updatedAccountCache);
+            }
+            // Trigger re-render to update UI
+            setBitcoinAddressCacheTrigger((prev) => prev + 1);
+          }
+        }
       };
       deriveAllBitcoinAddresses();
-    } else {
-      setBitcoinAddressCache(new Map());
     }
   }, [isBitcoinSelected, selectedChainId, accounts, getBitcoinAddress]);
 
@@ -255,27 +279,50 @@ const Dashboard: React.FC<DashboardProps> = ({
   useEffect(() => {
     if (isEvmSelected && accounts.length > 0) {
       const deriveAllEvmAddresses = async () => {
-        const newCache = new Map<string, string>();
+        // Check current cache and collect addresses to derive
+        const addressesToDerive: Array<{ account: typeof accounts[0]; cosmosAddress: string }> = [];
+        
         for (const account of accounts) {
-          try {
-            // Pass cosmosAddress to identify imported accounts
-            const addr = await getEvmAddress(
-              selectedChainId,
-              account.accountIndex,
-              account.address
-            );
-            if (addr) {
-              newCache.set(account.address, addr);
-            }
-          } catch (err) {
-            console.error(`Failed to derive EVM address for account ${account.address}:`, err);
+          const accountCache = evmAddressCacheRef.current.get(account.address);
+          if (!accountCache?.has(selectedChainId)) {
+            // Mark this address for derivation
+            addressesToDerive.push({ account, cosmosAddress: account.address });
           }
         }
-        setEvmAddressCache(newCache);
+        
+        // Derive missing addresses
+        if (addressesToDerive.length > 0) {
+          const derivedAddresses = new Map<string, string>();
+          for (const { account, cosmosAddress } of addressesToDerive) {
+            try {
+              // Pass cosmosAddress to identify imported accounts
+              const addr = await getEvmAddress(
+                selectedChainId,
+                account.accountIndex,
+                cosmosAddress
+              );
+              if (addr) {
+                derivedAddresses.set(cosmosAddress, addr);
+              }
+            } catch (err) {
+              console.error(`Failed to derive EVM address for account ${cosmosAddress}:`, err);
+            }
+          }
+          
+          // Update cache with newly derived addresses
+          if (derivedAddresses.size > 0) {
+            for (const [cosmosAddress, address] of derivedAddresses) {
+              const accountCache = evmAddressCacheRef.current.get(cosmosAddress);
+              const updatedAccountCache = accountCache ? new Map(accountCache) : new Map<string, string>();
+              updatedAccountCache.set(selectedChainId, address);
+              evmAddressCacheRef.current.set(cosmosAddress, updatedAccountCache);
+            }
+            // Trigger re-render to update UI
+            setEvmAddressCacheTrigger((prev) => prev + 1);
+          }
+        }
       };
       deriveAllEvmAddresses();
-    } else {
-      setEvmAddressCache(new Map());
     }
   }, [isEvmSelected, selectedChainId, accounts, getEvmAddress]);
 
@@ -361,13 +408,15 @@ const Dashboard: React.FC<DashboardProps> = ({
   const getAccountChainAddress = (account: { address: string; accountIndex?: number }) => {
     // For Bitcoin, use cached derived address (keyed by cosmos address)
     if (isBitcoinSelected) {
-      const cachedAddr = bitcoinAddressCache.get(account.address);
+      const accountCache = bitcoinAddressCacheRef.current.get(account.address);
+      const cachedAddr = accountCache?.get(selectedChainId);
       return cachedAddr || 'Deriving...';
     }
 
     // For EVM, use cached derived address (keyed by cosmos address)
     if (isEvmSelected) {
-      const cachedAddr = evmAddressCache.get(account.address);
+      const accountCache = evmAddressCacheRef.current.get(account.address);
+      const cachedAddr = accountCache?.get(selectedChainId);
       return cachedAddr || 'Deriving...';
     }
 
