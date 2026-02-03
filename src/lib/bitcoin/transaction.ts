@@ -29,6 +29,17 @@ if (typeof globalThis.Buffer === 'undefined') {
   globalThis.Buffer = Buffer;
 }
 
+/**
+ * Runtime check to ensure Buffer is available
+ * This provides a safeguard against initialization order issues
+ */
+function ensureBuffer(): typeof Buffer {
+  if (typeof globalThis.Buffer === 'undefined') {
+    globalThis.Buffer = Buffer;
+  }
+  return globalThis.Buffer;
+}
+
 // ============================================================================
 // Types
 // ============================================================================

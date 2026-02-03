@@ -4,6 +4,17 @@ if (typeof globalThis.Buffer === 'undefined') {
   globalThis.Buffer = Buffer;
 }
 
+/**
+ * Runtime check to ensure Buffer is available
+ * This provides a safeguard against initialization order issues
+ */
+function ensureBuffer(): typeof Buffer {
+  if (typeof globalThis.Buffer === 'undefined') {
+    globalThis.Buffer = Buffer;
+  }
+  return globalThis.Buffer;
+}
+
 import { DirectSecp256k1HdWallet, makeCosmoshubPath } from '@cosmjs/proto-signing';
 import {
   AminoSignResponse,
@@ -234,11 +245,12 @@ export class Keyring {
 
     const response = await this.signAmino(signerAddress, signDoc);
 
+    const BufferImpl = ensureBuffer();
     return {
       signature: response.signature.signature,
       pub_key: {
         type: 'tendermint/PubKeySecp256k1',
-        value: Buffer.from(account.pubKey).toString('base64'),
+        value: BufferImpl.from(account.pubKey).toString('base64'),
       },
     };
   }
@@ -254,15 +266,16 @@ export class Keyring {
   ): Promise<boolean> {
     try {
       // Decode the signature and public key from base64
-      const signatureBytes = Buffer.from(signature.signature, 'base64');
-      const pubKeyBytes = Buffer.from(signature.pub_key.value, 'base64');
+      const BufferImpl = ensureBuffer();
+      const signatureBytes = BufferImpl.from(signature.signature, 'base64');
+      const pubKeyBytes = BufferImpl.from(signature.pub_key.value, 'base64');
 
       // Verify the public key matches the signer address
       // Derive address from public key and compare
       const account = this.accounts.find((acc) => acc.address === signerAddress);
       if (account) {
         // If we have the account, verify the pubkey matches
-        const storedPubKeyBase64 = Buffer.from(account.pubKey).toString('base64');
+        const storedPubKeyBase64 = BufferImpl.from(account.pubKey).toString('base64');
         if (storedPubKeyBase64 !== signature.pub_key.value) {
           return false;
         }

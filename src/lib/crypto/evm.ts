@@ -16,6 +16,18 @@ import { keccak_256 } from '@noble/hashes/sha3';
 if (typeof globalThis.Buffer === 'undefined') {
   globalThis.Buffer = Buffer;
 }
+
+/**
+ * Runtime check to ensure Buffer is available
+ * This provides a safeguard against initialization order issues
+ */
+function ensureBuffer(): typeof Buffer {
+  if (typeof globalThis.Buffer === 'undefined') {
+    globalThis.Buffer = Buffer;
+  }
+  return globalThis.Buffer;
+}
+
 /**
  * EVM Key Pair
  */
@@ -45,7 +57,8 @@ function deriveChild(
 ): { key: Uint8Array; chainCode: Uint8Array } {
   // Curve order for secp256k1
   const n = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
-  const parentBig = BigInt('0x' + Buffer.from(parentKey).toString('hex'));
+  const BufferImpl = ensureBuffer();
+  const parentBig = BigInt('0x' + BufferImpl.from(parentKey).toString('hex'));
   let currentIndex = index;
 
   const intermediates: Uint8Array[] = [];
@@ -84,7 +97,8 @@ function deriveChild(
       const IR = I.slice(32);
       intermediates.push(IL);
 
-      const ILBig = BigInt('0x' + Buffer.from(IL).toString('hex'));
+      const BufferImpl = ensureBuffer();
+      const ILBig = BigInt('0x' + BufferImpl.from(IL).toString('hex'));
 
       // BIP32: if IL == 0 or IL >= n, discard this child and try next index
       if (ILBig === 0n || ILBig >= n) {
@@ -103,7 +117,7 @@ function deriveChild(
 
       const keyHex = childKey.toString(16).padStart(64, '0');
       return {
-        key: new Uint8Array(Buffer.from(keyHex, 'hex')),
+        key: new Uint8Array(BufferImpl.from(keyHex, 'hex')),
         chainCode: new Uint8Array(IR),
       };
     }
@@ -148,7 +162,8 @@ function isValidPrivateKey(key: Uint8Array): boolean {
 
   // Check if less than curve order n
   const n = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
-  const keyBig = BigInt('0x' + Buffer.from(key).toString('hex'));
+  const BufferImpl = ensureBuffer();
+  const keyBig = BigInt('0x' + BufferImpl.from(key).toString('hex'));
   return keyBig < n;
 }
 
@@ -235,7 +250,8 @@ export async function deriveEvmKeyPairFromSeed(
     const addressBytes = addressHash.slice(-20);
 
     // Convert to checksummed address
-    const address = toChecksumAddress('0x' + Buffer.from(addressBytes).toString('hex'));
+    const BufferImpl = ensureBuffer();
+    const address = toChecksumAddress('0x' + BufferImpl.from(addressBytes).toString('hex'));
 
     // Create copies for return (originals will be zeroed)
     const privateKeyCopy = key.slice() as Uint8Array;
@@ -274,7 +290,8 @@ export async function deriveEvmKeyPair(
  */
 export function toChecksumAddress(address: string): string {
   const addr = address.toLowerCase().replace('0x', '');
-  const hash = Buffer.from(keccak_256(new TextEncoder().encode(addr))).toString('hex');
+  const BufferImpl = ensureBuffer();
+  const hash = BufferImpl.from(keccak_256(new TextEncoder().encode(addr))).toString('hex');
 
   let checksumAddress = '0x';
   for (let i = 0; i < addr.length; i++) {
@@ -359,7 +376,8 @@ export function hasValidChecksum(address: string): boolean {
  * Get private key as hex string
  */
 export function privateKeyToHex(privateKey: Uint8Array): string {
-  return '0x' + Buffer.from(privateKey).toString('hex');
+  const BufferImpl = ensureBuffer();
+  return '0x' + BufferImpl.from(privateKey).toString('hex');
 }
 
 /**
@@ -367,5 +385,6 @@ export function privateKeyToHex(privateKey: Uint8Array): string {
  */
 export function hexToPrivateKey(hex: string): Uint8Array {
   const cleanHex = hex.startsWith('0x') ? hex.slice(2) : hex;
-  return new Uint8Array(Buffer.from(cleanHex, 'hex'));
+  const BufferImpl = ensureBuffer();
+  return new Uint8Array(BufferImpl.from(cleanHex, 'hex'));
 }
