@@ -24,7 +24,7 @@ import {
   Badge,
   Image,
 } from '@chakra-ui/react';
-import { ChevronRightIcon, CheckIcon } from '@chakra-ui/icons';
+import { ChevronRightIcon } from '@chakra-ui/icons';
 import { useWalletStore } from '@/store/walletStore';
 import { useChainStore } from '@/store/chainStore';
 import { RegistryAsset } from '@/lib/assets/chainRegistry';
