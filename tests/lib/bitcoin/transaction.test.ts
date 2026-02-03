@@ -292,5 +292,124 @@ describe('UTXO Transaction Module', () => {
       expect(result.fee).toBeGreaterThan(1000);
       expect(result.fee).toBeLessThan(3000);
     });
+
+    it('should create sweepAll transaction successfully', async () => {
+      const { privateKey, publicKey } = await generateTestKeys();
+
+      const utxos = [
+        {
+          txid: '0'.repeat(64),
+          vout: 0,
+          value: 100000, // 100k sats
+          status: { confirmed: true },
+        },
+      ];
+
+      const result = await createSendTransaction(
+        utxos,
+        'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
+        0, // Amount doesn't matter for sweepAll
+        10, // 10 sat/vB
+        privateKey,
+        publicKey,
+        'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
+        BITCOIN_MAINNET,
+        { sweepAll: true }
+      );
+
+      expect(result.txHex).toBeDefined();
+      expect(result.txid).toBeDefined();
+      // Fee should be roughly 1100 sats (1 input, 1 output at 10 sat/vB)
+      expect(result.fee).toBeGreaterThan(800);
+      expect(result.fee).toBeLessThan(1500);
+    });
+
+    it('should throw error when sweepAll fee exceeds 20% of balance', async () => {
+      const { privateKey, publicKey } = await generateTestKeys();
+
+      // Create many small UTXOs to trigger high fee scenario
+      const utxos = Array.from({ length: 50 }, (_, i) => ({
+        txid: i.toString().padStart(64, '0'),
+        vout: 0,
+        value: 1000, // 1000 sats each = 50k total
+        status: { confirmed: true },
+      }));
+
+      await expect(
+        createSendTransaction(
+          utxos,
+          'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
+          0,
+          100, // High fee rate: 100 sat/vB
+          privateKey,
+          publicKey,
+          'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
+          BITCOIN_MAINNET,
+          { sweepAll: true }
+        )
+      ).rejects.toThrow(/Fee too high.*exceeds 20% of total balance/);
+    });
+
+    it('should allow sweepAll when fee is below 20% threshold', async () => {
+      const { privateKey, publicKey } = await generateTestKeys();
+
+      // Fewer UTXOs with reasonable balance
+      const utxos = Array.from({ length: 5 }, (_, i) => ({
+        txid: i.toString().padStart(64, '0'),
+        vout: 0,
+        value: 50000, // 50k sats each = 250k total
+        status: { confirmed: true },
+      }));
+
+      const result = await createSendTransaction(
+        utxos,
+        'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
+        0,
+        10, // 10 sat/vB
+        privateKey,
+        publicKey,
+        'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
+        BITCOIN_MAINNET,
+        { sweepAll: true }
+      );
+
+      expect(result.txHex).toBeDefined();
+      expect(result.txid).toBeDefined();
+      // With 5 inputs and 1 output, fee should be reasonable
+      expect(result.fee).toBeGreaterThan(0);
+      expect(result.fee).toBeLessThan(50000); // Well below 20% of 250k
+    });
+
+    it('should successfully sweep when fee is reasonable and output is above dust', async () => {
+      const { privateKey, publicKey } = await generateTestKeys();
+
+      const utxos = [
+        {
+          txid: '0'.repeat(64),
+          vout: 0,
+          value: 10000, // 10k sats
+          status: { confirmed: true },
+        },
+      ];
+
+      // Using lower fee rate to get under 20% and result above dust threshold
+      const result = await createSendTransaction(
+        utxos,
+        'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
+        0,
+        8, // 8 sat/vB: fee ≈ 880 sats (≈8.8%), leaving ≈9120 sats (well above dust)
+        privateKey,
+        publicKey,
+        'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
+        BITCOIN_MAINNET,
+        { sweepAll: true }
+      );
+
+      // This should succeed since fee is under 20% and result is above dust
+      expect(result.txHex).toBeDefined();
+      expect(result.txid).toBeDefined();
+      expect(result.fee).toBeGreaterThan(0);
+      expect(result.fee).toBeLessThan(2000); // Fee should be reasonable
+    });
   });
 });
