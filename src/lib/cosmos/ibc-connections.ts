@@ -70,14 +70,6 @@ function getChainNameFromId(chainId: string): string | undefined {
 }
 
 /**
- * Get chain ID from chain name using the registry
- */
-function getChainIdFromName(chainName: string): string | undefined {
-  const chain = COSMOS_REGISTRY_CHAINS.find((c) => c.chainName === chainName);
-  return chain?.id;
-}
-
-/**
  * Get display name for a chain
  */
 export function getChainDisplayName(chainId: string): string {
