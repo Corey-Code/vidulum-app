@@ -391,9 +391,7 @@ export class EncryptedStorage {
   }
 
   // Get pre-derived addresses for an imported account (no password required)
-  static async getImportedAccountDerivedAddresses(
-    cosmosAddress: string
-  ): Promise<{
+  static async getImportedAccountDerivedAddresses(cosmosAddress: string): Promise<{
     bitcoin?: Record<string, string>;
     evm?: Record<string, string>;
     svm?: Record<string, string>;
