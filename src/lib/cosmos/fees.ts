@@ -195,6 +195,87 @@ export async function simulateTransaction(
 }
 
 /**
+ * Simulate any transaction and return fee estimate
+ * This is a generic version that works with any message type
+ */
+export async function simulateGenericFee(
+  restEndpoint: string,
+  messages: Array<{ typeUrl: string; value: Uint8Array }>,
+  pubKey: Uint8Array,
+  feeDenom: string,
+  gasPrice: number,
+  symbol: string = ''
+): Promise<{ gas: number; fee: FeeEstimate }> {
+  try {
+    const txBodyBytes = TxBody.encode(
+      TxBody.fromPartial({
+        messages,
+        memo: '',
+      })
+    ).finish();
+
+    const pubKeyProto = PubKey.fromPartial({ key: pubKey });
+    const authInfoBytes = AuthInfo.encode(
+      AuthInfo.fromPartial({
+        signerInfos: [
+          SignerInfo.fromPartial({
+            publicKey: {
+              typeUrl: '/cosmos.crypto.secp256k1.PubKey',
+              value: PubKey.encode(pubKeyProto).finish(),
+            },
+            modeInfo: { single: { mode: SignMode.SIGN_MODE_DIRECT } },
+            sequence: BigInt(0),
+          }),
+        ],
+        fee: Fee.fromPartial({
+          amount: [],
+          gasLimit: BigInt(0),
+        }),
+      })
+    ).finish();
+
+    const simResult = await simulateTransaction(restEndpoint, txBodyBytes, authInfoBytes);
+
+    // Add 50% buffer to gas estimate
+    const gasWithBuffer = Math.max(Math.ceil(simResult.gasUsed * 1.5), 150000);
+    const feeAmount = Math.ceil(gasWithBuffer * gasPrice);
+
+    console.log(
+      `Simulation: gasUsed=${simResult.gasUsed}, withBuffer=${gasWithBuffer}, fee=${feeAmount}`
+    );
+
+    // Format the fee for display
+    const decimals = feeDenom.startsWith('u') || feeDenom.startsWith('a') ? 6 : 18;
+    const formattedAmount = (feeAmount / Math.pow(10, decimals)).toFixed(6);
+
+    return {
+      gas: gasWithBuffer,
+      fee: {
+        amount: feeAmount.toString(),
+        denom: feeDenom,
+        formatted: `${formattedAmount} ${symbol || feeDenom}`,
+      },
+    };
+  } catch (error) {
+    console.error('Failed to simulate transaction fee:', error);
+    // Fallback to higher default estimate
+    const defaultGas = 250000;
+    const feeAmount = Math.ceil(defaultGas * gasPrice * 1.5);
+    const decimals = feeDenom.startsWith('u') || feeDenom.startsWith('a') ? 6 : 18;
+    const formattedAmount = (feeAmount / Math.pow(10, decimals)).toFixed(6);
+
+    return {
+      gas: defaultGas,
+      fee: {
+        amount: feeAmount.toString(),
+        denom: feeDenom,
+        formatted: `${formattedAmount} ${symbol || feeDenom}`,
+      },
+    };
+  }
+}
+
+/**
  * Simulate a send transaction and return fee estimate
  */
 export async function simulateSendFee(

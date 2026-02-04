@@ -28,11 +28,7 @@ import { ChevronRightIcon } from '@chakra-ui/icons';
 import { useWalletStore } from '@/store/walletStore';
 import { useChainStore } from '@/store/chainStore';
 import { RegistryAsset } from '@/lib/assets/chainRegistry';
-import {
-  IBCChannel,
-  fetchIBCConnections,
-  getChainDisplayName,
-} from '@/lib/cosmos/ibc-connections';
+import { IBCChannel, fetchIBCConnections, getChainDisplayName } from '@/lib/cosmos/ibc-connections';
 import { COSMOS_REGISTRY_CHAINS } from '@/lib/networks/cosmos-registry';
 
 interface IBCTransferModalProps {
@@ -57,9 +53,13 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
     signAndBroadcast,
     signAndBroadcastWithPassword,
     hasMnemonicInMemory,
+    selectedAccount,
   } = useWalletStore();
   const { fetchBalance } = useChainStore();
   const toast = useToast();
+
+  // Check if the current account is an imported account (has its own mnemonic)
+  const isImportedAccount = selectedAccount?.id?.startsWith('imported-') ?? false;
 
   const [step, setStep] = useState<'select-destination' | 'input-amount' | 'confirm' | 'password'>(
     'select-destination'
@@ -126,12 +126,22 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
     setStep('input-amount');
   };
 
+  // Calculate estimated fee for display and max amount calculation
+  const getEstimatedFee = () => {
+    const gasLimit = 250000;
+    const gasPrice = parseFloat(sourceChain?.gasPrice || '0.025');
+    const feeAmount = Math.ceil(gasLimit * gasPrice * 1.5);
+    const decimals = asset.decimals; // Use asset decimals which should match native token
+    return feeAmount / Math.pow(10, decimals);
+  };
+
   // Handle max amount
   const handleMaxAmount = () => {
-    // Leave a small buffer for fees if sending native token
+    // Leave buffer for fees if sending native token
     const isNativeToken = asset.denom === sourceChain?.feeDenom;
-    if (isNativeToken && availableBalance > 0.01) {
-      setAmount((availableBalance - 0.01).toFixed(6));
+    const estimatedFee = getEstimatedFee();
+    if (isNativeToken && availableBalance > estimatedFee) {
+      setAmount((availableBalance - estimatedFee).toFixed(6));
     } else {
       setAmount(availableBalance.toFixed(6));
     }
@@ -159,7 +169,8 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
     }
 
     // Check if we need password for cross-chain signing
-    if (!usePassword && !hasMnemonicInMemory()) {
+    // Imported accounts always need password since their mnemonic is stored separately
+    if (!usePassword && (isImportedAccount || !hasMnemonicInMemory())) {
       setStep('password');
       return;
     }
@@ -194,10 +205,16 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
         },
       };
 
-      // Estimate fee
+      // Calculate fee based on chain's gas price
+      // IBC transfers typically use ~250000 gas
+      const gasLimit = 250000;
+      const gasPrice = parseFloat(sourceChain?.gasPrice || '0.025');
+      // Add 50% buffer to gas price to ensure transaction succeeds
+      const feeAmount = Math.ceil(gasLimit * gasPrice * 1.5);
+
       const fee = {
-        amount: [{ denom: sourceChain?.feeDenom || 'ubze', amount: '5000' }],
-        gas: '250000',
+        amount: [{ denom: sourceChain?.feeDenom || 'ubze', amount: feeAmount.toString() }],
+        gas: gasLimit.toString(),
       };
 
       // Sign and broadcast (with password if needed)
