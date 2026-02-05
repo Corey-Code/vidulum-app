@@ -293,7 +293,7 @@ const Staking: React.FC<StakingProps> = ({ onBack }) => {
 
       const client = await SigningStargateClient.connectWithSigner(chainConfig.rpc, wallet);
       const amountInMinimal = Math.floor(amountNum * Math.pow(10, decimals)).toString();
-      const feeDenom = stakeCurrency?.coinMinimalDenom || 'ubze';
+      const stakingDenom = stakeCurrency?.coinMinimalDenom || 'ubze';
       const symbol = stakeCurrency?.coinDenom || '';
 
       // Build the message for simulation
@@ -305,7 +305,7 @@ const Staking: React.FC<StakingProps> = ({ onBack }) => {
         const msg = MsgDelegate.fromPartial({
           delegatorAddress: chainAddress,
           validatorAddress: selectedValidator.operatorAddress,
-          amount: { denom: feeDenom, amount: amountInMinimal },
+          amount: { denom: stakingDenom, amount: amountInMinimal },
         });
         msgValue = MsgDelegate.encode(msg).finish();
       } else {
@@ -313,7 +313,7 @@ const Staking: React.FC<StakingProps> = ({ onBack }) => {
         const msg = MsgUndelegate.fromPartial({
           delegatorAddress: chainAddress,
           validatorAddress: selectedValidator.operatorAddress,
-          amount: { denom: feeDenom, amount: amountInMinimal },
+          amount: { denom: stakingDenom, amount: amountInMinimal },
         });
         msgValue = MsgUndelegate.encode(msg).finish();
       }
@@ -332,13 +332,13 @@ const Staking: React.FC<StakingProps> = ({ onBack }) => {
           chainConfig.rest,
           [{ typeUrl, value: msgValue }],
           selectedAccount.pubKey,
-          feeDenom,
+          stakingDenom,
           gasPrice,
           symbol
         );
 
         fee = {
-          amount: [coin(simResult.fee.amount, feeDenom)],
+          amount: [coin(simResult.fee.amount, stakingDenom)],
           gas: simResult.gas.toString(),
         };
         console.log(`Simulated staking fee: ${simResult.fee.formatted} (gas: ${simResult.gas})`);
@@ -346,7 +346,7 @@ const Staking: React.FC<StakingProps> = ({ onBack }) => {
         console.warn('Fee simulation failed, using fallback:', error);
         // Fallback to default
         fee = {
-          amount: [coin('5000', feeDenom)],
+          amount: [coin('5000', stakingDenom)],
           gas: '250000',
         };
       }
@@ -356,7 +356,7 @@ const Staking: React.FC<StakingProps> = ({ onBack }) => {
         result = await client.delegateTokens(
           chainAddress,
           selectedValidator.operatorAddress,
-          coin(amountInMinimal, feeDenom),
+          coin(amountInMinimal, stakingDenom),
           fee,
           ''
         );
@@ -364,7 +364,7 @@ const Staking: React.FC<StakingProps> = ({ onBack }) => {
         result = await client.undelegateTokens(
           chainAddress,
           selectedValidator.operatorAddress,
-          coin(amountInMinimal, feeDenom),
+          coin(amountInMinimal, stakingDenom),
           fee,
           ''
         );
