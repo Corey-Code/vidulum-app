@@ -12,7 +12,7 @@ import { MnemonicManager } from '@/lib/crypto/mnemonic';
 import { cosmosClient } from '@/lib/cosmos/client';
 import { SUPPORTED_CHAINS } from '@/lib/cosmos/chains';
 import { coin } from '@cosmjs/stargate';
-import { simulateSendFee } from '@/lib/cosmos/fees';
+import { simulateSendFee, simulateGenericFee } from '@/lib/cosmos/fees';
 import { networkRegistry } from '@/lib/networks';
 import { MessageType } from '@/types/messages';
 import { DirectSecp256k1HdWallet, makeCosmoshubPath } from '@cosmjs/proto-signing';
@@ -1288,11 +1288,37 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       throw new Error('Selected account not found in wallet');
     }
 
-    // Use provided fee or default
-    const txFee = fee || {
-      amount: [{ denom: chainInfo.feeCurrencies[0]?.coinMinimalDenom || 'ubze', amount: '5000' }],
-      gas: '200000',
-    };
+    // Simulate fee if not provided
+    let txFee = fee;
+    if (!txFee) {
+      const feeDenom = chainInfo.feeCurrencies[0]?.coinMinimalDenom || 'ubze';
+      // Use a reasonable default gas price (0.025 for most Cosmos chains)
+      const gasPrice = 0.025;
+      const symbol = chainInfo.currencies[0]?.coinDenom || '';
+      
+      try {
+        const simResult = await simulateGenericFee(
+          chainInfo.rest,
+          messages,
+          matchingWalletAccount.pubkey,
+          feeDenom,
+          gasPrice,
+          symbol
+        );
+        txFee = {
+          amount: [{ denom: feeDenom, amount: simResult.fee.amount }],
+          gas: simResult.gas.toString(),
+        };
+        console.log(`Simulated transaction fee: ${simResult.fee.formatted} (gas: ${simResult.gas})`);
+      } catch (error) {
+        console.warn('Fee simulation failed, using fallback:', error);
+        // Fallback to default
+        txFee = {
+          amount: [{ denom: feeDenom, amount: '5000' }],
+          gas: '200000',
+        };
+      }
+    }
 
     // Create signing client
     const signingClient = await cosmosClient.getSigningClient(chainInfo.rpc, wallet);
@@ -1382,11 +1408,37 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       throw new Error('Selected account not found in wallet');
     }
 
-    // Use provided fee or default
-    const txFee = fee || {
-      amount: [{ denom: chainInfo.feeCurrencies[0]?.coinMinimalDenom || 'ubze', amount: '5000' }],
-      gas: '200000',
-    };
+    // Simulate fee if not provided
+    let txFee = fee;
+    if (!txFee) {
+      const feeDenom = chainInfo.feeCurrencies[0]?.coinMinimalDenom || 'ubze';
+      // Use a reasonable default gas price (0.025 for most Cosmos chains)
+      const gasPrice = 0.025;
+      const symbol = chainInfo.currencies[0]?.coinDenom || '';
+      
+      try {
+        const simResult = await simulateGenericFee(
+          chainInfo.rest,
+          messages,
+          matchingWalletAccount.pubkey,
+          feeDenom,
+          gasPrice,
+          symbol
+        );
+        txFee = {
+          amount: [{ denom: feeDenom, amount: simResult.fee.amount }],
+          gas: simResult.gas.toString(),
+        };
+        console.log(`Simulated transaction fee: ${simResult.fee.formatted} (gas: ${simResult.gas})`);
+      } catch (error) {
+        console.warn('Fee simulation failed, using fallback:', error);
+        // Fallback to default
+        txFee = {
+          amount: [{ denom: feeDenom, amount: '5000' }],
+          gas: '200000',
+        };
+      }
+    }
 
     // Create signing client
     const signingClient = await cosmosClient.getSigningClient(chainInfo.rpc, wallet);

@@ -41,6 +41,8 @@ import {
 } from '@/lib/cosmos/staking';
 import { SigningStargateClient } from '@cosmjs/stargate';
 import { coin } from '@cosmjs/stargate';
+import { simulateGenericFee } from '@/lib/cosmos/fees';
+import { MsgDelegate, MsgUndelegate } from 'cosmjs-types/cosmos/staking/v1beta1/tx';
 
 // Fetch REStake compatible validators from restake.app registry
 async function fetchRestakeValidators(chainName: string): Promise<Set<string>> {
@@ -291,18 +293,70 @@ const Staking: React.FC<StakingProps> = ({ onBack }) => {
 
       const client = await SigningStargateClient.connectWithSigner(chainConfig.rpc, wallet);
       const amountInMinimal = Math.floor(amountNum * Math.pow(10, decimals)).toString();
+      const feeDenom = stakeCurrency?.coinMinimalDenom || 'ubze';
+      const symbol = stakeCurrency?.coinDenom || '';
 
-      const fee = {
-        amount: [coin('5000', stakeCurrency?.coinMinimalDenom || 'ubze')],
-        gas: '250000',
-      };
+      // Build the message for simulation
+      let msgValue: Uint8Array;
+      let typeUrl: string;
+
+      if (actionType === 'delegate') {
+        typeUrl = '/cosmos.staking.v1beta1.MsgDelegate';
+        const msg = MsgDelegate.fromPartial({
+          delegatorAddress: chainAddress,
+          validatorAddress: selectedValidator.operatorAddress,
+          amount: { denom: feeDenom, amount: amountInMinimal },
+        });
+        msgValue = MsgDelegate.encode(msg).finish();
+      } else {
+        typeUrl = '/cosmos.staking.v1beta1.MsgUndelegate';
+        const msg = MsgUndelegate.fromPartial({
+          delegatorAddress: chainAddress,
+          validatorAddress: selectedValidator.operatorAddress,
+          amount: { denom: feeDenom, amount: amountInMinimal },
+        });
+        msgValue = MsgUndelegate.encode(msg).finish();
+      }
+
+      // Simulate fee
+      // Use a reasonable gas price default (can be overridden per chain)
+      const gasPrice = 0.025; // Default Cosmos SDK gas price
+      let fee;
+
+      try {
+        if (!selectedAccount?.pubKey) {
+          throw new Error('Public key not available');
+        }
+
+        const simResult = await simulateGenericFee(
+          chainConfig.rest,
+          [{ typeUrl, value: msgValue }],
+          selectedAccount.pubKey,
+          feeDenom,
+          gasPrice,
+          symbol
+        );
+
+        fee = {
+          amount: [coin(simResult.fee.amount, feeDenom)],
+          gas: simResult.gas.toString(),
+        };
+        console.log(`Simulated staking fee: ${simResult.fee.formatted} (gas: ${simResult.gas})`);
+      } catch (error) {
+        console.warn('Fee simulation failed, using fallback:', error);
+        // Fallback to default
+        fee = {
+          amount: [coin('5000', feeDenom)],
+          gas: '250000',
+        };
+      }
 
       let result;
       if (actionType === 'delegate') {
         result = await client.delegateTokens(
           chainAddress,
           selectedValidator.operatorAddress,
-          coin(amountInMinimal, stakeCurrency?.coinMinimalDenom || 'ubze'),
+          coin(amountInMinimal, feeDenom),
           fee,
           ''
         );
@@ -310,7 +364,7 @@ const Staking: React.FC<StakingProps> = ({ onBack }) => {
         result = await client.undelegateTokens(
           chainAddress,
           selectedValidator.operatorAddress,
-          coin(amountInMinimal, stakeCurrency?.coinMinimalDenom || 'ubze'),
+          coin(amountInMinimal, feeDenom),
           fee,
           ''
         );

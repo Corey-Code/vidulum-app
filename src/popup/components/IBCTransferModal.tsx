@@ -30,6 +30,10 @@ import { useChainStore } from '@/store/chainStore';
 import { RegistryAsset } from '@/lib/assets/chainRegistry';
 import { IBCChannel, fetchIBCConnections, getChainDisplayName } from '@/lib/cosmos/ibc-connections';
 import { COSMOS_REGISTRY_CHAINS } from '@/lib/networks/cosmos-registry';
+import { simulateGenericFee } from '@/lib/cosmos/fees';
+import { MsgTransfer } from 'cosmjs-types/ibc/applications/transfer/v1/tx';
+import { Coin } from 'cosmjs-types/cosmos/base/v1beta1/coin';
+import { Height } from 'cosmjs-types/ibc/core/client/v1/client';
 
 interface IBCTransferModalProps {
   isOpen: boolean;
@@ -190,35 +194,67 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
       // Timeout: 10 minutes from now in nanoseconds
       const timeoutTimestampNs = BigInt(Date.now() + 10 * 60 * 1000) * BigInt(1_000_000);
 
+      // Build MsgTransfer value
+      const msgTransferValue = MsgTransfer.fromPartial({
+        sourcePort: selectedDestination.sourcePort,
+        sourceChannel: selectedDestination.sourceChannelId,
+        token: Coin.fromPartial({
+          denom: asset.denom,
+          amount: amountInSmallestUnit,
+        }),
+        sender: sourceAddress,
+        receiver: destAddress,
+        timeoutHeight: Height.fromPartial({
+          revisionNumber: BigInt(0),
+          revisionHeight: BigInt(0),
+        }),
+        timeoutTimestamp: timeoutTimestampNs,
+        memo: '',
+      });
+
       const msgTransfer = {
         typeUrl: '/ibc.applications.transfer.v1.MsgTransfer',
-        value: {
-          sourcePort: selectedDestination.sourcePort,
-          sourceChannel: selectedDestination.sourceChannelId,
-          token: {
-            denom: asset.denom,
-            amount: amountInSmallestUnit,
-          },
-          sender: sourceAddress,
-          receiver: destAddress,
-          timeoutHeight: {
-            revisionNumber: BigInt(0),
-            revisionHeight: BigInt(0),
-          },
-          timeoutTimestamp: timeoutTimestampNs,
-          memo: '',
-        },
+        value: MsgTransfer.encode(msgTransferValue).finish(),
       };
 
-      // Calculate fee based on chain's gas price
-      // IBC transfers typically use ~250000 gas
-      const gasLimit = 250000;
+      // Simulate fee using the generic fee simulation utility
+      const feeDenom = sourceChain?.feeDenom || 'ubze';
       const gasPrice = parseFloat(sourceChain?.gasPrice || '0.025');
-      // Add 50% buffer to gas price to ensure transaction succeeds
-      const feeAmount = Math.ceil(gasLimit * gasPrice * 1.5);
+      const symbol = sourceChain?.symbol || '';
+      
+      let gasLimit: number;
+      let feeAmount: string;
+      
+      try {
+        if (!selectedAccount?.pubKey) {
+          throw new Error('Public key not available');
+        }
+        
+        const restEndpoint = Array.isArray(sourceChain?.rest) 
+          ? sourceChain.rest[0] 
+          : sourceChain?.rest || '';
+        
+        const simResult = await simulateGenericFee(
+          restEndpoint,
+          [msgTransfer],
+          selectedAccount.pubKey,
+          feeDenom,
+          gasPrice,
+          symbol
+        );
+        
+        gasLimit = simResult.gas;
+        feeAmount = simResult.fee.amount;
+        console.log(`Simulated IBC transfer fee: ${simResult.fee.formatted} (gas: ${gasLimit})`);
+      } catch (error) {
+        console.warn('Fee simulation failed, using fallback:', error);
+        // Fallback to conservative estimate
+        gasLimit = 250000;
+        feeAmount = Math.ceil(gasLimit * gasPrice * 1.5).toString();
+      }
 
       const fee = {
-        amount: [{ denom: sourceChain?.feeDenom || 'ubze', amount: feeAmount.toString() }],
+        amount: [{ denom: feeDenom, amount: feeAmount }],
         gas: gasLimit.toString(),
       };
 
