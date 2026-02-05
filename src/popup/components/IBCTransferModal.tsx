@@ -130,8 +130,13 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
   const getEstimatedFee = () => {
     const gasLimit = 250000;
     const gasPrice = parseFloat(sourceChain?.gasPrice || '0.025');
+    const feeDenom = sourceChain?.feeDenom || '';
+    // Determine decimals based on the fee denom, not the transferred asset.
+    // Most Cosmos SDK chains use 6 decimals for micro/atto denoms (starting with 'u' or 'a'),
+    // and 18 decimals otherwise.
+    const decimals =
+      feeDenom.startsWith('u') || feeDenom.startsWith('a') ? 6 : 18;
     const feeAmount = Math.ceil(gasLimit * gasPrice * 1.5);
-    const decimals = asset.decimals; // Use asset decimals which should match native token
     return feeAmount / Math.pow(10, decimals);
   };
 
