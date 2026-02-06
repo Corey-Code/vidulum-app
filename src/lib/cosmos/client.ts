@@ -1,7 +1,7 @@
 import { StargateClient, SigningStargateClient, defaultRegistryTypes } from '@cosmjs/stargate';
 import { OfflineSigner, GeneratedType, Registry } from '@cosmjs/proto-signing';
 import { Balance } from '@/types/wallet';
-import { fetchWithFailover, withFailover } from '@/lib/networks';
+import { fetchWithFailover, withFailover, FailoverStatusCallback } from '@/lib/networks';
 
 // Simple protobuf encoder for BZE messages (no eval required)
 // Protobuf wire format: tag = (field_number << 3) | wire_type
@@ -117,19 +117,24 @@ export class CosmosClient {
    * Get a StargateClient with automatic failover across multiple RPC endpoints
    */
   async getClientWithFailover(
-    rpcEndpoints: string[]
+    rpcEndpoints: string[],
+    onStatusUpdate?: FailoverStatusCallback
   ): Promise<{ client: StargateClient; endpoint: string }> {
-    const { result: client, endpoint } = await withFailover(rpcEndpoints, async (rpcEndpoint) => {
-      // Prefer a cached client for this endpoint if available
-      const cachedClient = this.clients.get(rpcEndpoint);
-      if (cachedClient) {
-        return cachedClient;
-      }
+    const { result: client, endpoint } = await withFailover(
+      rpcEndpoints,
+      async (rpcEndpoint) => {
+        // Prefer a cached client for this endpoint if available
+        const cachedClient = this.clients.get(rpcEndpoint);
+        if (cachedClient) {
+          return cachedClient;
+        }
 
-      const newClient = await StargateClient.connect(rpcEndpoint);
-      this.clients.set(rpcEndpoint, newClient);
-      return newClient;
-    });
+        const newClient = await StargateClient.connect(rpcEndpoint);
+        this.clients.set(rpcEndpoint, newClient);
+        return newClient;
+      },
+      { onStatusUpdate }
+    );
 
     // Ensure the successful client is cached
     this.clients.set(endpoint, client);
@@ -173,7 +178,8 @@ export class CosmosClient {
   async getBalance(
     rpcEndpoints: string | string[],
     address: string,
-    restEndpoints?: string | string[]
+    restEndpoints?: string | string[],
+    onStatusUpdate?: FailoverStatusCallback
   ): Promise<Balance[]> {
     // Normalize to arrays
     const rpcArray = Array.isArray(rpcEndpoints) ? rpcEndpoints : [rpcEndpoints];
@@ -187,7 +193,9 @@ export class CosmosClient {
     try {
       const data = await fetchWithFailover<{ balances: Array<{ denom: string; amount: string }> }>(
         restArray,
-        `/cosmos/bank/v1beta1/balances/${address}`
+        `/cosmos/bank/v1beta1/balances/${address}`,
+        {},
+        { onStatusUpdate }
       );
 
       if (data.balances && Array.isArray(data.balances)) {
@@ -202,7 +210,7 @@ export class CosmosClient {
     }
 
     // Fallback to RPC with failover if REST fails
-    const { client } = await this.getClientWithFailover(rpcArray);
+    const { client } = await this.getClientWithFailover(rpcArray, onStatusUpdate);
     const balances = await client.getAllBalances(address);
     console.log('Fetched balances via RPC:', balances);
     return balances.map((b) => ({

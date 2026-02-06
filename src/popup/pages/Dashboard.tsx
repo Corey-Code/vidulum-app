@@ -79,7 +79,8 @@ const Dashboard: React.FC<DashboardProps> = ({
     updateActivity,
   } = useWalletStore();
 
-  const { fetchBalance, getBalance, subscribeToBalanceUpdates, unsubscribeAll } = useChainStore();
+  const { fetchBalance, getBalance, subscribeToBalanceUpdates, unsubscribeAll, loadingStatus } =
+    useChainStore();
   const [loading, setLoading] = useState(false);
   const [updatingTokens, setUpdatingTokens] = useState<Set<string>>(new Set());
   const [showZeroBalances, setShowZeroBalances] = useState(false);
@@ -1833,9 +1834,18 @@ const Dashboard: React.FC<DashboardProps> = ({
             </HStack>
             <VStack spacing={3} align="stretch">
               {loading ? (
-                <Text color="gray.500" textAlign="center" py={4}>
-                  Loading...
-                </Text>
+                <VStack spacing={2} py={4}>
+                  <Spinner size="sm" color="cyan.400" />
+                  <Text color="gray.500" textAlign="center" fontSize="sm">
+                    {loadingStatus.message || 'Loading...'}
+                  </Text>
+                  {loadingStatus.endpointAttempt && loadingStatus.endpointAttempt > 1 && (
+                    <Text color="gray.600" textAlign="center" fontSize="xs">
+                      Finding reliable endpoint ({loadingStatus.endpointAttempt}/
+                      {loadingStatus.totalEndpoints})
+                    </Text>
+                  )}
+                </VStack>
               ) : (
                 (() => {
                   // Build a map of balances from chain
