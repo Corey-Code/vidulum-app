@@ -31,7 +31,7 @@ import { ChevronDownIcon } from '@chakra-ui/icons';
 import { useWalletStore } from '@/store/walletStore';
 import { useChainStore } from '@/store/chainStore';
 import { ChainInfo } from '@/types/wallet';
-import { fetchChainAssets, RegistryAsset } from '@/lib/assets/chainRegistry';
+import { fetchChainAssets, RegistryAsset, parseBeeZeeLPToken } from '@/lib/assets/chainRegistry';
 import { simulateSendFee, FeeEstimate } from '@/lib/cosmos/fees';
 import { isValidBitcoinAddress } from '@/lib/crypto/bitcoin';
 import { getBitcoinClient, createSendTransaction, btcToSats } from '@/lib/bitcoin';
@@ -305,6 +305,15 @@ const SendModal: React.FC<SendModalProps> = ({
         decimals: registryAsset.decimals,
       };
     }
+    // Check for BeeZee LP tokens
+    const beeZeeLP = parseBeeZeeLPToken(denom);
+    if (beeZeeLP) {
+      return {
+        symbol: beeZeeLP.symbol,
+        name: beeZeeLP.name,
+        decimals: 6,
+      };
+    }
     // Fallback for unknown tokens
     return {
       symbol: denom.startsWith('ibc/') ? 'IBC' : denom.slice(0, 6).toUpperCase(),
@@ -428,7 +437,8 @@ const SendModal: React.FC<SendModalProps> = ({
 
         // Determine if network supports SegWit for accurate size calculation
         const btcNetwork = networkRegistry.getBitcoin(chainId);
-        const isSegWit = btcNetwork?.addressType === 'p2wpkh' || btcNetwork?.addressType === 'p2sh-p2wpkh';
+        const isSegWit =
+          btcNetwork?.addressType === 'p2wpkh' || btcNetwork?.addressType === 'p2sh-p2wpkh';
 
         // Calculate estimated transaction size based on actual UTXO count
         // For SegWit P2WPKH: ~68 vbytes per input + ~31 vbytes for output + 11 vbytes overhead
@@ -436,11 +446,14 @@ const SendModal: React.FC<SendModalProps> = ({
         const inputSize = isSegWit ? 68 : 148;
         const outputSize = isSegWit ? 31 : 34;
         const overhead = isSegWit ? 11 : 10;
-        const estimatedVbytes = overhead + (utxoCount * inputSize) + outputSize;
+        const estimatedVbytes = overhead + utxoCount * inputSize + outputSize;
 
         calculateAndSetMaxAmount(estimatedVbytes);
       } catch (error) {
-        console.warn('Failed to fetch UTXOs for accurate fee calculation, using conservative single-input estimate instead:', error);
+        console.warn(
+          'Failed to fetch UTXOs for accurate fee calculation, using conservative single-input estimate instead:',
+          error
+        );
         // Fallback to single input estimate if UTXO fetch fails
         const estimatedVbytes = 110; // Conservative single SegWit input estimate
         calculateAndSetMaxAmount(estimatedVbytes);

@@ -7,12 +7,20 @@ import { getBitcoinClient } from '@/lib/bitcoin/client';
 import { getEvmClient } from '@/lib/evm/client';
 import { networkRegistry } from '@/lib/networks';
 
+export interface LoadingStatus {
+  isLoading: boolean;
+  message: string;
+  endpointAttempt?: number;
+  totalEndpoints?: number;
+}
+
 interface ChainState {
   chains: Map<string, ChainInfo>;
   balances: Map<string, Map<string, Balance[]>>; // chainId -> address -> balances
   subscriptions: Map<string, string>; // "chainId:address" -> subscriptionId
   debounceTimeouts: Map<string, ReturnType<typeof setTimeout>>; // "chainId:address" -> timeout handle
   isSubscribed: boolean;
+  loadingStatus: LoadingStatus;
 
   getChain: (chainId: string) => ChainInfo | undefined;
   addChain: (chain: ChainInfo) => void;
@@ -21,6 +29,7 @@ interface ChainState {
   fetchBalance: (networkId: string, address: string) => Promise<Balance[]>;
   getBalance: (networkId: string, address: string) => Balance[] | undefined;
   clearBalances: () => void;
+  setLoadingStatus: (status: LoadingStatus) => void;
 
   // WebSocket subscription management
   subscribeToBalanceUpdates: (chainId: string, address: string) => void;
@@ -34,6 +43,7 @@ export const useChainStore = create<ChainState>((set, get) => ({
   subscriptions: new Map(),
   debounceTimeouts: new Map(),
   isSubscribed: false,
+  loadingStatus: { isLoading: false, message: '' },
 
   getChain: (chainId: string) => {
     return get().chains.get(chainId);
@@ -51,14 +61,23 @@ export const useChainStore = create<ChainState>((set, get) => ({
     set({ chains: new Map(chains) });
   },
 
+  setLoadingStatus: (status: LoadingStatus) => {
+    set({ loadingStatus: status });
+  },
+
   fetchBalance: async (networkId: string, address: string) => {
     const networkType = getNetworkType(networkId);
+    const { setLoadingStatus } = get();
 
     let balances: Balance[];
+
+    // Set initial loading status
+    setLoadingStatus({ isLoading: true, message: 'Connecting to network...' });
 
     if (networkType === 'bitcoin') {
       // Fetch Bitcoin balance
       try {
+        setLoadingStatus({ isLoading: true, message: 'Fetching Bitcoin balance...' });
         const client = getBitcoinClient(networkId);
         const satoshis = await client.getBalance(address);
         balances = [
@@ -74,6 +93,7 @@ export const useChainStore = create<ChainState>((set, get) => ({
     } else if (networkType === 'evm') {
       // Fetch EVM balance
       try {
+        setLoadingStatus({ isLoading: true, message: 'Fetching EVM balance...' });
         const client = getEvmClient(networkId);
         const wei = await client.getBalance(address);
         balances = [
@@ -88,12 +108,29 @@ export const useChainStore = create<ChainState>((set, get) => ({
       }
     } else {
       // Fetch Cosmos balance
+      setLoadingStatus({ isLoading: true, message: 'Finding reliable endpoint...' });
       const cosmosConfig = networkRegistry.getCosmos(networkId);
       if (!cosmosConfig) {
+        setLoadingStatus({ isLoading: false, message: '' });
         throw new Error(`Chain ${networkId} not found`);
       }
-      balances = await cosmosClient.getBalance(cosmosConfig.rpc, address, cosmosConfig.rest);
+      balances = await cosmosClient.getBalance(
+        cosmosConfig.rpc,
+        address,
+        cosmosConfig.rest,
+        (status) => {
+          setLoadingStatus({
+            isLoading: true,
+            message: status.message,
+            endpointAttempt: status.currentEndpoint,
+            totalEndpoints: status.totalEndpoints,
+          });
+        }
+      );
     }
+
+    // Clear loading status
+    setLoadingStatus({ isLoading: false, message: '' });
 
     const { balances: currentBalances } = get();
     let chainBalances = currentBalances.get(networkId);
@@ -139,15 +176,15 @@ export const useChainStore = create<ChainState>((set, get) => ({
     // Subscribe to transactions affecting this address
     const subscriptionId = ws.subscribeToAddress(address, async (txResult) => {
       console.log('Transaction detected for', address, txResult);
-      
+
       const state = get();
-      
+
       // Clear any existing debounce timeout for this key
       const existingTimeout = state.debounceTimeouts.get(key);
       if (existingTimeout) {
         clearTimeout(existingTimeout);
       }
-      
+
       // Debounce balance refresh
       const timeoutHandle = setTimeout(() => {
         const currentState = get();
@@ -160,7 +197,7 @@ export const useChainStore = create<ChainState>((set, get) => ({
         updatedTimeouts.delete(key);
         set({ debounceTimeouts: updatedTimeouts });
       }, 1000);
-      
+
       // Update the timeout map with a fresh copy
       const updatedTimeouts = new Map(state.debounceTimeouts);
       updatedTimeouts.set(key, timeoutHandle);
@@ -184,23 +221,23 @@ export const useChainStore = create<ChainState>((set, get) => ({
     if (subscriptionId) {
       const ws = getChainWebSocket(chain.rpc);
       ws.unsubscribe(subscriptionId);
-      
+
       // Clear any pending debounce timeout for this key
       const existingTimeout = debounceTimeouts.get(key);
       if (existingTimeout) {
         clearTimeout(existingTimeout);
       }
-      
+
       // Update both maps
       const updatedSubscriptions = new Map(subscriptions);
       updatedSubscriptions.delete(key);
       const updatedTimeouts = new Map(debounceTimeouts);
       updatedTimeouts.delete(key);
-      
-      set({ 
+
+      set({
         subscriptions: updatedSubscriptions,
         debounceTimeouts: updatedTimeouts,
-        isSubscribed: updatedSubscriptions.size > 0 
+        isSubscribed: updatedSubscriptions.size > 0,
       });
       console.log(`Unsubscribed from balance updates for ${address} on ${chainId}`);
     }
@@ -210,7 +247,7 @@ export const useChainStore = create<ChainState>((set, get) => ({
     // Clear all pending debounce timeouts
     const { debounceTimeouts } = get();
     debounceTimeouts.forEach((timeout) => clearTimeout(timeout));
-    
+
     disconnectAllWebSockets();
     set({ subscriptions: new Map(), debounceTimeouts: new Map(), isSubscribed: false });
     console.log('Unsubscribed from all balance updates');

@@ -11,9 +11,8 @@ import ImportWallet from './pages/ImportWallet';
 import Staking from './pages/Staking';
 import Settings from './pages/Settings';
 import Earn from './pages/Earn';
-import Deposit from './pages/Deposit';
-import Withdraw from './pages/Withdraw';
 import Approval from './pages/Approval';
+import Swap from './pages/Swap';
 
 type View =
   | 'loading'
@@ -24,9 +23,8 @@ type View =
   | 'staking'
   | 'settings'
   | 'earn'
-  | 'deposit'
-  | 'withdraw'
-  | 'approval';
+  | 'approval'
+  | 'swap';
 
 // Check for approval ID in URL query params
 function getApprovalIdFromUrl(): string | null {
@@ -146,12 +144,8 @@ const App: React.FC = () => {
     setView('earn');
   };
 
-  const navigateToDeposit = () => {
-    setView('deposit');
-  };
-
-  const navigateToWithdraw = () => {
-    setView('withdraw');
+  const navigateToSwap = () => {
+    setView('swap');
   };
 
   const navigateToDashboard = () => {
@@ -214,15 +208,13 @@ const App: React.FC = () => {
           onNavigateToStaking={navigateToStaking}
           onNavigateToSettings={navigateToSettings}
           onNavigateToEarn={navigateToEarn}
-          onNavigateToDeposit={navigateToDeposit}
-          onNavigateToWithdraw={navigateToWithdraw}
+          onNavigateToSwap={navigateToSwap}
         />
       )}
       {view === 'staking' && <Staking onBack={navigateToDashboard} />}
       {view === 'settings' && <Settings onBack={navigateToDashboard} />}
       {view === 'earn' && <Earn onBack={navigateToDashboard} />}
-      {view === 'deposit' && <Deposit onBack={navigateToDashboard} />}
-      {view === 'withdraw' && <Withdraw onBack={navigateToDashboard} />}
+      {view === 'swap' && <Swap onBack={navigateToDashboard} />}
       {view === 'approval' && approvalId && (
         <Approval approvalId={approvalId} onComplete={handleApprovalComplete} />
       )}

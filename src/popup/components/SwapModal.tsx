@@ -22,6 +22,8 @@ import {
   MenuList,
   MenuItem,
   Spinner,
+  FormControl,
+  FormLabel,
 } from '@chakra-ui/react';
 import { ChevronDownIcon, RepeatIcon } from '@chakra-ui/icons';
 import { useWalletStore } from '@/store/walletStore';
@@ -30,6 +32,7 @@ import { ChainInfo } from '@/types/wallet';
 import { fetchChainAssets } from '@/lib/assets/chainRegistry';
 import { estimateSwapFee, FeeEstimate } from '@/lib/cosmos/fees';
 import { findBestRoute, SwapRoute, LiquidityPool as RouterPool } from '@/lib/cosmos/swap-router';
+import { fetchOsmosisPools } from '@/lib/cosmos/osmosis-pools';
 import { toBase64, fromBase64 } from '@cosmjs/encoding';
 import { TxRaw, AuthInfo, TxBody, SignerInfo, Fee } from 'cosmjs-types/cosmos/tx/v1beta1/tx';
 import { SignMode } from 'cosmjs-types/cosmos/tx/signing/v1beta1/signing';
@@ -183,10 +186,21 @@ const SwapModal: React.FC<SwapModalProps> = ({
   onSuccess,
   onSwapSuccess,
 }) => {
-  const { selectedAccount, getAddressForChain, updateActivity, keyring } = useWalletStore();
+  const {
+    selectedAccount,
+    getAddressForChain,
+    updateActivity,
+    keyring,
+    signAndBroadcast,
+    signAndBroadcastWithPassword,
+    hasMnemonicInMemory,
+  } = useWalletStore();
   const { getBalance, fetchBalance } = useChainStore();
 
   const [availableTokens, setAvailableTokens] = useState<TokenInfo[]>(defaultBzeTokens);
+  const [filteredAvailableTokens, setFilteredAvailableTokens] =
+    useState<TokenInfo[]>(availableTokens);
+  const [availableFromTokens, setAvailableFromTokens] = useState<TokenInfo[]>(defaultBzeTokens);
   const [fromToken, setFromToken] = useState<TokenInfo>(defaultBzeTokens[0]);
   const [toToken, setToToken] = useState<TokenInfo | null>(null);
   const [fromAmount, setFromAmount] = useState('');
@@ -194,7 +208,8 @@ const SwapModal: React.FC<SwapModalProps> = ({
   const [slippage, setSlippage] = useState(0.1);
   const [loading, setLoading] = useState(false);
   const [fetchingQuote, setFetchingQuote] = useState(false);
-  const [step, setStep] = useState<'input' | 'confirm'>('input');
+  const [step, setStep] = useState<'input' | 'confirm' | 'password'>('input');
+  const [password, setPassword] = useState('');
   const [pools, setPools] = useState<LiquidityPool[]>([]);
   const [loadingPools, setLoadingPools] = useState(false);
   const [txFee, setTxFee] = useState<FeeEstimate | null>(null);
@@ -208,58 +223,111 @@ const SwapModal: React.FC<SwapModalProps> = ({
   const balance = chainAddress ? getBalance(chainId, chainAddress) : undefined;
 
   // Fetch liquidity pools, tokens, and fees on mount
-  const fetchPoolsAndTokens = useCallback(async () => {
-    setLoadingPools(true);
-    try {
-      // Fetch pools
-      const poolResponse = await fetch('https://rest.getbze.com/bze/tradebin/all_liquidity_pools');
-      const poolData = await poolResponse.json();
-      const fetchedPools: LiquidityPool[] = poolData.list || [];
-      setPools(fetchedPools);
+  const fetchPoolsAndTokens = useCallback(
+    async (signal: AbortSignal) => {
+      setLoadingPools(true);
+      try {
+        let fetchedPools: LiquidityPool[] = [];
 
-      // Get all denoms that have pools
-      const poolDenoms = new Set<string>();
-      fetchedPools.forEach((pool) => {
-        poolDenoms.add(pool.base);
-        poolDenoms.add(pool.quote);
-      });
+        if (chainId === 'beezee-1') {
+          const poolResponse = await fetch(
+            'https://rest.getbze.com/bze/tradebin/all_liquidity_pools',
+            { signal }
+          );
+          const poolData = await poolResponse.json();
+          fetchedPools = poolData.list || [];
+        } else if (chainId === 'osmosis-1' && chainConfig?.rest) {
+          fetchedPools = await fetchOsmosisPools(chainConfig.rest);
+        }
 
-      // Fetch assets from chain registry
-      const registryAssets = await fetchChainAssets(chainId);
+        if (signal.aborted) return;
 
-      // Filter to only tokens with pools
-      const tokensWithPools: TokenInfo[] = registryAssets
-        .filter((asset) => poolDenoms.has(asset.denom))
-        .map((asset) => ({
-          symbol: asset.symbol,
-          name: asset.name,
-          decimals: asset.decimals,
-          denom: asset.denom,
-        }));
+        setPools(fetchedPools);
 
-      if (tokensWithPools.length > 0) {
-        setAvailableTokens(tokensWithPools);
-        setFromToken(tokensWithPools[0]);
-        setToToken(tokensWithPools.length > 1 ? tokensWithPools[1] : null);
+        // Get all denoms that have pools
+        const poolDenoms = new Set<string>();
+        fetchedPools.forEach((pool) => {
+          poolDenoms.add(pool.base);
+          poolDenoms.add(pool.quote);
+        });
+
+        // Get all denoms with a balance on beezee-1 or osmosis-1
+        const chainBalances = await fetchBalance(chainId, chainAddress);
+
+        if (signal.aborted) return;
+
+        const chainBalancesDenoms = new Set<string>();
+        chainBalances.forEach((balance) => {
+          chainBalancesDenoms.add(balance.denom);
+        });
+
+        // Fetch assets from chain registry
+        const registryAssets = await fetchChainAssets(chainId);
+
+        if (signal.aborted) return;
+
+        // Filter to only tokens with pools
+        const tokensWithPools: TokenInfo[] = registryAssets
+          .filter((asset) => poolDenoms.has(asset.denom))
+          .map((asset) => ({
+            symbol: asset.symbol,
+            name: asset.name,
+            decimals: asset.decimals,
+            denom: asset.denom,
+          }));
+
+        // Filter to only tokens with a balance on the chain
+        const tokensWithPoolsAndBalance = tokensWithPools.filter((token) =>
+          chainBalancesDenoms.has(token.denom)
+        );
+
+        if (tokensWithPools.length > 0) {
+          setAvailableFromTokens(
+            tokensWithPoolsAndBalance.length > 0 ? tokensWithPoolsAndBalance : tokensWithPools
+          );
+          setAvailableTokens(tokensWithPools);
+          setFilteredAvailableTokens(tokensWithPools);
+          setFromToken(tokensWithPools[0]);
+          setToToken(tokensWithPools.length > 1 ? tokensWithPools[1] : null);
+        }
+
+        // Fetch swap fees from chain params (BeeZee only; Osmosis uses fixed fee)
+        if (chainId === 'beezee-1' && chainConfig?.rest) {
+          const fees = await estimateSwapFee(chainConfig.rest, 250000);
+          if (!signal.aborted) {
+            setTxFee(fees.txFee);
+            setTradeFee(fees.tradeFee);
+          }
+        } else if (chainId === 'osmosis-1' && chainConfig) {
+          const feeDenom = chainConfig.feeCurrencies?.[0]?.coinMinimalDenom || 'uosmo';
+          setTxFee({
+            amount: '25000',
+            denom: feeDenom,
+            formatted: '0.025 OSMO',
+          });
+          setTradeFee(null);
+        }
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        console.error('Failed to fetch pools/tokens:', error);
+      } finally {
+        if (!signal.aborted) {
+          setLoadingPools(false);
+        }
       }
-
-      // Fetch swap fees from chain params
-      if (chainConfig?.rest) {
-        const fees = await estimateSwapFee(chainConfig.rest, 250000);
-        setTxFee(fees.txFee);
-        setTradeFee(fees.tradeFee);
-      }
-    } catch (error) {
-      console.error('Failed to fetch pools/tokens:', error);
-    } finally {
-      setLoadingPools(false);
-    }
-  }, [chainId, chainConfig?.rest]);
+    },
+    [chainId, chainConfig, chainAddress, fetchBalance]
+  );
 
   useEffect(() => {
-    if (isOpen && chainId === 'beezee-1') {
-      fetchPoolsAndTokens();
-    }
+    if (!isOpen || (chainId !== 'beezee-1' && chainId !== 'osmosis-1')) return;
+
+    const controller = new AbortController();
+    fetchPoolsAndTokens(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
   }, [isOpen, chainId, fetchPoolsAndTokens]);
 
   // Get balance for a specific token
@@ -271,33 +339,19 @@ const SwapModal: React.FC<SwapModalProps> = ({
     return parseInt(tokenBalance.amount) / Math.pow(10, token?.decimals || 6);
   };
 
-  const fromBalance = getTokenBalance(fromToken.denom);
+  const fromBalance = fromToken ? getTokenBalance(fromToken.denom) : 0;
   const toBalance = toToken ? getTokenBalance(toToken.denom) : 0;
-
-  // Find the pool for the current token pair (legacy - for direct routes)
-  const findPool = useCallback((): LiquidityPool | null => {
-    if (!toToken) return null;
-    for (const pool of pools) {
-      if (
-        (pool.base === fromToken.denom && pool.quote === toToken.denom) ||
-        (pool.base === toToken.denom && pool.quote === fromToken.denom)
-      ) {
-        return pool;
-      }
-    }
-    return null;
-  }, [pools, fromToken.denom, toToken]);
 
   // Find the best route (supports multi-hop)
   const findRoute = useCallback(
     (inputAmount: bigint): SwapRoute | null => {
-      if (!toToken || pools.length === 0) return null;
+      if (!fromToken || !toToken || pools.length === 0) return null;
 
       // Cast to RouterPool type (same structure)
       const routerPools = pools as RouterPool[];
       return findBestRoute(routerPools, fromToken.denom, toToken.denom, inputAmount, 3);
     },
-    [pools, fromToken.denom, toToken]
+    [pools, fromToken, toToken]
   );
 
   // Get token symbol from denom
@@ -311,17 +365,18 @@ const SwapModal: React.FC<SwapModalProps> = ({
 
   // Calculate swap quote using multi-hop router
   useEffect(() => {
-    if (!fromAmount || parseFloat(fromAmount) <= 0 || !toToken) {
+    if (!fromAmount || parseFloat(fromAmount) <= 0 || !fromToken || !toToken) {
       setToAmount('');
       setSelectedRoute(null);
       return;
     }
 
+    const currentFromToken = fromToken;
     const calculateQuote = async () => {
       setFetchingQuote(true);
       try {
         const inputAmountRaw = BigInt(
-          Math.floor(parseFloat(fromAmount) * Math.pow(10, fromToken.decimals))
+          Math.floor(parseFloat(fromAmount) * Math.pow(10, currentFromToken.decimals))
         );
 
         // Use multi-hop router to find best route
@@ -378,25 +433,34 @@ const SwapModal: React.FC<SwapModalProps> = ({
     setToAmount(fromAmount);
   };
 
-  // Set max amount
+  // Set max amount (reserve native token for tx fee)
   const handleMaxAmount = () => {
-    const maxAmount = fromToken.denom === 'ubze' ? Math.max(0, fromBalance - 0.01) : fromBalance;
+    if (!fromToken) return;
+    const feeDenom = chainConfig?.feeCurrencies?.[0]?.coinMinimalDenom;
+    const reserve = fromToken.denom === feeDenom ? (chainId === 'osmosis-1' ? 0.03 : 0.01) : 0;
+    const maxAmount = Math.max(0, fromBalance - reserve);
     setFromAmount(maxAmount.toFixed(6));
   };
 
-  // Reset form
+  // Reset form when modal closes
   useEffect(() => {
     if (!isOpen) {
       setFromAmount('');
       setToAmount('');
       setStep('input');
-      // Reset to first available tokens
-      if (availableTokens.length > 0) {
-        setFromToken(availableTokens[0]);
-        setToToken(availableTokens.length > 1 ? availableTokens[1] : null);
-      }
+      setPassword('');
+      setSelectedRoute(null);
+      setPools([]);
+      setAvailableTokens(defaultBzeTokens);
+      setAvailableFromTokens(defaultBzeTokens);
+      setFilteredAvailableTokens(defaultBzeTokens);
+      setFromToken(defaultBzeTokens[0]);
+      setToToken(null);
+      setTxFee(null);
+      setTradeFee(null);
+      setLoadingPools(false);
     }
-  }, [isOpen, availableTokens]);
+  }, [isOpen]);
 
   const handleContinue = () => {
     if (!fromAmount || parseFloat(fromAmount) <= 0) {
@@ -423,8 +487,14 @@ const SwapModal: React.FC<SwapModalProps> = ({
     updateActivity();
   };
 
-  const handleSwap = async () => {
-    if (!keyring || !chainAddress || !toToken) {
+  const filterAvailableTokens = (search: string) => {
+    setFilteredAvailableTokens(
+      availableTokens.filter((t) => t.symbol.toLowerCase().includes(search.toLowerCase()))
+    );
+  };
+
+  const handleSwap = async (passwordForSigning?: string) => {
+    if (!chainAddress || !toToken) {
       toast({
         title: 'Wallet not connected or tokens not selected',
         status: 'error',
@@ -438,15 +508,75 @@ const SwapModal: React.FC<SwapModalProps> = ({
       return;
     }
 
+    // Osmosis with imported account or when mnemonic not in memory: require password
+    const isImportedAccount = selectedAccount?.id?.startsWith('imported-');
+    const needsPassword =
+      chainId === 'osmosis-1' &&
+      (isImportedAccount || !hasMnemonicInMemory()) &&
+      !passwordForSigning;
+
+    if (needsPassword) {
+      setStep('password');
+      return;
+    }
+
     setLoading(true);
     try {
-      // Build the swap message amounts
       const inputAmountRaw = Math.floor(parseFloat(fromAmount) * Math.pow(10, fromToken.decimals));
       const minOutputAmountRaw = Math.floor(
         parseFloat(toAmount) * Math.pow(10, toToken.decimals) * 0.95
-      ); // 5% slippage buffer
+      );
 
-      // Get account info via REST
+      if (chainId === 'osmosis-1' && (signAndBroadcast || signAndBroadcastWithPassword)) {
+        // Osmosis: MsgSwapExactAmountIn via signAndBroadcast
+        const routes = selectedRoute.pools.map((poolId, i) => ({
+          pool_id: parseInt(poolId, 10),
+          token_out_denom: selectedRoute.path[i + 1],
+        }));
+
+        const msg = {
+          typeUrl: '/osmosis.poolmanager.v1beta1.MsgSwapExactAmountIn',
+          value: {
+            sender: chainAddress,
+            routes,
+            token_in: { denom: fromToken.denom, amount: inputAmountRaw.toString() },
+            token_out_min_amount: minOutputAmountRaw.toString(),
+          },
+        };
+
+        const feeDenom = chainConfig?.feeCurrencies?.[0]?.coinMinimalDenom || 'uosmo';
+        const fee = {
+          amount: [{ denom: feeDenom, amount: '25000' }],
+          gas: '250000',
+        };
+
+        let txHash: string;
+        if (passwordForSigning && signAndBroadcastWithPassword) {
+          txHash = await signAndBroadcastWithPassword(chainId, [msg], passwordForSigning, fee);
+        } else if (signAndBroadcast) {
+          txHash = await signAndBroadcast(chainId, [msg], fee, '');
+        } else {
+          throw new Error('Signing not available');
+        }
+
+        toast({
+          title: 'Swap successful!',
+          description: `Swapped ${fromAmount} ${fromToken.symbol} for ~${toAmount} ${toToken.symbol}`,
+          status: 'success',
+          duration: 5000,
+        });
+        onSwapSuccess?.(fromToken.denom, toToken.denom);
+        onSuccess?.();
+        onClose();
+        return;
+      }
+
+      // BeeZee: MsgMultiSwap (manual Amino signing + broadcast)
+      if (!keyring) {
+        toast({ title: 'Wallet not ready', status: 'error', duration: 2000 });
+        return;
+      }
+
       const accountResponse = await fetch(
         `https://rest.getbze.com/cosmos/auth/v1beta1/accounts/${chainAddress}`
       );
@@ -696,8 +826,14 @@ const SwapModal: React.FC<SwapModalProps> = ({
                     >
                       {fromToken.symbol}
                     </MenuButton>
-                    <MenuList bg="#141414" borderColor="#2a2a2a" borderRadius="xl">
-                      {availableTokens
+                    <MenuList
+                      bg="#141414"
+                      borderColor="#2a2a2a"
+                      borderRadius="xl"
+                      maxH="200px"
+                      overflowY="auto"
+                    >
+                      {availableFromTokens
                         .filter((t) => t.denom !== toToken?.denom)
                         .map((token) => (
                           <MenuItem
@@ -776,8 +912,26 @@ const SwapModal: React.FC<SwapModalProps> = ({
                     >
                       {toToken?.symbol || 'Select'}
                     </MenuButton>
-                    <MenuList bg="#141414" borderColor="#2a2a2a" borderRadius="xl">
-                      {availableTokens
+                    <MenuList
+                      bg="#141414"
+                      borderColor="#2a2a2a"
+                      borderRadius="xl"
+                      maxH="200px"
+                      overflowY="auto"
+                    >
+                      {/* Searchable menu list */}
+                      <MenuItem bg="transparent" _hover={{ bg: 'whiteAlpha.100' }}>
+                        <HStack justify="space-between" w="full">
+                          <Input
+                            onClick={(e) => e.stopPropagation()}
+                            type="text"
+                            placeholder="Search"
+                            onChange={(e) => filterAvailableTokens(e.target.value)}
+                          />
+                        </HStack>
+                      </MenuItem>
+
+                      {filteredAvailableTokens
                         .filter((t) => t.denom !== fromToken.denom)
                         .map((token) => (
                           <MenuItem
@@ -890,12 +1044,17 @@ const SwapModal: React.FC<SwapModalProps> = ({
                     <Box h="1px" bg="#2a2a2a" my={1} />
                     <HStack justify="space-between">
                       <Text color="gray.500">Network Fee</Text>
-                      <Text>{txFee?.formatted || '~0.015 BZE'}</Text>
+                      <Text>
+                        {txFee?.formatted ||
+                          (chainId === 'osmosis-1' ? '~0.025 OSMO' : '~0.015 BZE')}
+                      </Text>
                     </HStack>
-                    <HStack justify="space-between">
-                      <Text color="gray.500">Taker Fee</Text>
-                      <Text>{tradeFee?.formatted || '0.1 BZE'}</Text>
-                    </HStack>
+                    {chainId === 'beezee-1' && (
+                      <HStack justify="space-between">
+                        <Text color="gray.500">Taker Fee</Text>
+                        <Text>{tradeFee?.formatted || '0.1 BZE'}</Text>
+                      </HStack>
+                    )}
                     <HStack justify="space-between">
                       <Text color="gray.500" fontWeight="medium">
                         Total Fees
@@ -903,12 +1062,66 @@ const SwapModal: React.FC<SwapModalProps> = ({
                       <Text fontWeight="medium">
                         {txFee && tradeFee
                           ? `${((parseInt(txFee.amount) + parseInt(tradeFee.amount)) / 1_000_000).toFixed(6)} BZE`
-                          : '~0.115 BZE'}
+                          : txFee?.formatted ||
+                            (chainId === 'osmosis-1' ? '~0.025 OSMO' : '~0.115 BZE')}
                       </Text>
                     </HStack>
                   </VStack>
                 </Box>
               )}
+            </VStack>
+          ) : step === 'password' ? (
+            <VStack spacing={4} align="stretch">
+              <Text color="gray.400" fontSize="sm">
+                Enter your password to sign this swap
+              </Text>
+
+              <Box
+                bg="rgba(0, 230, 230, 0.1)"
+                borderRadius="lg"
+                p={3}
+                border="1px solid"
+                borderColor="cyan.800"
+              >
+                <Text color="cyan.300" fontSize="sm">
+                  🔐 Your password is required to sign transactions on Osmosis
+                </Text>
+              </Box>
+
+              <FormControl>
+                <FormLabel color="gray.400" fontSize="sm">
+                  Password
+                </FormLabel>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your wallet password"
+                  bg="#0a0a0a"
+                  borderColor="#3a3a3a"
+                  color="white"
+                  _hover={{ borderColor: '#4a4a4a' }}
+                  _focus={{ borderColor: 'cyan.500', boxShadow: 'none' }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && password) {
+                      handleSwap(password);
+                    }
+                  }}
+                />
+              </FormControl>
+
+              <Box bg="#141414" borderRadius="lg" p={3}>
+                <VStack spacing={2} align="stretch">
+                  <HStack justify="space-between">
+                    <Text color="gray.500" fontSize="sm">
+                      Swapping
+                    </Text>
+                    <Text color="white" fontSize="sm" fontWeight="medium">
+                      {fromAmount} {fromToken.symbol} → ~{toAmount} {toToken?.symbol}
+                    </Text>
+                  </HStack>
+                </VStack>
+              </Box>
             </VStack>
           ) : toToken ? (
             <VStack spacing={4} align="stretch">
@@ -975,12 +1188,16 @@ const SwapModal: React.FC<SwapModalProps> = ({
                   <Box h="1px" bg="#2a2a2a" my={1} />
                   <HStack justify="space-between">
                     <Text color="gray.500">Network Fee</Text>
-                    <Text>{txFee?.formatted || '~0.015 BZE'}</Text>
+                    <Text>
+                      {txFee?.formatted || (chainId === 'osmosis-1' ? '~0.025 OSMO' : '~0.015 BZE')}
+                    </Text>
                   </HStack>
-                  <HStack justify="space-between">
-                    <Text color="gray.500">Taker Fee</Text>
-                    <Text>{tradeFee?.formatted || '0.1 BZE'}</Text>
-                  </HStack>
+                  {chainId === 'beezee-1' && (
+                    <HStack justify="space-between">
+                      <Text color="gray.500">Taker Fee</Text>
+                      <Text>{tradeFee?.formatted || '0.1 BZE'}</Text>
+                    </HStack>
+                  )}
                   <HStack justify="space-between">
                     <Text color="gray.500" fontWeight="medium">
                       Total Fees
@@ -988,7 +1205,8 @@ const SwapModal: React.FC<SwapModalProps> = ({
                     <Text fontWeight="medium" color="orange.300">
                       {txFee && tradeFee
                         ? `${((parseInt(txFee.amount) + parseInt(tradeFee.amount)) / 1_000_000).toFixed(6)} BZE`
-                        : '~0.115 BZE'}
+                        : txFee?.formatted ||
+                          (chainId === 'osmosis-1' ? '~0.025 OSMO' : '~0.115 BZE')}
                     </Text>
                   </HStack>
                 </VStack>
@@ -1026,6 +1244,31 @@ const SwapModal: React.FC<SwapModalProps> = ({
                 Review Swap
               </Button>
             </HStack>
+          ) : step === 'password' ? (
+            <HStack spacing={3} w="full">
+              <Button
+                variant="ghost"
+                flex={1}
+                onClick={() => setStep('confirm')}
+                color="gray.400"
+                _hover={{ color: 'white', bg: 'whiteAlpha.100' }}
+              >
+                Back
+              </Button>
+              <Button
+                bg="cyan.500"
+                color="white"
+                _hover={{ bg: 'cyan.600' }}
+                flex={1}
+                borderRadius="xl"
+                onClick={() => handleSwap(password)}
+                isLoading={loading}
+                loadingText="Swapping..."
+                isDisabled={!password}
+              >
+                Confirm Swap
+              </Button>
+            </HStack>
           ) : (
             <HStack spacing={3} w="full">
               <Button
@@ -1043,7 +1286,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
                 _hover={{ bg: 'cyan.600' }}
                 flex={1}
                 borderRadius="xl"
-                onClick={handleSwap}
+                onClick={() => handleSwap()}
                 isLoading={loading}
                 loadingText="Swapping..."
               >
