@@ -59,7 +59,7 @@ This software is a tool, not a financial service. Nothing in this software const
 
 ## Third-Party Services
 
-The wallet may integrate with third-party services (blockchain networks, MoonPay, etc.). Your use of these services is subject to their respective terms and policies. We are not responsible for third-party services.
+The wallet may integrate with third-party services (blockchain networks, go.skip.build, etc.). Your use of these services is subject to their respective terms and policies. We are not responsible for third-party services.
 
 ## Limitation of Liability
 

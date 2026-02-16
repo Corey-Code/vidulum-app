@@ -45,6 +45,51 @@ const cacheExpiry: Map<string, number> = new Map();
 const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
 
 /**
+ * Parse BeeZee liquidity pool token denom to get a readable name
+ * Format: ulp_factory/{factory_address}/u{asset1}_{asset2}
+ * Example: ulp_factory/bze13gzq40che93tgfm9kzmkpjamah5nj0j73pyhqk/uvdl_ubze -> LP
+ */
+function parseBeeZeeLPToken(denom: string): { symbol: string; name: string } | null {
+  if (!denom.startsWith('ulp_factory/')) {
+    return null;
+  }
+
+  const parts = denom.split('/');
+  if (parts.length < 3) {
+    return null;
+  }
+
+  const lastPart = parts[parts.length - 1];
+  if (!lastPart.startsWith('u')) {
+    return null;
+  }
+
+  // Remove 'u' prefix and split by '_'
+  const assetPart = lastPart.slice(1);
+  const assets = assetPart.split('_');
+
+  if (assets.length !== 2) {
+    return null;
+  }
+
+  // Map known denoms to symbols
+  const denomToSymbol: Record<string, string> = {
+    bze: 'BZE',
+    vdl: 'VDL',
+    ubze: 'BZE',
+    uvdl: 'VDL',
+  };
+
+  const symbol1 = denomToSymbol[assets[0]] || assets[0].toUpperCase();
+  const symbol2 = denomToSymbol[assets[1]] || assets[1].toUpperCase();
+
+  const symbol = `${symbol1}/${symbol2}`;
+  const name = `LP Shares`;
+
+  return { symbol, name };
+}
+
+/**
  * Get chain name from network ID for Cosmos chains
  * Uses the pre-bundled registry config which has chainName
  */
@@ -620,6 +665,8 @@ const tokenColors: Record<string, string> = {
   CTL: '#32CD32',
   SPICE: '#FF6347',
 };
+
+export { parseBeeZeeLPToken };
 
 export function getTokenColor(symbol: string): string {
   return tokenColors[symbol] || '#718096';

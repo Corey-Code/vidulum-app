@@ -1,7 +1,7 @@
 import { StargateClient, SigningStargateClient, defaultRegistryTypes } from '@cosmjs/stargate';
 import { OfflineSigner, GeneratedType, Registry } from '@cosmjs/proto-signing';
 import { Balance } from '@/types/wallet';
-import { fetchWithFailover, withFailover } from '@/lib/networks';
+import { fetchWithFailover, withFailover, FailoverStatusCallback } from '@/lib/networks';
 
 // Simple protobuf encoder for BZE messages (no eval required)
 // Protobuf wire format: tag = (field_number << 3) | wire_type
@@ -22,6 +22,59 @@ function encodeString(fieldNumber: number, value: string): number[] {
   const strBytes = encoder.encode(value);
   const tag = (fieldNumber << 3) | 2; // wire type 2 = length-delimited
   return [...encodeVarint(tag), ...encodeVarint(strBytes.length), ...strBytes];
+}
+
+function encodeVarintField(fieldNumber: number, value: number): number[] {
+  const tag = (fieldNumber << 3) | 0; // wire type 0 = varint
+  return [...encodeVarint(tag), ...encodeVarint(value)];
+}
+
+function encodeLengthDelimited(fieldNumber: number, payload: number[]): number[] {
+  const tag = (fieldNumber << 3) | 2;
+  return [...encodeVarint(tag), ...encodeVarint(payload.length), ...payload];
+}
+
+// Osmosis SwapAmountInRoute: pool_id (1), token_out_denom (2)
+function encodeSwapAmountInRoute(route: { pool_id: number; token_out_denom: string }): number[] {
+  const parts: number[] = [];
+  if (route.pool_id !== undefined && route.pool_id !== null) {
+    parts.push(...encodeVarintField(1, route.pool_id));
+  }
+  if (route.token_out_denom) {
+    parts.push(...encodeString(2, route.token_out_denom));
+  }
+  return parts;
+}
+
+// cosmos.base.v1beta1.Coin: denom (1), amount (2)
+function encodeCoin(coin: { denom: string; amount: string }): number[] {
+  const parts: number[] = [];
+  if (coin.denom) parts.push(...encodeString(1, coin.denom));
+  if (coin.amount) parts.push(...encodeString(2, coin.amount));
+  return parts;
+}
+
+// Osmosis MsgSwapExactAmountIn: sender (1), routes (2), token_in (3), token_out_min_amount (4)
+function encodeMsgSwapExactAmountIn(message: {
+  sender: string;
+  routes: Array<{ pool_id: number; token_out_denom: string }>;
+  token_in: { denom: string; amount: string };
+  token_out_min_amount: string;
+}): Uint8Array {
+  const bytes: number[] = [];
+  if (message.sender) bytes.push(...encodeString(1, message.sender));
+  for (const route of message.routes || []) {
+    const routeBytes = encodeSwapAmountInRoute(route);
+    bytes.push(...encodeLengthDelimited(2, routeBytes));
+  }
+  if (message.token_in) {
+    const coinBytes = encodeCoin(message.token_in);
+    bytes.push(...encodeLengthDelimited(3, coinBytes));
+  }
+  if (message.token_out_min_amount) {
+    bytes.push(...encodeString(4, message.token_out_min_amount));
+  }
+  return new Uint8Array(bytes);
 }
 
 // MsgJoinStaking: creator (1), reward_id (2), amount (3)
@@ -90,6 +143,33 @@ function createBzeRegistry(): Registry {
     createMsgType(encodeMsgClaimStakingRewards, { creator: '', reward_id: '' })
   );
 
+  // Osmosis poolmanager swap
+  const osmosisSwapDefaults = {
+    sender: '',
+    routes: [] as Array<{ pool_id: number; token_out_denom: string }>,
+    token_in: { denom: '', amount: '' },
+    token_out_min_amount: '',
+  };
+  registry.register(
+    '/osmosis.poolmanager.v1beta1.MsgSwapExactAmountIn',
+    createMsgType(
+      (msg) => {
+        const m = { ...osmosisSwapDefaults, ...msg };
+        const routes = (m.routes || []).map((r: { pool_id?: number; poolId?: number; token_out_denom?: string; tokenOutDenom?: string }) => ({
+          pool_id: r.pool_id ?? r.poolId ?? 0,
+          token_out_denom: r.token_out_denom ?? r.tokenOutDenom ?? '',
+        }));
+        return encodeMsgSwapExactAmountIn({
+          sender: m.sender,
+          routes,
+          token_in: m.token_in ?? m.tokenIn ?? { denom: '', amount: '' },
+          token_out_min_amount: m.token_out_min_amount ?? m.tokenOutMinAmount ?? '0',
+        });
+      },
+      osmosisSwapDefaults
+    )
+  );
+
   return registry;
 }
 
@@ -117,19 +197,24 @@ export class CosmosClient {
    * Get a StargateClient with automatic failover across multiple RPC endpoints
    */
   async getClientWithFailover(
-    rpcEndpoints: string[]
+    rpcEndpoints: string[],
+    onStatusUpdate?: FailoverStatusCallback
   ): Promise<{ client: StargateClient; endpoint: string }> {
-    const { result: client, endpoint } = await withFailover(rpcEndpoints, async (rpcEndpoint) => {
-      // Prefer a cached client for this endpoint if available
-      const cachedClient = this.clients.get(rpcEndpoint);
-      if (cachedClient) {
-        return cachedClient;
-      }
+    const { result: client, endpoint } = await withFailover(
+      rpcEndpoints,
+      async (rpcEndpoint) => {
+        // Prefer a cached client for this endpoint if available
+        const cachedClient = this.clients.get(rpcEndpoint);
+        if (cachedClient) {
+          return cachedClient;
+        }
 
-      const newClient = await StargateClient.connect(rpcEndpoint);
-      this.clients.set(rpcEndpoint, newClient);
-      return newClient;
-    });
+        const newClient = await StargateClient.connect(rpcEndpoint);
+        this.clients.set(rpcEndpoint, newClient);
+        return newClient;
+      },
+      { onStatusUpdate }
+    );
 
     // Ensure the successful client is cached
     this.clients.set(endpoint, client);
@@ -173,7 +258,8 @@ export class CosmosClient {
   async getBalance(
     rpcEndpoints: string | string[],
     address: string,
-    restEndpoints?: string | string[]
+    restEndpoints?: string | string[],
+    onStatusUpdate?: FailoverStatusCallback
   ): Promise<Balance[]> {
     // Normalize to arrays
     const rpcArray = Array.isArray(rpcEndpoints) ? rpcEndpoints : [rpcEndpoints];
@@ -187,7 +273,9 @@ export class CosmosClient {
     try {
       const data = await fetchWithFailover<{ balances: Array<{ denom: string; amount: string }> }>(
         restArray,
-        `/cosmos/bank/v1beta1/balances/${address}`
+        `/cosmos/bank/v1beta1/balances/${address}`,
+        {},
+        { onStatusUpdate }
       );
 
       if (data.balances && Array.isArray(data.balances)) {
@@ -202,7 +290,7 @@ export class CosmosClient {
     }
 
     // Fallback to RPC with failover if REST fails
-    const { client } = await this.getClientWithFailover(rpcArray);
+    const { client } = await this.getClientWithFailover(rpcArray, onStatusUpdate);
     const balances = await client.getAllBalances(address);
     console.log('Fetched balances via RPC:', balances);
     return balances.map((b) => ({

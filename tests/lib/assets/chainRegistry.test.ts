@@ -4,7 +4,12 @@
  * Tests for asset registry and token metadata
  */
 
-import { fetchChainAssets, getAssetByDenom, getTokenColor } from '@/lib/assets/chainRegistry';
+import {
+  fetchChainAssets,
+  getAssetByDenom,
+  getTokenColor,
+  parseBeeZeeLPToken,
+} from '@/lib/assets/chainRegistry';
 import { mockFetchResponse } from '../../setup';
 
 // Mock the cosmos-registry module
@@ -263,6 +268,45 @@ describe('Chain Registry', () => {
     it('should have proper decimals for EVM chains', async () => {
       const ethAssets = await fetchChainAssets('ethereum-mainnet');
       expect(ethAssets[0].decimals).toBe(18);
+    });
+  });
+
+  describe('parseBeeZeeLPToken', () => {
+    it('should parse valid BeeZee LP token denoms', () => {
+      const result = parseBeeZeeLPToken(
+        'ulp_factory/bze13gzq40che93tgfm9kzmkpjamah5nj0j73pyhqk/uvdl_ubze'
+      );
+      expect(result).toEqual({
+        symbol: 'LP',
+        name: 'Liquidity Pool VDL/BZE',
+      });
+    });
+
+    it('should handle unknown asset symbols', () => {
+      const result = parseBeeZeeLPToken('ulp_factory/someaddress/uabc_udef');
+      expect(result).toEqual({
+        symbol: 'LP',
+        name: 'Liquidity Pool ABC/UDEF',
+      });
+    });
+
+    it('should return null for non-LP tokens', () => {
+      expect(parseBeeZeeLPToken('ubze')).toBeNull();
+      expect(parseBeeZeeLPToken('ibc/123')).toBeNull();
+    });
+
+    it('should return null for malformed LP tokens', () => {
+      expect(parseBeeZeeLPToken('ulp_factory/invalid')).toBeNull();
+      expect(parseBeeZeeLPToken('ulp_factory/addr/invalid')).toBeNull();
+      expect(parseBeeZeeLPToken('ulp_factory/addr/abc')).toBeNull();
+    });
+
+    it('should map known denoms to symbols', () => {
+      const result = parseBeeZeeLPToken('ulp_factory/addr/ubze_uvdl');
+      expect(result).toEqual({
+        symbol: 'LP',
+        name: 'Liquidity Pool BZE/VDL',
+      });
     });
   });
 });
