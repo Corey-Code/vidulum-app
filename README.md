@@ -56,7 +56,6 @@ Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/
 - Multi-chain wallet from a single mnemonic
 - Cosmos staking with validator APR display
 - REStake compatibility detection
-- MoonPay integration for fiat on/off ramp
 - BeeZee staking pools (Offers)
 - IBC token support
 
@@ -182,7 +181,7 @@ This project is built with the following open-source libraries:
 
 ### Integrations
 
-- [MoonPay](https://www.moonpay.com/) - Fiat on/off ramp integration
+- [Skip.go](https://go.skip.build/) - Skip Go API is an end-to-end interoperability platform
 
 ## License
 

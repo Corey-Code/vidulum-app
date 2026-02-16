@@ -42,10 +42,6 @@ When you use the wallet, it communicates directly with blockchain nodes (RPC/RES
 
 These requests contain your wallet address by necessity. The wallet connects to public infrastructure or endpoints you configure.
 
-### MoonPay (Optional)
-
-If you use the Deposit or Withdraw features, you will be redirected to MoonPay's service. MoonPay has its own privacy policy and data collection practices. Use of MoonPay is entirely optional and requires your explicit action.
-
 ### Chain Registries
 
 The wallet may fetch chain metadata from public registries (such as the Cosmos Chain Registry) to display network information.

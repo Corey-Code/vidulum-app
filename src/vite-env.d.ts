@@ -1,8 +1,8 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_MOONPAY_API_KEY?: string;
-  readonly VITE_MOONPAY_ENV?: 'sandbox' | 'production';
+  readonly VIDULUM_FEE_BPS?: string;
+  readonly VIDULUM_FEE_BASE_ADDRESS?: string;
 }
 
 interface ImportMeta {

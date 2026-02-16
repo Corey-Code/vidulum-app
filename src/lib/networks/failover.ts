@@ -7,6 +7,14 @@
 
 import { EndpointHealth } from './types';
 
+// Callback for status updates during failover
+export type FailoverStatusCallback = (status: {
+  message: string;
+  currentEndpoint: number;
+  totalEndpoints: number;
+  isRetry?: boolean;
+}) => void;
+
 // Configuration for failover behavior
 export interface FailoverConfig {
   maxRetries: number; // Max retries per endpoint before failing over
@@ -14,6 +22,7 @@ export interface FailoverConfig {
   requestTimeoutMs: number; // Request timeout (ms)
   failureThreshold: number; // Consecutive failures before marking unhealthy
   recoveryTimeMs: number; // Time before retrying an unhealthy endpoint (ms)
+  onStatusUpdate?: FailoverStatusCallback; // Optional callback for status updates
 }
 
 // Default failover configuration
@@ -207,10 +216,25 @@ export async function fetchWithFailover<T>(
   const cfg = { ...DEFAULT_CONFIG, ...config };
   const sortedEndpoints = getSortedEndpoints(endpoints, cfg);
   const errors: Error[] = [];
+  const totalEndpoints = sortedEndpoints.length;
 
-  for (const baseUrl of sortedEndpoints) {
+  for (let endpointIndex = 0; endpointIndex < sortedEndpoints.length; endpointIndex++) {
+    const baseUrl = sortedEndpoints[endpointIndex];
     if (!shouldTryEndpoint(baseUrl, cfg)) {
       continue;
+    }
+
+    // Notify status callback of endpoint attempt
+    if (cfg.onStatusUpdate) {
+      cfg.onStatusUpdate({
+        message:
+          endpointIndex === 0
+            ? 'Connecting to network...'
+            : `Trying endpoint ${endpointIndex + 1} of ${totalEndpoints}...`,
+        currentEndpoint: endpointIndex + 1,
+        totalEndpoints,
+        isRetry: endpointIndex > 0,
+      });
     }
 
     const fullUrl = pathOrUrl.startsWith('http') ? pathOrUrl : `${baseUrl}${pathOrUrl}`;
@@ -286,10 +310,25 @@ export async function withFailover<T>(
   const cfg = { ...DEFAULT_CONFIG, ...config };
   const sortedEndpoints = getSortedEndpoints(endpoints, cfg);
   const errors: Error[] = [];
+  const totalEndpoints = sortedEndpoints.length;
 
-  for (const endpoint of sortedEndpoints) {
+  for (let endpointIndex = 0; endpointIndex < sortedEndpoints.length; endpointIndex++) {
+    const endpoint = sortedEndpoints[endpointIndex];
     if (!shouldTryEndpoint(endpoint, cfg)) {
       continue;
+    }
+
+    // Notify status callback of endpoint attempt
+    if (cfg.onStatusUpdate) {
+      cfg.onStatusUpdate({
+        message:
+          endpointIndex === 0
+            ? 'Connecting to network...'
+            : `Trying endpoint ${endpointIndex + 1} of ${totalEndpoints}...`,
+        currentEndpoint: endpointIndex + 1,
+        totalEndpoints,
+        isRetry: endpointIndex > 0,
+      });
     }
 
     for (let attempt = 0; attempt <= cfg.maxRetries; attempt++) {

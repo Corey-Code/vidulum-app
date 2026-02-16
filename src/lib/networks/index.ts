@@ -68,6 +68,7 @@ export {
   getEndpointHealthStatus,
   clearAllEndpointHealth,
   type FailoverConfig,
+  type FailoverStatusCallback,
 } from './failover';
 
 // Chain Registry Clients (dynamic chain fetching)
