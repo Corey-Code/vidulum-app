@@ -24,6 +24,59 @@ function encodeString(fieldNumber: number, value: string): number[] {
   return [...encodeVarint(tag), ...encodeVarint(strBytes.length), ...strBytes];
 }
 
+function encodeVarintField(fieldNumber: number, value: number): number[] {
+  const tag = (fieldNumber << 3) | 0; // wire type 0 = varint
+  return [...encodeVarint(tag), ...encodeVarint(value)];
+}
+
+function encodeLengthDelimited(fieldNumber: number, payload: number[]): number[] {
+  const tag = (fieldNumber << 3) | 2;
+  return [...encodeVarint(tag), ...encodeVarint(payload.length), ...payload];
+}
+
+// Osmosis SwapAmountInRoute: pool_id (1), token_out_denom (2)
+function encodeSwapAmountInRoute(route: { pool_id: number; token_out_denom: string }): number[] {
+  const parts: number[] = [];
+  if (route.pool_id !== undefined && route.pool_id !== null) {
+    parts.push(...encodeVarintField(1, route.pool_id));
+  }
+  if (route.token_out_denom) {
+    parts.push(...encodeString(2, route.token_out_denom));
+  }
+  return parts;
+}
+
+// cosmos.base.v1beta1.Coin: denom (1), amount (2)
+function encodeCoin(coin: { denom: string; amount: string }): number[] {
+  const parts: number[] = [];
+  if (coin.denom) parts.push(...encodeString(1, coin.denom));
+  if (coin.amount) parts.push(...encodeString(2, coin.amount));
+  return parts;
+}
+
+// Osmosis MsgSwapExactAmountIn: sender (1), routes (2), token_in (3), token_out_min_amount (4)
+function encodeMsgSwapExactAmountIn(message: {
+  sender: string;
+  routes: Array<{ pool_id: number; token_out_denom: string }>;
+  token_in: { denom: string; amount: string };
+  token_out_min_amount: string;
+}): Uint8Array {
+  const bytes: number[] = [];
+  if (message.sender) bytes.push(...encodeString(1, message.sender));
+  for (const route of message.routes || []) {
+    const routeBytes = encodeSwapAmountInRoute(route);
+    bytes.push(...encodeLengthDelimited(2, routeBytes));
+  }
+  if (message.token_in) {
+    const coinBytes = encodeCoin(message.token_in);
+    bytes.push(...encodeLengthDelimited(3, coinBytes));
+  }
+  if (message.token_out_min_amount) {
+    bytes.push(...encodeString(4, message.token_out_min_amount));
+  }
+  return new Uint8Array(bytes);
+}
+
 // MsgJoinStaking: creator (1), reward_id (2), amount (3)
 function encodeMsgJoinStaking(message: {
   creator: string;
@@ -88,6 +141,33 @@ function createBzeRegistry(): Registry {
   registry.register(
     '/bze.rewards.MsgClaimStakingRewards',
     createMsgType(encodeMsgClaimStakingRewards, { creator: '', reward_id: '' })
+  );
+
+  // Osmosis poolmanager swap
+  const osmosisSwapDefaults = {
+    sender: '',
+    routes: [] as Array<{ pool_id: number; token_out_denom: string }>,
+    token_in: { denom: '', amount: '' },
+    token_out_min_amount: '',
+  };
+  registry.register(
+    '/osmosis.poolmanager.v1beta1.MsgSwapExactAmountIn',
+    createMsgType(
+      (msg) => {
+        const m = { ...osmosisSwapDefaults, ...msg };
+        const routes = (m.routes || []).map((r: { pool_id?: number; poolId?: number; token_out_denom?: string; tokenOutDenom?: string }) => ({
+          pool_id: r.pool_id ?? r.poolId ?? 0,
+          token_out_denom: r.token_out_denom ?? r.tokenOutDenom ?? '',
+        }));
+        return encodeMsgSwapExactAmountIn({
+          sender: m.sender,
+          routes,
+          token_in: m.token_in ?? m.tokenIn ?? { denom: '', amount: '' },
+          token_out_min_amount: m.token_out_min_amount ?? m.tokenOutMinAmount ?? '0',
+        });
+      },
+      osmosisSwapDefaults
+    )
   );
 
   return registry;

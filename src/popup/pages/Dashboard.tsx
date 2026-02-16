@@ -31,12 +31,19 @@ import {
   CheckIcon,
   EditIcon,
   RepeatIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from '@chakra-ui/icons';
 import { useWalletStore } from '@/store/walletStore';
 import { useChainStore } from '@/store/chainStore';
 import { UI_CHAINS, SUPPORTED_CHAINS, getNetworkType } from '@/lib/cosmos/chains';
 import { Keyring } from '@/lib/crypto/keyring';
-import { fetchChainAssets, RegistryAsset, getTokenColor } from '@/lib/assets/chainRegistry';
+import {
+  fetchChainAssets,
+  RegistryAsset,
+  getTokenColor,
+  parseBeeZeeLPToken,
+} from '@/lib/assets/chainRegistry';
 import { getExplorerAccountUrl } from '@/lib/networks';
 import SendModal from '../components/SendModal';
 import SwapModal from '../components/SwapModal';
@@ -49,16 +56,14 @@ interface DashboardProps {
   onNavigateToStaking?: () => void;
   onNavigateToSettings?: () => void;
   onNavigateToEarn?: () => void;
-  onNavigateToDeposit?: () => void;
-  onNavigateToWithdraw?: () => void;
+  onNavigateToSwap?: () => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({
   onNavigateToStaking,
   onNavigateToSettings,
   onNavigateToEarn,
-  onNavigateToDeposit,
-  onNavigateToWithdraw,
+  onNavigateToSwap,
 }) => {
   const {
     selectedAccount,
@@ -435,6 +440,19 @@ const Dashboard: React.FC<DashboardProps> = ({
         priceUsd: 0, // Price data not available from registry
       };
     }
+    // Check for BeeZee LP tokens
+    const beeZeeLP = parseBeeZeeLPToken(denom);
+    if (beeZeeLP) {
+      return {
+        symbol: beeZeeLP.symbol,
+        name: beeZeeLP.name,
+        decimals: 6,
+        color: getTokenColor(beeZeeLP.symbol),
+        logoUrl: undefined,
+        priceUsd: 0,
+      };
+    }
+    console.log('Unknown token:', denom);
     // Fallback for unknown tokens
     return {
       symbol: denom.startsWith('ibc/') ? 'IBC' : denom.slice(0, 6).toUpperCase(),
@@ -700,33 +718,20 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Scrollable Content */}
       <Box flex={1} overflowY="auto" px={5} py={5} pb={14}>
         <VStack spacing={5} align="stretch">
-          {/* Deposit / Withdraw Buttons - Hidden for now (MoonPay integration pending) */}
-          {/* <HStack spacing={3}>
-            <Button
-              flex={1}
-              size="md"
-              variant="outline"
-              color="teal.300"
-              borderColor="teal.500"
-              borderWidth="1.5px"
-              _hover={{ bg: 'teal.900', borderColor: 'teal.400' }}
-              onClick={onNavigateToDeposit}
-            >
-              Deposit
-            </Button>
-            <Button
-              flex={1}
-              size="md"
-              variant="outline"
-              color="orange.300"
-              borderColor="orange.500"
-              borderWidth="1.5px"
-              _hover={{ bg: 'orange.900', borderColor: 'orange.400' }}
-              onClick={onNavigateToWithdraw}
-            >
-              Withdraw
-            </Button>
-          </HStack> */}
+          {/* Cross Chain Swaps Button */}
+          <Button
+            flex={1}
+            variant="outline"
+            color="purple.300"
+            borderColor="purple.500"
+            borderWidth="1px"
+            _hover={{ bg: 'purple.900', borderColor: 'purple.400' }}
+            onClick={onNavigateToSwap}
+          >
+            <Text fontSize="lg" margin={2}>
+              Cross-Chain Swaps
+            </Text>
+          </Button>
 
           {/* Account Card */}
           <Box bg="#141414" borderRadius="xl" p={4}>
@@ -1436,6 +1441,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           <Box>
             <HStack justify="space-between" align="center" mb={3}>
               <HStack spacing={2}>
+                <Text color="gray.400" fontWeight="medium">
+                  Network
+                </Text>
                 <IconButton
                   aria-label="Manage networks"
                   icon={<AddIcon />}
@@ -1445,9 +1453,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                   _hover={{ color: 'cyan.400', bg: 'whiteAlpha.100' }}
                   onClick={onNetworkManagerOpen}
                 />
-                <Text color="gray.400" fontWeight="medium">
-                  Network
-                </Text>
               </HStack>
               <Tabs
                 size="sm"
@@ -1611,195 +1616,203 @@ const Dashboard: React.FC<DashboardProps> = ({
 
           {/* Quick Actions */}
           <Box>
-            <Text color="gray.400" fontWeight="medium" mb={3}>
+            <Text color="gray.400" fontWeight="medium" mb={3} mr={2} display={'inline-flex'}>
               Quick Actions
             </Text>
-            <HStack spacing={2}>
-              <Button
-                size="sm"
-                variant="outline"
+            <Menu>
+              <MenuButton
                 borderColor="#3a3a3a"
                 borderRadius="xl"
-                flex={1}
-                onClick={onSendOpen}
+                _hover={{ color: 'cyan.400', bg: 'whiteAlpha.100' }}
+                aria-label="More Quick Actions"
               >
-                Send
-              </Button>
-              {/* Swap only available on BeeZee */}
-              {isCosmosSelected && (
+                <IconButton
+                  icon={<AddIcon />}
+                  size="xs"
+                  variant="ghost"
+                  color="gray.500"
+                  aria-label={'More Quick Actions'}
+                />
+              </MenuButton>
+              <MenuList bg="#1a1a1a" borderColor="#2a2a2a" minW="180px">
+                <MenuItem
+                  bg="transparent"
+                  _hover={{ bg: 'whiteAlpha.100' }}
+                  as="a"
+                  href={getExplorerUrl()}
+                  target="_blank"
+                  isDisabled={
+                    !chainAddress ||
+                    chainAddress === 'Loading...' ||
+                    chainAddress === 'Deriving address...'
+                  }
+                >
+                  <HStack justify="space-between" w="full">
+                    <Text>Explorer</Text>
+                    <ExternalLinkIcon boxSize={3} color="gray.500" />
+                  </HStack>
+                </MenuItem>
+
+                {/* Cosmos-specific menu items */}
+                {isCosmosSelected && (
+                  <>
+                    <MenuItem
+                      bg="transparent"
+                      _hover={{ bg: 'whiteAlpha.100' }}
+                      as="a"
+                      href={
+                        selectedChainId === 'beezee-1'
+                          ? 'https://explorer.getbze.com/beezee/gov'
+                          : selectedChainId === 'atomone-1'
+                            ? 'https://explorer.govgen.io/atomone/gov'
+                            : selectedChainId === 'cosmoshub-4'
+                              ? 'https://www.mintscan.io/cosmos/proposals'
+                              : 'https://www.mintscan.io/osmosis/proposals'
+                      }
+                      target="_blank"
+                    >
+                      <HStack justify="space-between" w="full">
+                        <Text>Governance</Text>
+                        <ExternalLinkIcon boxSize={3} color="gray.500" />
+                      </HStack>
+                    </MenuItem>
+                    <MenuItem
+                      bg="transparent"
+                      _hover={{ bg: 'whiteAlpha.100' }}
+                      onClick={onNavigateToStaking}
+                    >
+                      Stake{' '}
+                      {selectedChainId === 'beezee-1'
+                        ? 'BZE'
+                        : selectedChainId === 'atomone-1'
+                          ? 'ATONE'
+                          : selectedChainId === 'cosmoshub-4'
+                            ? 'ATOM'
+                            : 'OSMO'}
+                    </MenuItem>
+                    {selectedChainId === 'beezee-1' && (
+                      <MenuItem
+                        bg="transparent"
+                        _hover={{ bg: 'whiteAlpha.100' }}
+                        onClick={onNavigateToEarn}
+                      >
+                        Offers
+                      </MenuItem>
+                    )}
+                  </>
+                )}
+
+                {/* Bitcoin-specific menu items */}
+                {isBitcoinSelected && (
+                  <>
+                    <MenuItem
+                      bg="transparent"
+                      _hover={{ bg: 'whiteAlpha.100' }}
+                      as="a"
+                      href={
+                        selectedChainId === 'bitcoin-mainnet'
+                          ? 'https://mempool.space'
+                          : selectedChainId === 'bitcoin-testnet'
+                            ? 'https://mempool.space/testnet'
+                            : selectedChainId === 'litecoin-mainnet'
+                              ? 'https://litecoinspace.org'
+                              : selectedChainId === 'dogecoin-mainnet'
+                                ? 'https://dogechain.info'
+                                : 'https://mempool.space'
+                      }
+                      target="_blank"
+                    >
+                      <HStack justify="space-between" w="full">
+                        <Text>Mempool</Text>
+                        <ExternalLinkIcon boxSize={3} color="gray.500" />
+                      </HStack>
+                    </MenuItem>
+                    <MenuItem
+                      bg="transparent"
+                      _hover={{ bg: 'whiteAlpha.100' }}
+                      as="a"
+                      href={
+                        selectedChainId === 'bitcoin-mainnet'
+                          ? 'https://mempool.space/tx/push'
+                          : selectedChainId === 'bitcoin-testnet'
+                            ? 'https://mempool.space/testnet/tx/push'
+                            : undefined
+                      }
+                      target="_blank"
+                      isDisabled={!selectedChainId.startsWith('bitcoin')}
+                    >
+                      <HStack justify="space-between" w="full">
+                        <Text>Broadcast TX</Text>
+                        <ExternalLinkIcon boxSize={3} color="gray.500" />
+                      </HStack>
+                    </MenuItem>
+                  </>
+                )}
+
+                {/* EVM-specific menu items */}
+                {isEvmSelected && (
+                  <>
+                    <MenuItem
+                      bg="transparent"
+                      _hover={{ bg: 'whiteAlpha.100' }}
+                      as="a"
+                      href={
+                        selectedChainId === 'eth-mainnet'
+                          ? 'https://etherscan.io/gastracker'
+                          : selectedChainId === 'base-mainnet'
+                            ? 'https://basescan.org/gastracker'
+                            : selectedChainId === 'polygon-mainnet'
+                              ? 'https://polygonscan.com/gastracker'
+                              : selectedChainId === 'arbitrum-mainnet'
+                                ? 'https://arbiscan.io/gastracker'
+                                : 'https://etherscan.io/gastracker'
+                      }
+                      target="_blank"
+                    >
+                      <HStack justify="space-between" w="full">
+                        <Text>Gas Tracker</Text>
+                        <ExternalLinkIcon boxSize={3} color="gray.500" />
+                      </HStack>
+                    </MenuItem>
+                    <MenuItem bg="transparent" _hover={{ bg: 'whiteAlpha.100' }} isDisabled>
+                      <Text color="gray.500">Token Management (coming soon)</Text>
+                    </MenuItem>
+                  </>
+                )}
+              </MenuList>
+            </Menu>
+            <VStack spacing={2} align="stretch">
+              <HStack spacing={2}>
                 <Button
                   size="sm"
                   variant="outline"
                   borderColor="#3a3a3a"
                   borderRadius="xl"
-                  flex={1}
-                  onClick={onSwapOpen}
-                  isDisabled={selectedChainId !== 'beezee-1'}
-                  opacity={selectedChainId !== 'beezee-1' ? 0.5 : 1}
+                  flex={0.5}
+                  onClick={onSendOpen}
                 >
-                  Swap
+                  Send
                 </Button>
-              )}
-              <Menu>
-                <MenuButton
-                  as={Button}
-                  size="sm"
-                  variant="outline"
-                  borderColor="#3a3a3a"
-                  borderRadius="xl"
-                  flex={1}
-                  rightIcon={<ChevronDownIcon />}
-                >
-                  More
-                </MenuButton>
-                <MenuList bg="#1a1a1a" borderColor="#2a2a2a" minW="180px">
-                  <MenuItem
-                    bg="transparent"
-                    _hover={{ bg: 'whiteAlpha.100' }}
-                    as="a"
-                    href={getExplorerUrl()}
-                    target="_blank"
-                    isDisabled={
-                      !chainAddress ||
-                      chainAddress === 'Loading...' ||
-                      chainAddress === 'Deriving address...'
+                {/* Swap available on BeeZee and Osmosis */}
+                {isCosmosSelected && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    borderColor="#3a3a3a"
+                    borderRadius="xl"
+                    flex={0.5}
+                    onClick={onSwapOpen}
+                    display={
+                      selectedChainId !== 'beezee-1' && selectedChainId !== 'osmosis-1'
+                        ? 'none'
+                        : 'block'
                     }
                   >
-                    <HStack justify="space-between" w="full">
-                      <Text>Explorer</Text>
-                      <ExternalLinkIcon boxSize={3} color="gray.500" />
-                    </HStack>
-                  </MenuItem>
-
-                  {/* Cosmos-specific menu items */}
-                  {isCosmosSelected && (
-                    <>
-                      <MenuItem
-                        bg="transparent"
-                        _hover={{ bg: 'whiteAlpha.100' }}
-                        as="a"
-                        href={
-                          selectedChainId === 'beezee-1'
-                            ? 'https://explorer.getbze.com/beezee/gov'
-                            : selectedChainId === 'atomone-1'
-                              ? 'https://explorer.govgen.io/atomone/gov'
-                              : selectedChainId === 'cosmoshub-4'
-                                ? 'https://www.mintscan.io/cosmos/proposals'
-                                : 'https://www.mintscan.io/osmosis/proposals'
-                        }
-                        target="_blank"
-                      >
-                        <HStack justify="space-between" w="full">
-                          <Text>Governance</Text>
-                          <ExternalLinkIcon boxSize={3} color="gray.500" />
-                        </HStack>
-                      </MenuItem>
-                      <MenuItem
-                        bg="transparent"
-                        _hover={{ bg: 'whiteAlpha.100' }}
-                        onClick={onNavigateToStaking}
-                      >
-                        Stake{' '}
-                        {selectedChainId === 'beezee-1'
-                          ? 'BZE'
-                          : selectedChainId === 'atomone-1'
-                            ? 'ATONE'
-                            : selectedChainId === 'cosmoshub-4'
-                              ? 'ATOM'
-                              : 'OSMO'}
-                      </MenuItem>
-                      {selectedChainId === 'beezee-1' && (
-                        <MenuItem
-                          bg="transparent"
-                          _hover={{ bg: 'whiteAlpha.100' }}
-                          onClick={onNavigateToEarn}
-                        >
-                          Offers
-                        </MenuItem>
-                      )}
-                    </>
-                  )}
-
-                  {/* Bitcoin-specific menu items */}
-                  {isBitcoinSelected && (
-                    <>
-                      <MenuItem
-                        bg="transparent"
-                        _hover={{ bg: 'whiteAlpha.100' }}
-                        as="a"
-                        href={
-                          selectedChainId === 'bitcoin-mainnet'
-                            ? 'https://mempool.space'
-                            : selectedChainId === 'bitcoin-testnet'
-                              ? 'https://mempool.space/testnet'
-                              : selectedChainId === 'litecoin-mainnet'
-                                ? 'https://litecoinspace.org'
-                                : selectedChainId === 'dogecoin-mainnet'
-                                  ? 'https://dogechain.info'
-                                  : 'https://mempool.space'
-                        }
-                        target="_blank"
-                      >
-                        <HStack justify="space-between" w="full">
-                          <Text>Mempool</Text>
-                          <ExternalLinkIcon boxSize={3} color="gray.500" />
-                        </HStack>
-                      </MenuItem>
-                      <MenuItem
-                        bg="transparent"
-                        _hover={{ bg: 'whiteAlpha.100' }}
-                        as="a"
-                        href={
-                          selectedChainId === 'bitcoin-mainnet'
-                            ? 'https://mempool.space/tx/push'
-                            : selectedChainId === 'bitcoin-testnet'
-                              ? 'https://mempool.space/testnet/tx/push'
-                              : undefined
-                        }
-                        target="_blank"
-                        isDisabled={!selectedChainId.startsWith('bitcoin')}
-                      >
-                        <HStack justify="space-between" w="full">
-                          <Text>Broadcast TX</Text>
-                          <ExternalLinkIcon boxSize={3} color="gray.500" />
-                        </HStack>
-                      </MenuItem>
-                    </>
-                  )}
-
-                  {/* EVM-specific menu items */}
-                  {isEvmSelected && (
-                    <>
-                      <MenuItem
-                        bg="transparent"
-                        _hover={{ bg: 'whiteAlpha.100' }}
-                        as="a"
-                        href={
-                          selectedChainId === 'eth-mainnet'
-                            ? 'https://etherscan.io/gastracker'
-                            : selectedChainId === 'base-mainnet'
-                              ? 'https://basescan.org/gastracker'
-                              : selectedChainId === 'polygon-mainnet'
-                                ? 'https://polygonscan.com/gastracker'
-                                : selectedChainId === 'arbitrum-mainnet'
-                                  ? 'https://arbiscan.io/gastracker'
-                                  : 'https://etherscan.io/gastracker'
-                        }
-                        target="_blank"
-                      >
-                        <HStack justify="space-between" w="full">
-                          <Text>Gas Tracker</Text>
-                          <ExternalLinkIcon boxSize={3} color="gray.500" />
-                        </HStack>
-                      </MenuItem>
-                      <MenuItem bg="transparent" _hover={{ bg: 'whiteAlpha.100' }} isDisabled>
-                        <Text color="gray.500">Token Management (coming soon)</Text>
-                      </MenuItem>
-                    </>
-                  )}
-                </MenuList>
-              </Menu>
-            </HStack>
+                    Swap
+                  </Button>
+                )}
+              </HStack>
+            </VStack>
           </Box>
 
           {/* Balances Section */}
@@ -1974,7 +1987,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                               <Tooltip label="IBC Transfer" placement="top">
                                 <Box
                                   as="button"
-                                  p={2}
+                                  p={1.25}
                                   borderRadius="md"
                                   bg="purple.900"
                                   color="purple.300"
@@ -1989,20 +2002,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                                   cursor="pointer"
                                   transition="all 0.2s"
                                 >
-                                  <svg
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <circle cx="12" cy="12" r="10" />
-                                    <path d="M2 12h20" />
-                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                                  </svg>
+                                  <ChevronLeftIcon display={'inline-flex'} />
+                                  <Text fontSize={'xs'} display={'inline-flex'}>
+                                    IBC
+                                  </Text>
+                                  <ChevronRightIcon display={'inline-flex'} />
                                 </Box>
                               </Tooltip>
                             )}
