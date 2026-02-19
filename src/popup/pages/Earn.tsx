@@ -27,7 +27,6 @@ import {
   createJoinStakingMsg,
   createClaimStakingRewardsMsg,
   toBaseUnits,
-  getDefaultStakingFee,
 } from '@/lib/bze/rewards';
 
 interface StakingPool {
@@ -282,11 +281,8 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
       // Create the join staking message
       const msg = createJoinStakingMsg(address, selectedPool.index, baseAmount);
 
-      // Get default fee
-      const fee = getDefaultStakingFee();
-
-      // Sign and broadcast transaction
-      const txHash = await signAndBroadcast('beezee-1', [msg], fee, '');
+      // Sign and broadcast transaction (fee dynamically simulated in walletStore)
+      const txHash = await signAndBroadcast('beezee-1', [msg], undefined, '');
 
       toast({
         title: 'Stake Successful!',
@@ -326,11 +322,8 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
       // Create the claim staking rewards message
       const msg = createClaimStakingRewardsMsg(address, pool.index);
 
-      // Get default fee
-      const fee = getDefaultStakingFee();
-
-      // Sign and broadcast transaction
-      const txHash = await signAndBroadcast('beezee-1', [msg], fee, '');
+      // Sign and broadcast transaction (fee dynamically simulated in walletStore)
+      const txHash = await signAndBroadcast('beezee-1', [msg], undefined, '');
 
       toast({
         title: 'Rewards Claimed!',

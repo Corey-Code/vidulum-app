@@ -32,6 +32,18 @@ export interface SwapRoute {
 }
 
 /**
+ * Normalize fee values from API data.
+ * Expected input is a decimal fraction (e.g. 0.003 for 0.3%).
+ * Clamp into [0, 0.9999] to prevent invalid math (negative or >= 100% fee).
+ */
+function normalizeFeePercent(feeValue: number): number {
+  if (!Number.isFinite(feeValue)) return 0;
+  if (feeValue <= 0) return 0;
+  if (feeValue >= 1) return 0.9999;
+  return feeValue;
+}
+
+/**
  * Pool Graph for routing
  */
 class PoolGraph {
@@ -47,7 +59,7 @@ class PoolGraph {
       this.allDenoms.add(pool.base);
       this.allDenoms.add(pool.quote);
 
-      const feePercent = parseFloat(pool.fee);
+      const feePercent = normalizeFeePercent(parseFloat(pool.fee));
 
       // Add edge from base to quote
       const baseEdges = this.edges.get(pool.base) || [];
@@ -96,25 +108,52 @@ function calculateSwapOutput(
   }
 
   // Apply fee (fee is taken from input)
-  const feeMultiplier = BigInt(Math.round((1 - feePercent) * 10000));
+  const safeFeePercent = normalizeFeePercent(feePercent);
+  const feeMultiplier = BigInt(Math.round((1 - safeFeePercent) * 10000));
   const inputWithFee = (inputAmount * feeMultiplier) / 10000n;
 
   // Constant product formula
   const numerator = inputWithFee * outputReserve;
   const denominator = inputReserve + inputWithFee;
 
+  if (denominator <= 0n) {
+    return 0n;
+  }
+
   return numerator / denominator;
 }
 
 /**
- * Calculate price impact for a swap
+ * Calculate per-hop price impact percentage (excludes pool fee).
+ * Compares execution output to the spot output at current reserves.
  */
-function calculatePriceImpact(inputAmount: bigint, inputReserve: bigint): number {
-  if (inputReserve <= 0n) return 100;
-  // Use bigint arithmetic to avoid precision loss, then convert bounded result to number.
-  // Calculate price impact in basis points (hundredths of a percent).
-  const impactBasisPoints = (inputAmount * 10000n) / inputReserve;
+function calculateHopPriceImpact(
+  inputAmount: bigint,
+  inputReserve: bigint,
+  feePercent: number
+): number {
+  if (inputAmount <= 0n || inputReserve <= 0n) return 0;
+
+  const safeFeePercent = normalizeFeePercent(feePercent);
+  const feeMultiplier = BigInt(Math.round((1 - safeFeePercent) * 10000));
+  const inputWithFee = (inputAmount * feeMultiplier) / 10000n;
+  const denominator = inputReserve + inputWithFee;
+  if (inputWithFee <= 0n || denominator <= 0n) return 0;
+
+  // For constant product pools, price impact (excluding fee):
+  // impact = 1 - output / spotOutputWithFee = inputWithFee / (reserveIn + inputWithFee)
+  const impactBasisPoints = (inputWithFee * 10000n) / denominator;
   return Number(impactBasisPoints) / 100;
+}
+
+/**
+ * Combine route price impacts multiplicatively.
+ * Example: 10% then 20% => 28% total, not 30%.
+ */
+function combinePriceImpacts(totalPercent: number, hopPercent: number): number {
+  const total = Math.max(0, Math.min(100, totalPercent));
+  const hop = Math.max(0, Math.min(100, hopPercent));
+  return 100 - ((100 - total) * (100 - hop)) / 100;
 }
 
 /**
@@ -202,11 +241,11 @@ function findAllRoutes(
         continue;
       }
 
-      const hopPriceImpact = calculatePriceImpact(state.currentAmount, edge.reserveIn);
+      const hopPriceImpact = calculateHopPriceImpact(state.currentAmount, edge.reserveIn, edge.fee);
       const newPath = [...state.path, edge.targetDenom];
       const newPools = [...state.pools, edge.poolId];
       const newTotalFee = state.totalFee + edge.fee;
-      const newTotalPriceImpact = state.totalPriceImpact + hopPriceImpact;
+      const newTotalPriceImpact = combinePriceImpacts(state.totalPriceImpact, hopPriceImpact);
 
       // If we've reached the target, add this route
       if (edge.targetDenom === toDenom) {

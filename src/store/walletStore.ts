@@ -12,7 +12,6 @@ import { MnemonicManager } from '@/lib/crypto/mnemonic';
 import { cosmosClient } from '@/lib/cosmos/client';
 import { SUPPORTED_CHAINS } from '@/lib/cosmos/chains';
 import { coin } from '@cosmjs/stargate';
-import { simulateSendFee } from '@/lib/cosmos/fees';
 import { networkRegistry } from '@/lib/networks';
 import { MessageType } from '@/types/messages';
 import { DirectSecp256k1HdWallet, makeCosmoshubPath } from '@cosmjs/proto-signing';
@@ -1182,44 +1181,51 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       throw new Error(`Chain ${chainId} not supported`);
     }
 
-    // Use the existing wallet from the keyring
-    // The wallet was created with bze prefix but we can sign for any chain
-    // since the underlying keys are the same (coinType 118)
-    const wallet = keyring.getWallet();
-
-    // Get all wallet accounts and find the one that matches our selected account
-    const walletAccounts = await wallet.getAccounts();
-    const signerAddress = selectedAccount.address;
-    const matchingWalletAccount = walletAccounts.find((acc) => acc.address === signerAddress);
-
-    if (!matchingWalletAccount) {
-      throw new Error('Selected account not found in wallet');
+    const chainPrefix = chainInfo.bech32Config.bech32PrefixAccAddr;
+    const wallet = await keyring.getWalletForChain(chainPrefix, selectedAccount.accountIndex);
+    const signerAddress = Keyring.convertAddress(selectedAccount.address, chainPrefix);
+    if (fromAddress && fromAddress !== signerAddress) {
+      console.warn(
+        `sendTokens signer mismatch: requested ${fromAddress}, using selected account ${signerAddress}`
+      );
     }
+
+    const walletAccounts = await wallet.getAccounts();
+    const matchingWalletAccount = walletAccounts.find((acc) => acc.address === signerAddress);
+    if (!matchingWalletAccount) throw new Error('Selected account not found in wallet');
+
+    // Create signing client
+    const signingClient = await cosmosClient.getSigningClient(chainInfo.rpc, wallet);
+
+    // Build MsgSend
+    const sendAmount = coin(amount, denom);
+    const sendMsg = {
+      typeUrl: '/cosmos.bank.v1beta1.MsgSend',
+      value: {
+        fromAddress: signerAddress,
+        toAddress,
+        amount: [sendAmount],
+      },
+    };
 
     // Simulate transaction to get accurate gas estimate
     const feeDenom = chainInfo.feeCurrencies[0]?.coinMinimalDenom || 'ubze';
-    const MIN_GAS_PRICE = 0.01; // ubze per gas
+    const gasPrice =
+      parseFloat(networkRegistry.getCosmos(chainId)?.gasPrice || '') ||
+      parseFloat(chainInfo.chainId === 'osmosis-1' ? '0.025' : '0.01');
 
     let gasLimit: number;
     let feeAmount: number;
 
     try {
-      const simResult = await simulateSendFee(
-        chainInfo.rest,
-        fromAddress,
-        toAddress,
-        amount,
-        denom,
-        matchingWalletAccount.pubkey
-      );
-      gasLimit = simResult.gas;
-      feeAmount = parseInt(simResult.fee.amount);
+      const simulatedGas = await signingClient.simulate(signerAddress, [sendMsg], memo);
+      gasLimit = Math.max(Math.ceil(simulatedGas * 1.3), 100000);
+      feeAmount = Math.max(1, Math.ceil(gasLimit * gasPrice));
       console.log(`Simulated gas: ${gasLimit}, fee: ${feeAmount} ${feeDenom}`);
     } catch (error) {
       console.warn('Simulation failed, using default gas estimate:', error);
-      // Fallback to higher default estimate
-      gasLimit = 150000;
-      feeAmount = Math.ceil(gasLimit * MIN_GAS_PRICE);
+      gasLimit = 160000;
+      feeAmount = Math.max(1, Math.ceil(gasLimit * gasPrice));
     }
 
     const fee = {
@@ -1227,17 +1233,11 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       gas: gasLimit.toString(),
     };
 
-    // Create signing client
-    const signingClient = await cosmosClient.getSigningClient(chainInfo.rpc, wallet);
-
-    // Build the send message
-    const sendAmount = coin(amount, denom);
-
-    // Send the transaction using the bze-prefixed address as signer
+    // Send the transaction using the correct chain-prefixed signer address
     const result = await signingClient.sendTokens(
       signerAddress,
       toAddress,
-      [sendAmount],
+      [coin(amount, denom)],
       fee,
       memo
     );
@@ -1288,14 +1288,34 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       throw new Error('Selected account not found in wallet');
     }
 
-    // Use provided fee or default
-    const txFee = fee || {
-      amount: [{ denom: chainInfo.feeCurrencies[0]?.coinMinimalDenom || 'ubze', amount: '5000' }],
-      gas: '200000',
-    };
-
     // Create signing client
     const signingClient = await cosmosClient.getSigningClient(chainInfo.rpc, wallet);
+
+    // Use provided fee or dynamically simulate for this message set
+    let txFee = fee;
+    if (!txFee) {
+      const feeDenom = chainInfo.feeCurrencies[0]?.coinMinimalDenom || 'ubze';
+      const gasPrice =
+        parseFloat(networkRegistry.getCosmos(chainId)?.gasPrice || '') ||
+        parseFloat(chainId === 'osmosis-1' ? '0.025' : '0.01');
+      try {
+        const simulatedGas = await signingClient.simulate(signerAddress, messages, memo);
+        const gasLimit = Math.max(Math.ceil(simulatedGas * 1.3), 100000);
+        const feeAmount = Math.max(1, Math.ceil(gasLimit * gasPrice));
+        txFee = {
+          amount: [{ denom: feeDenom, amount: feeAmount.toString() }],
+          gas: gasLimit.toString(),
+        };
+      } catch (error) {
+        console.warn('Simulation failed, using fallback fee:', error);
+        const fallbackGas = 200000;
+        const fallbackAmount = Math.max(1, Math.ceil(fallbackGas * gasPrice));
+        txFee = {
+          amount: [{ denom: feeDenom, amount: fallbackAmount.toString() }],
+          gas: fallbackGas.toString(),
+        };
+      }
+    }
 
     // Sign and broadcast the transaction
     const result = await signingClient.signAndBroadcast(signerAddress, messages, txFee, memo);
@@ -1382,14 +1402,34 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       throw new Error('Selected account not found in wallet');
     }
 
-    // Use provided fee or default
-    const txFee = fee || {
-      amount: [{ denom: chainInfo.feeCurrencies[0]?.coinMinimalDenom || 'ubze', amount: '5000' }],
-      gas: '200000',
-    };
-
     // Create signing client
     const signingClient = await cosmosClient.getSigningClient(chainInfo.rpc, wallet);
+
+    // Use provided fee or dynamically simulate for this message set
+    let txFee = fee;
+    if (!txFee) {
+      const feeDenom = chainInfo.feeCurrencies[0]?.coinMinimalDenom || 'ubze';
+      const gasPrice =
+        parseFloat(networkRegistry.getCosmos(chainId)?.gasPrice || '') ||
+        parseFloat(chainId === 'osmosis-1' ? '0.025' : '0.01');
+      try {
+        const simulatedGas = await signingClient.simulate(signerAddress, messages, memo);
+        const gasLimit = Math.max(Math.ceil(simulatedGas * 1.3), 100000);
+        const feeAmount = Math.max(1, Math.ceil(gasLimit * gasPrice));
+        txFee = {
+          amount: [{ denom: feeDenom, amount: feeAmount.toString() }],
+          gas: gasLimit.toString(),
+        };
+      } catch (error) {
+        console.warn('Simulation failed, using fallback fee:', error);
+        const fallbackGas = 200000;
+        const fallbackAmount = Math.max(1, Math.ceil(fallbackGas * gasPrice));
+        txFee = {
+          amount: [{ denom: feeDenom, amount: fallbackAmount.toString() }],
+          gas: fallbackGas.toString(),
+        };
+      }
+    }
 
     // Sign and broadcast the transaction
     const result = await signingClient.signAndBroadcast(signerAddress, messages, txFee, memo);

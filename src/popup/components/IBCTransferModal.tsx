@@ -194,18 +194,13 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
         },
       };
 
-      // Estimate fee
-      const fee = {
-        amount: [{ denom: sourceChain?.feeDenom || 'ubze', amount: '5000' }],
-        gas: '250000',
-      };
-
-      // Sign and broadcast (with password if needed)
+      // Sign and broadcast (with password if needed). Fee is dynamically
+      // simulated in walletStore when not explicitly provided.
       let txHash: string;
       if (usePassword) {
-        txHash = await signAndBroadcastWithPassword(sourceChainId, [msgTransfer], password, fee);
+        txHash = await signAndBroadcastWithPassword(sourceChainId, [msgTransfer], password);
       } else {
-        txHash = await signAndBroadcast(sourceChainId, [msgTransfer], fee);
+        txHash = await signAndBroadcast(sourceChainId, [msgTransfer]);
       }
 
       toast({

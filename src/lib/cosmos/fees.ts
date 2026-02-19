@@ -9,6 +9,13 @@ import { PubKey } from 'cosmjs-types/cosmos/crypto/secp256k1/keys';
 import { MsgSend } from 'cosmjs-types/cosmos/bank/v1beta1/tx';
 import { Coin } from 'cosmjs-types/cosmos/base/v1beta1/coin';
 
+class SimulationUnsupportedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SimulationUnsupportedError';
+  }
+}
+
 export interface ChainFeeConfig {
   minimumGasPrice: string; // e.g., "0.01ubze"
   defaultGasLimit: number;
@@ -168,6 +175,11 @@ export async function simulateTransaction(
     const responseText = await response.text();
 
     if (!response.ok) {
+      // Some LCDs (e.g. certain Osmosis endpoints) don't implement simulate.
+      if (response.status === 501 || /not implemented/i.test(responseText)) {
+        throw new SimulationUnsupportedError('Transaction simulation is not supported by this endpoint');
+      }
+
       // The simulation may fail with sequence mismatch but still return gas used in error
       // Example: "account sequence mismatch... with gas used: '70305'"
       const gasMatch = responseText.match(/gas used[:\s'"]*(\d+)/i);
@@ -179,7 +191,6 @@ export async function simulateTransaction(
           gasWanted: gasUsed,
         };
       }
-      console.error('Simulate error:', responseText);
       throw new Error(`Simulation failed: ${response.status}`);
     }
 
@@ -189,6 +200,9 @@ export async function simulateTransaction(
       gasWanted: parseInt(data.gas_info?.gas_wanted || '0'),
     };
   } catch (error) {
+    if (error instanceof SimulationUnsupportedError) {
+      throw error;
+    }
     console.error('Failed to simulate transaction:', error);
     throw error;
   }
@@ -203,9 +217,22 @@ export async function simulateSendFee(
   toAddress: string,
   amount: string,
   denom: string,
-  pubKey: Uint8Array
+  pubKey: Uint8Array,
+  options?: {
+    feeDenom?: string;
+    gasPrice?: number;
+    feeDecimals?: number;
+    feeSymbol?: string;
+    minGas?: number;
+    gasMultiplier?: number;
+  }
 ): Promise<{ gas: number; fee: FeeEstimate }> {
-  const MIN_GAS_PRICE = 0.01; // ubze per gas
+  const feeDenom = options?.feeDenom || 'ubze';
+  const gasPrice = options?.gasPrice && options.gasPrice > 0 ? options.gasPrice : 0.01;
+  const feeDecimals = options?.feeDecimals ?? 6;
+  const feeSymbol = options?.feeSymbol || feeDenom.toUpperCase();
+  const minGas = options?.minGas ?? 100000;
+  const gasMultiplier = options?.gasMultiplier ?? 1.3;
 
   try {
     // Build MsgSend
@@ -249,10 +276,8 @@ export async function simulateSendFee(
 
     const simResult = await simulateTransaction(restEndpoint, txBodyBytes, authInfoBytes);
 
-    // Add 100% buffer (double) to gas estimate to account for variability
-    // Also ensure minimum of 150k gas for safety
-    const gasWithBuffer = Math.max(Math.ceil(simResult.gasUsed * 2), 150000);
-    const feeAmount = Math.ceil(gasWithBuffer * MIN_GAS_PRICE);
+    const gasWithBuffer = Math.max(Math.ceil(simResult.gasUsed * gasMultiplier), minGas);
+    const feeAmount = Math.max(1, Math.ceil(gasWithBuffer * gasPrice));
 
     console.log(`Simulation: gasUsed=${simResult.gasUsed}, withBuffer=${gasWithBuffer}`);
 
@@ -260,21 +285,22 @@ export async function simulateSendFee(
       gas: gasWithBuffer,
       fee: {
         amount: feeAmount.toString(),
-        denom: 'ubze',
-        formatted: `${(feeAmount / 1_000_000).toFixed(6)} BZE`,
+        denom: feeDenom,
+        formatted: `${(feeAmount / Math.pow(10, feeDecimals)).toFixed(6)} ${feeSymbol}`,
       },
     };
   } catch (error) {
-    console.error('Failed to simulate send fee:', error);
-    // Fallback to higher default estimate
-    const defaultGas = 150000;
-    const feeAmount = Math.ceil(defaultGas * MIN_GAS_PRICE);
+    if (!(error instanceof SimulationUnsupportedError)) {
+      console.error('Failed to simulate send fee:', error);
+    }
+    const defaultGas = Math.max(minGas, 150000);
+    const feeAmount = Math.max(1, Math.ceil(defaultGas * gasPrice));
     return {
       gas: defaultGas,
       fee: {
         amount: feeAmount.toString(),
-        denom: 'ubze',
-        formatted: `${(feeAmount / 1_000_000).toFixed(6)} BZE`,
+        denom: feeDenom,
+        formatted: `${(feeAmount / Math.pow(10, feeDecimals)).toFixed(6)} ${feeSymbol}`,
       },
     };
   }

@@ -39,8 +39,6 @@ import {
   formatCommission,
   formatVotingPower,
 } from '@/lib/cosmos/staking';
-import { SigningStargateClient } from '@cosmjs/stargate';
-import { coin } from '@cosmjs/stargate';
 
 // Fetch REStake compatible validators from restake.app registry
 async function fetchRestakeValidators(chainName: string): Promise<Set<string>> {
@@ -125,7 +123,7 @@ interface StakingProps {
 }
 
 const Staking: React.FC<StakingProps> = ({ onBack }) => {
-  const { selectedAccount, selectedChainId, getAddressForChain, keyring } = useWalletStore();
+  const { selectedChainId, getAddressForChain, signAndBroadcast } = useWalletStore();
   const toast = useToast();
 
   const [loading, setLoading] = useState(true);
@@ -276,7 +274,7 @@ const Staking: React.FC<StakingProps> = ({ onBack }) => {
   };
 
   const handleSubmitDelegation = async () => {
-    if (!selectedValidator || !chainConfig || !chainAddress || !keyring) return;
+    if (!selectedValidator || !chainConfig || !chainAddress) return;
 
     const amountNum = parseFloat(delegateAmount);
     if (isNaN(amountNum) || amountNum <= 0) {
@@ -286,51 +284,50 @@ const Staking: React.FC<StakingProps> = ({ onBack }) => {
 
     setIsSubmitting(true);
     try {
-      const wallet = keyring.getWallet();
-      if (!wallet) throw new Error('Wallet not available');
-
-      const client = await SigningStargateClient.connectWithSigner(chainConfig.rpc, wallet);
       const amountInMinimal = Math.floor(amountNum * Math.pow(10, decimals)).toString();
-
-      const fee = {
-        amount: [coin('5000', stakeCurrency?.coinMinimalDenom || 'ubze')],
-        gas: '250000',
-      };
-
-      let result;
+      let txHash: string;
       if (actionType === 'delegate') {
-        result = await client.delegateTokens(
-          chainAddress,
-          selectedValidator.operatorAddress,
-          coin(amountInMinimal, stakeCurrency?.coinMinimalDenom || 'ubze'),
-          fee,
-          ''
-        );
+        const msg = {
+          typeUrl: '/cosmos.staking.v1beta1.MsgDelegate',
+          value: {
+            delegatorAddress: chainAddress,
+            validatorAddress: selectedValidator.operatorAddress,
+            amount: {
+              denom: stakeCurrency?.coinMinimalDenom || 'ubze',
+              amount: amountInMinimal,
+            },
+          },
+        };
+        txHash = await signAndBroadcast(selectedChainId, [msg], undefined, '');
       } else if (actionType === 'undelegate') {
-        result = await client.undelegateTokens(
-          chainAddress,
-          selectedValidator.operatorAddress,
-          coin(amountInMinimal, stakeCurrency?.coinMinimalDenom || 'ubze'),
-          fee,
-          ''
-        );
+        const msg = {
+          typeUrl: '/cosmos.staking.v1beta1.MsgUndelegate',
+          value: {
+            delegatorAddress: chainAddress,
+            validatorAddress: selectedValidator.operatorAddress,
+            amount: {
+              denom: stakeCurrency?.coinMinimalDenom || 'ubze',
+              amount: amountInMinimal,
+            },
+          },
+        };
+        txHash = await signAndBroadcast(selectedChainId, [msg], undefined, '');
+      } else {
+        throw new Error('Invalid staking action');
       }
 
-      if (result && result.code === 0) {
-        toast({
-          title: actionType === 'delegate' ? 'Delegation successful' : 'Undelegation started',
-          description:
-            actionType === 'undelegate'
-              ? 'Tokens will be available after unbonding period'
-              : undefined,
-          status: 'success',
-          duration: 3000,
-        });
-        onDelegateClose();
-        loadStakingData();
-      } else {
-        throw new Error(result?.rawLog || 'Transaction failed');
-      }
+      toast({
+        title: actionType === 'delegate' ? 'Delegation successful' : 'Undelegation started',
+        description:
+          actionType === 'undelegate'
+            ? 'Tokens will be available after unbonding period'
+            : undefined,
+        status: 'success',
+        duration: 3000,
+      });
+      console.log('Staking tx hash:', txHash);
+      onDelegateClose();
+      loadStakingData();
     } catch (error) {
       console.error('Staking transaction failed:', error);
       toast({
@@ -345,20 +342,10 @@ const Staking: React.FC<StakingProps> = ({ onBack }) => {
   };
 
   const handleClaimRewards = async () => {
-    if (!chainConfig || !chainAddress || !keyring || delegations.length === 0) return;
+    if (!chainConfig || !chainAddress || delegations.length === 0) return;
 
     setIsSubmitting(true);
     try {
-      const wallet = keyring.getWallet();
-      if (!wallet) throw new Error('Wallet not available');
-
-      const client = await SigningStargateClient.connectWithSigner(chainConfig.rpc, wallet);
-
-      const fee = {
-        amount: [coin('5000', stakeCurrency?.coinMinimalDenom || 'ubze')],
-        gas: '500000',
-      };
-
       // Claim from all validators
       const msgs = delegations.map((d) => ({
         typeUrl: '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
@@ -368,18 +355,13 @@ const Staking: React.FC<StakingProps> = ({ onBack }) => {
         },
       }));
 
-      const result = await client.signAndBroadcast(chainAddress, msgs, fee, '');
-
-      if (result.code === 0) {
-        toast({
-          title: 'Rewards claimed',
-          status: 'success',
-          duration: 3000,
-        });
-        loadStakingData();
-      } else {
-        throw new Error(result.rawLog || 'Transaction failed');
-      }
+      await signAndBroadcast(selectedChainId, msgs, undefined, '');
+      toast({
+        title: 'Rewards claimed',
+        status: 'success',
+        duration: 3000,
+      });
+      loadStakingData();
     } catch (error) {
       console.error('Claim rewards failed:', error);
       toast({

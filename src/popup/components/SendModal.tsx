@@ -261,13 +261,19 @@ const SendModal: React.FC<SendModalProps> = ({
           recipient,
           amountInSmallestUnit,
           selectedDenom,
-          selectedAccount.pubKey
+          selectedAccount.pubKey,
+          {
+            feeDenom: chainConfig.feeCurrencies?.[0]?.coinMinimalDenom || 'ubze',
+            gasPrice: parseFloat(networkRegistry.getCosmos(chainId)?.gasPrice || '0.01'),
+            feeDecimals: chainConfig.feeCurrencies?.[0]?.coinDecimals || 6,
+            feeSymbol: chainConfig.feeCurrencies?.[0]?.coinDenom || 'BZE',
+            minGas: 100000,
+            gasMultiplier: 1.3,
+          }
         );
 
         setEstimatedFee(simResult.fee);
-        console.log(`Simulated fee: ${simResult.fee.formatted} (gas: ${simResult.gas})`);
       } catch (error) {
-        console.warn('Fee simulation failed:', error);
         // Keep previous estimate or set higher default (150k gas * 0.01 = 1500 ubze)
         if (!estimatedFee) {
           setEstimatedFee({

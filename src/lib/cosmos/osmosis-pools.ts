@@ -45,7 +45,9 @@ export async function fetchOsmosisPools(restUrl: string): Promise<LiquidityPool[
     }
 
     const swapFee = parseFloat(pool.pool_params?.swap_fee || '0.002');
-    const feePercent = swapFee * 100; // 0.002 -> 0.2%
+    // Keep fee as a decimal fraction for router math
+    // (e.g. 0.002 = 0.2%).
+    const feeFraction = Number.isFinite(swapFee) && swapFee >= 0 ? swapFee : 0.002;
 
     const asset0 = pool.pool_assets[0];
     const asset1 = pool.pool_assets[1];
@@ -67,7 +69,7 @@ export async function fetchOsmosisPools(restUrl: string): Promise<LiquidityPool[
       quote,
       reserve_base: reserveBase,
       reserve_quote: reserveQuote,
-      fee: feePercent.toString(),
+      fee: feeFraction.toString(),
     });
   }
 

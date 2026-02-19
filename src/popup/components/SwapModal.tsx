@@ -30,14 +30,17 @@ import { useWalletStore } from '@/store/walletStore';
 import { useChainStore } from '@/store/chainStore';
 import { ChainInfo } from '@/types/wallet';
 import { fetchChainAssets } from '@/lib/assets/chainRegistry';
-import { estimateSwapFee, FeeEstimate } from '@/lib/cosmos/fees';
+import { estimateSwapFee, FeeEstimate, simulateTransaction } from '@/lib/cosmos/fees';
 import { findBestRoute, SwapRoute, LiquidityPool as RouterPool } from '@/lib/cosmos/swap-router';
 import { fetchOsmosisPools } from '@/lib/cosmos/osmosis-pools';
+import { cosmosClient } from '@/lib/cosmos/client';
+import { networkRegistry } from '@/lib/networks';
 import { toBase64, fromBase64 } from '@cosmjs/encoding';
 import { TxRaw, AuthInfo, TxBody, SignerInfo, Fee } from 'cosmjs-types/cosmos/tx/v1beta1/tx';
 import { SignMode } from 'cosmjs-types/cosmos/tx/signing/v1beta1/signing';
 import { Any } from 'cosmjs-types/google/protobuf/any';
 import { PubKey } from 'cosmjs-types/cosmos/crypto/secp256k1/keys';
+import type { OfflineSigner } from '@cosmjs/proto-signing';
 
 // Helper to encode a string as protobuf bytes (wire type 2)
 function encodeString(fieldNum: number, value: string): Uint8Array {
@@ -291,20 +294,17 @@ const SwapModal: React.FC<SwapModalProps> = ({
           setToToken(tokensWithPools.length > 1 ? tokensWithPools[1] : null);
         }
 
-        // Fetch swap fees from chain params (BeeZee only; Osmosis uses fixed fee)
+        // Fetch BeeZee tradebin taker fee metadata.
+        // Network fee is simulated dynamically once quote/route is available.
         if (chainId === 'beezee-1' && chainConfig?.rest) {
           const fees = await estimateSwapFee(chainConfig.rest, 250000);
           if (!signal.aborted) {
-            setTxFee(fees.txFee);
             setTradeFee(fees.tradeFee);
+            setTxFee(null);
           }
         } else if (chainId === 'osmosis-1' && chainConfig) {
-          const feeDenom = chainConfig.feeCurrencies?.[0]?.coinMinimalDenom || 'uosmo';
-          setTxFee({
-            amount: '25000',
-            denom: feeDenom,
-            formatted: '0.025 OSMO',
-          });
+          // Keep empty until simulation fills the estimate.
+          setTxFee(null);
           setTradeFee(null);
         }
       } catch (error) {
@@ -349,9 +349,13 @@ const SwapModal: React.FC<SwapModalProps> = ({
 
       // Cast to RouterPool type (same structure)
       const routerPools = pools as RouterPool[];
-      return findBestRoute(routerPools, fromToken.denom, toToken.denom, inputAmount, 3);
+      // Osmosis routes can include stale/illiquid multi-hop paths from legacy pools
+      // that produce unrealistic quotes and inflated price impact. Prefer direct
+      // routing on Osmosis for stable/accurate UX.
+      const maxHops = chainId === 'osmosis-1' ? 1 : 3;
+      return findBestRoute(routerPools, fromToken.denom, toToken.denom, inputAmount, maxHops);
     },
-    [pools, fromToken, toToken]
+    [pools, fromToken, toToken, chainId]
   );
 
   // Get token symbol from denom
@@ -422,6 +426,215 @@ const SwapModal: React.FC<SwapModalProps> = ({
     const debounce = setTimeout(calculateQuote, 300);
     return () => clearTimeout(debounce);
   }, [fromAmount, fromToken, toToken, slippage, findRoute]);
+
+  // Dynamically simulate Osmosis swap fee for current quote.
+  useEffect(() => {
+    if (
+      chainId !== 'osmosis-1' ||
+      !chainConfig?.rpc ||
+      !selectedRoute ||
+      !fromToken ||
+      !toToken ||
+      !fromAmount ||
+      parseFloat(fromAmount) <= 0 ||
+      !selectedAccount?.pubKey ||
+      !chainAddress
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const inputAmountRaw = Math.floor(parseFloat(fromAmount) * Math.pow(10, fromToken.decimals));
+        if (inputAmountRaw <= 0) return;
+
+        const routes = selectedRoute.pools.map((poolId, i) => ({
+          pool_id: parseInt(poolId, 10),
+          token_out_denom: selectedRoute.path[i + 1],
+        }));
+        const msg = {
+          typeUrl: '/osmosis.poolmanager.v1beta1.MsgSwapExactAmountIn',
+          value: {
+            sender: chainAddress,
+            routes,
+            token_in: { denom: fromToken.denom, amount: inputAmountRaw.toString() },
+            // For fee simulation only, keep min output permissive so route pricing
+            // changes don't make simulation fail with "lesser than min amount".
+            token_out_min_amount: '1',
+          },
+        };
+
+        // Build a lightweight signer from the selected account only.
+        // simulate() needs account metadata, but does not require private keys.
+        const simulationSigner: OfflineSigner = {
+          getAccounts: async () => [
+            {
+              address: chainAddress,
+              algo: 'secp256k1',
+              pubkey: selectedAccount.pubKey,
+            },
+          ],
+        };
+        const rpcEndpoints = networkRegistry.getCosmos(chainId)?.rpc || [chainConfig.rpc];
+        const { client: signingClient } = await cosmosClient.getSigningClientWithFailover(
+          rpcEndpoints,
+          simulationSigner
+        );
+        const signerAddress = chainAddress;
+        const simulatedGas = await signingClient.simulate(signerAddress, [msg], '');
+        const gasLimit = Math.max(Math.ceil(simulatedGas * 1.3), 120000);
+        const gasPrice = parseFloat(networkRegistry.getCosmos(chainId)?.gasPrice || '0.025');
+        const feeDenom = chainConfig.feeCurrencies?.[0]?.coinMinimalDenom || 'uosmo';
+        const feeAmount = Math.max(1, Math.ceil(gasLimit * gasPrice));
+        const symbol = chainConfig.feeCurrencies?.[0]?.coinDenom || 'OSMO';
+
+        if (!cancelled) {
+          setTxFee({
+            amount: feeAmount.toString(),
+            denom: feeDenom,
+            formatted: `${(feeAmount / 1_000_000).toFixed(6)} ${symbol}`,
+          });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          // Osmosis often returns gas usage in simulation errors; recover it to
+          // still provide an accurate fee estimate instead of "unavailable".
+          const message = error instanceof Error ? error.message : String(error);
+          const gasMatch = message.match(/gas used:\s*'(\d+)'/i);
+          if (gasMatch) {
+            const gasUsed = parseInt(gasMatch[1], 10);
+            const gasLimit = Math.max(Math.ceil(gasUsed * 1.3), 120000);
+            const gasPrice = parseFloat(networkRegistry.getCosmos(chainId)?.gasPrice || '0.025');
+            const feeDenom = chainConfig.feeCurrencies?.[0]?.coinMinimalDenom || 'uosmo';
+            const feeAmount = Math.max(1, Math.ceil(gasLimit * gasPrice));
+            const symbol = chainConfig.feeCurrencies?.[0]?.coinDenom || 'OSMO';
+            setTxFee({
+              amount: feeAmount.toString(),
+              denom: feeDenom,
+              formatted: `${(feeAmount / 1_000_000).toFixed(6)} ${symbol}`,
+            });
+          } else {
+            console.warn('Failed to simulate Osmosis swap fee:', error);
+          }
+        }
+      }
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [
+    chainId,
+    chainConfig,
+    selectedRoute,
+    fromToken,
+    toToken,
+    fromAmount,
+    toAmount,
+    selectedAccount,
+    chainAddress,
+  ]);
+
+  // Dynamically simulate BeeZee swap fee for current quote.
+  useEffect(() => {
+    if (
+      chainId !== 'beezee-1' ||
+      !chainConfig?.rest ||
+      !selectedRoute ||
+      !fromToken ||
+      !toToken ||
+      !fromAmount ||
+      parseFloat(fromAmount) <= 0 ||
+      !selectedAccount?.pubKey
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const inputAmountRaw = Math.floor(parseFloat(fromAmount) * Math.pow(10, fromToken.decimals));
+        const minOutputAmountRaw = Math.floor(
+          parseFloat(toAmount || '0') * Math.pow(10, toToken.decimals) * 0.95
+        );
+        if (inputAmountRaw <= 0) return;
+
+        const msgBytes = encodeMsgMultiSwap(
+          chainAddress,
+          selectedRoute.pools,
+          fromToken.denom,
+          inputAmountRaw.toString(),
+          toToken.denom,
+          Math.max(minOutputAmountRaw, 1).toString()
+        );
+        const msgAny: Any = {
+          typeUrl: '/bze.tradebin.MsgMultiSwap',
+          value: msgBytes,
+        };
+
+        const simTxBody = TxBody.fromPartial({
+          messages: [msgAny],
+          memo: '',
+        });
+        const simAuthInfo = AuthInfo.fromPartial({
+          signerInfos: [
+            SignerInfo.fromPartial({
+              publicKey: {
+                typeUrl: '/cosmos.crypto.secp256k1.PubKey',
+                value: PubKey.encode(PubKey.fromPartial({ key: selectedAccount.pubKey })).finish(),
+              },
+              modeInfo: { single: { mode: SignMode.SIGN_MODE_LEGACY_AMINO_JSON } },
+              sequence: BigInt(0),
+            }),
+          ],
+          fee: Fee.fromPartial({
+            amount: [],
+            gasLimit: BigInt(0),
+          }),
+        });
+
+        const simResult = await simulateTransaction(
+          chainConfig.rest,
+          TxBody.encode(simTxBody).finish(),
+          AuthInfo.encode(simAuthInfo).finish()
+        );
+        const gasLimit = Math.max(Math.ceil(simResult.gasUsed * 1.3), 150000);
+        const gasPrice = parseFloat(networkRegistry.getCosmos(chainId)?.gasPrice || '0.025');
+        const feeDenom = chainConfig.feeCurrencies?.[0]?.coinMinimalDenom || 'ubze';
+        const symbol = chainConfig.feeCurrencies?.[0]?.coinDenom || 'BZE';
+        const feeAmount = Math.max(1, Math.ceil(gasLimit * gasPrice));
+
+        if (!cancelled) {
+          setTxFee({
+            amount: feeAmount.toString(),
+            denom: feeDenom,
+            formatted: `${(feeAmount / 1_000_000).toFixed(6)} ${symbol}`,
+          });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.warn('Failed to simulate BeeZee swap fee:', error);
+        }
+      }
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [
+    chainId,
+    chainConfig,
+    selectedRoute,
+    fromToken,
+    toToken,
+    fromAmount,
+    toAmount,
+    selectedAccount,
+    chainAddress,
+  ]);
 
   // Swap token positions
   const handleSwapTokens = () => {
@@ -544,17 +757,11 @@ const SwapModal: React.FC<SwapModalProps> = ({
           },
         };
 
-        const feeDenom = chainConfig?.feeCurrencies?.[0]?.coinMinimalDenom || 'uosmo';
-        const fee = {
-          amount: [{ denom: feeDenom, amount: '25000' }],
-          gas: '250000',
-        };
-
         let txHash: string;
         if (passwordForSigning && signAndBroadcastWithPassword) {
-          txHash = await signAndBroadcastWithPassword(chainId, [msg], passwordForSigning, fee);
+          txHash = await signAndBroadcastWithPassword(chainId, [msg], passwordForSigning);
         } else if (signAndBroadcast) {
-          txHash = await signAndBroadcast(chainId, [msg], fee, '');
+          txHash = await signAndBroadcast(chainId, [msg], undefined, '');
         } else {
           throw new Error('Signing not available');
         }
@@ -614,14 +821,66 @@ const SwapModal: React.FC<SwapModalProps> = ({
         },
       };
 
+      // Pre-encode MsgMultiSwap for both simulation and final TxRaw.
+      const msgBytes = encodeMsgMultiSwap(
+        chainAddress,
+        selectedRoute.pools,
+        fromToken.denom,
+        inputAmountRaw.toString(),
+        toToken.denom,
+        minOutputAmountRaw.toString()
+      );
+      const msgAny: Any = {
+        typeUrl: '/bze.tradebin.MsgMultiSwap',
+        value: msgBytes,
+      };
+
+      const feeDenom = chainConfig?.feeCurrencies?.[0]?.coinMinimalDenom || 'ubze';
+      const gasPrice = parseFloat(networkRegistry.getCosmos(chainId)?.gasPrice || '0.025');
+      let gasLimit = 400000;
+      let feeAmount = Math.max(1, Math.ceil(gasLimit * gasPrice));
+      if (selectedAccount?.pubKey && chainConfig?.rest) {
+        try {
+          const simTxBody = TxBody.fromPartial({
+            messages: [msgAny],
+            memo: '',
+          });
+          const simAuthInfo = AuthInfo.fromPartial({
+            signerInfos: [
+              SignerInfo.fromPartial({
+                publicKey: {
+                  typeUrl: '/cosmos.crypto.secp256k1.PubKey',
+                  value: PubKey.encode(PubKey.fromPartial({ key: selectedAccount.pubKey })).finish(),
+                },
+                modeInfo: { single: { mode: SignMode.SIGN_MODE_LEGACY_AMINO_JSON } },
+                sequence: BigInt(sequence),
+              }),
+            ],
+            fee: Fee.fromPartial({
+              amount: [],
+              gasLimit: BigInt(0),
+            }),
+          });
+          const simResult = await simulateTransaction(
+            chainConfig.rest,
+            TxBody.encode(simTxBody).finish(),
+            AuthInfo.encode(simAuthInfo).finish()
+          );
+          gasLimit = Math.max(Math.ceil(simResult.gasUsed * 1.3), 150000);
+          feeAmount = Math.max(1, Math.ceil(gasLimit * gasPrice));
+        } catch (error) {
+          console.warn('BeeZee swap fee simulation failed, using fallback fee:', error);
+        }
+      }
+
       // Build sign doc for Amino signing
       const signDoc = {
         chain_id: 'beezee-1',
         account_number: accountNumber,
         sequence: sequence,
         fee: {
-          amount: [{ denom: 'ubze', amount: '15000' }],
-          gas: '400000',
+          amount: [{ denom: feeDenom, amount: feeAmount.toString() }],
+          gas: gasLimit.toString(),
         },
         msgs: [aminoMsg],
         memo: '',
@@ -632,23 +891,6 @@ const SwapModal: React.FC<SwapModalProps> = ({
 
       // Get the public key from the sign response
       const pubKey = signResponse.signature.pub_key;
-
-      // Encode MsgMultiSwap as protobuf bytes
-      // Use the route's pools array for multi-hop support
-      const msgBytes = encodeMsgMultiSwap(
-        chainAddress,
-        selectedRoute.pools,
-        fromToken.denom,
-        inputAmountRaw.toString(),
-        toToken.denom,
-        minOutputAmountRaw.toString()
-      );
-
-      // Create the Any wrapper for the message
-      const msgAny: Any = {
-        typeUrl: '/bze.tradebin.MsgMultiSwap',
-        value: msgBytes,
-      };
 
       // Build TxBody
       const txBody = TxBody.fromPartial({
@@ -677,8 +919,8 @@ const SwapModal: React.FC<SwapModalProps> = ({
       };
 
       const fee: Fee = {
-        amount: [{ denom: 'ubze', amount: '15000' }],
-        gasLimit: BigInt(400000),
+        amount: [{ denom: feeDenom, amount: feeAmount.toString() }],
+        gasLimit: BigInt(gasLimit),
         payer: '',
         granter: '',
       };
@@ -755,6 +997,15 @@ const SwapModal: React.FC<SwapModalProps> = ({
 
   // Price impact and fees are now calculated by the swap router
   // and available in selectedRoute.priceImpact and selectedRoute.totalFee
+  const networkFeeDisplay = txFee?.formatted || (fetchingQuote ? 'Estimating...' : 'Estimate unavailable');
+  const totalFeeDisplay =
+    chainId === 'beezee-1'
+      ? txFee && tradeFee
+        ? `${((parseInt(txFee.amount) + parseInt(tradeFee.amount)) / 1_000_000).toFixed(6)} BZE`
+        : tradeFee
+          ? `${tradeFee.formatted} + network fee`
+          : networkFeeDisplay
+      : networkFeeDisplay;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered size="md">
@@ -1044,10 +1295,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
                     <Box h="1px" bg="#2a2a2a" my={1} />
                     <HStack justify="space-between">
                       <Text color="gray.500">Network Fee</Text>
-                      <Text>
-                        {txFee?.formatted ||
-                          (chainId === 'osmosis-1' ? '~0.025 OSMO' : '~0.015 BZE')}
-                      </Text>
+                      <Text>{networkFeeDisplay}</Text>
                     </HStack>
                     {chainId === 'beezee-1' && (
                       <HStack justify="space-between">
@@ -1059,12 +1307,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
                       <Text color="gray.500" fontWeight="medium">
                         Total Fees
                       </Text>
-                      <Text fontWeight="medium">
-                        {txFee && tradeFee
-                          ? `${((parseInt(txFee.amount) + parseInt(tradeFee.amount)) / 1_000_000).toFixed(6)} BZE`
-                          : txFee?.formatted ||
-                            (chainId === 'osmosis-1' ? '~0.025 OSMO' : '~0.115 BZE')}
-                      </Text>
+                      <Text fontWeight="medium">{totalFeeDisplay}</Text>
                     </HStack>
                   </VStack>
                 </Box>
@@ -1188,9 +1431,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
                   <Box h="1px" bg="#2a2a2a" my={1} />
                   <HStack justify="space-between">
                     <Text color="gray.500">Network Fee</Text>
-                    <Text>
-                      {txFee?.formatted || (chainId === 'osmosis-1' ? '~0.025 OSMO' : '~0.015 BZE')}
-                    </Text>
+                    <Text>{networkFeeDisplay}</Text>
                   </HStack>
                   {chainId === 'beezee-1' && (
                     <HStack justify="space-between">
@@ -1202,12 +1443,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
                     <Text color="gray.500" fontWeight="medium">
                       Total Fees
                     </Text>
-                    <Text fontWeight="medium" color="orange.300">
-                      {txFee && tradeFee
-                        ? `${((parseInt(txFee.amount) + parseInt(tradeFee.amount)) / 1_000_000).toFixed(6)} BZE`
-                        : txFee?.formatted ||
-                          (chainId === 'osmosis-1' ? '~0.025 OSMO' : '~0.115 BZE')}
-                    </Text>
+                    <Text fontWeight="medium" color="orange.300">{totalFeeDisplay}</Text>
                   </HStack>
                 </VStack>
               </Box>
