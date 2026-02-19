@@ -277,16 +277,16 @@ describe('Chain Registry', () => {
         'ulp_factory/bze13gzq40che93tgfm9kzmkpjamah5nj0j73pyhqk/uvdl_ubze'
       );
       expect(result).toEqual({
-        symbol: 'LP',
-        name: 'Liquidity Pool VDL/BZE',
+        symbol: 'VDL/BZE',
+        name: 'LP Shares',
       });
     });
 
     it('should handle unknown asset symbols', () => {
       const result = parseBeeZeeLPToken('ulp_factory/someaddress/uabc_udef');
       expect(result).toEqual({
-        symbol: 'LP',
-        name: 'Liquidity Pool ABC/UDEF',
+        symbol: 'ABC/UDEF',
+        name: 'LP Shares',
       });
     });
 
@@ -304,8 +304,8 @@ describe('Chain Registry', () => {
     it('should map known denoms to symbols', () => {
       const result = parseBeeZeeLPToken('ulp_factory/addr/ubze_uvdl');
       expect(result).toEqual({
-        symbol: 'LP',
-        name: 'Liquidity Pool BZE/VDL',
+        symbol: 'BZE/VDL',
+        name: 'LP Shares',
       });
     });
   });
