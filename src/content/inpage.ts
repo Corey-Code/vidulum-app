@@ -21,6 +21,7 @@ function readConfig(): {
     WALLET_CONNECT?: boolean;
     AUTO_OPEN_POPUP?: boolean;
     TX_TRANSLATION?: boolean;
+    DEVELOPER_MODE?: boolean;
   };
 } {
   try {
@@ -41,6 +42,7 @@ function readConfig(): {
       WALLET_CONNECT: false,
       AUTO_OPEN_POPUP: true,
       TX_TRANSLATION: true,
+      DEVELOPER_MODE: false,
     },
   };
 }
@@ -71,7 +73,36 @@ const FEATURES = {
 
   // User-configurable: Human-readable transaction display
   TX_TRANSLATION: CONFIG.features?.TX_TRANSLATION ?? true,
+
+  // User-configurable: developer console output
+  DEVELOPER_MODE: CONFIG.features?.DEVELOPER_MODE ?? false,
 };
+
+const ORIGINAL_CONSOLE = {
+  log: console.log.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console),
+  debug: console.debug.bind(console),
+  trace: console.trace.bind(console),
+};
+
+if (!FEATURES.DEVELOPER_MODE) {
+  const noop = () => {};
+  console.log = noop;
+  console.info = noop;
+  console.warn = noop;
+  console.error = noop;
+  console.debug = noop;
+  console.trace = noop;
+} else {
+  console.log = ORIGINAL_CONSOLE.log;
+  console.info = ORIGINAL_CONSOLE.info;
+  console.warn = ORIGINAL_CONSOLE.warn;
+  console.error = ORIGINAL_CONSOLE.error;
+  console.debug = ORIGINAL_CONSOLE.debug;
+  console.trace = ORIGINAL_CONSOLE.trace;
+}
 
 // Message types for communication with content script
 const VIDULUM_REQUEST = 'VIDULUM_REQUEST';

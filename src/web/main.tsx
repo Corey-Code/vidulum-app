@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ChakraProvider, extendTheme, Flex, HStack, Link, Icon } from '@chakra-ui/react';
 import App from '@/popup/App';
+import { initDeveloperModeLogging } from '@/lib/debug/developerMode';
 
 // GitHub icon (simple SVG path)
 const GitHubIcon: React.FC<{ boxSize?: string | number }> = ({ boxSize = 5 }) => (
@@ -37,6 +38,8 @@ const theme = extendTheme({
     },
   },
 });
+
+void initDeveloperModeLogging();
 
 /**
  * Web-specific wrapper that makes the app look like a native app embedded in a page.
@@ -98,7 +101,14 @@ const WebAppFrame: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ChakraProvider theme={theme}>
+    <ChakraProvider
+      theme={theme}
+      toastOptions={{
+        defaultOptions: {
+          position: 'top',
+        },
+      }}
+    >
       <WebAppFrame>
         <App />
       </WebAppFrame>

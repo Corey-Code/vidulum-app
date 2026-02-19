@@ -10,6 +10,7 @@
 
 import browser from 'webextension-polyfill';
 import { MessageType, Message } from '@/types/messages';
+import { initDeveloperModeLogging } from '@/lib/debug/developerMode';
 
 // Message type constants (must match inpage.ts)
 const VIDULUM_REQUEST = 'VIDULUM_REQUEST';
@@ -17,6 +18,8 @@ const VIDULUM_RESPONSE = 'VIDULUM_RESPONSE';
 
 // Settings storage key
 const SETTINGS_KEY = 'vidulum_settings';
+
+void initDeveloperModeLogging();
 
 // ============================================================================
 // Inject the inpage provider script
@@ -34,6 +37,7 @@ async function injectScript() {
       WALLET_CONNECT: false, // Default
       AUTO_OPEN_POPUP: true, // Default
       TX_TRANSLATION: true, // Default
+      DEVELOPER_MODE: false, // Default
     };
 
     try {
@@ -51,6 +55,7 @@ async function injectScript() {
           WALLET_CONNECT: settings.features.WALLET_CONNECT ?? false,
           AUTO_OPEN_POPUP: settings.features.AUTO_OPEN_POPUP ?? true,
           TX_TRANSLATION: settings.features.TX_TRANSLATION ?? true,
+          DEVELOPER_MODE: settings.features.DEVELOPER_MODE ?? false,
         };
       }
     } catch (error) {

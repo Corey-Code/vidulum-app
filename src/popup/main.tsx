@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import App from './App';
+import { initDeveloperModeLogging } from '@/lib/debug/developerMode';
 
 const theme = extendTheme({
   config: {
@@ -24,9 +25,18 @@ const theme = extendTheme({
   },
 });
 
+void initDeveloperModeLogging();
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ChakraProvider theme={theme}>
+    <ChakraProvider
+      theme={theme}
+      toastOptions={{
+        defaultOptions: {
+          position: 'top',
+        },
+      }}
+    >
       <App />
     </ChakraProvider>
   </React.StrictMode>

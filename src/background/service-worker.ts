@@ -3,9 +3,12 @@ import { MessageType, Message, MessageResponse } from '@/types/messages';
 import { Keyring } from '@/lib/crypto/keyring';
 import { EncryptedStorage } from '@/lib/storage/encrypted-storage';
 import { getChainInfo, SUPPORTED_CHAINS } from '@/lib/cosmos/chains';
+import { initDeveloperModeLogging } from '@/lib/debug/developerMode';
 
 // Storage key for connected dApps
 const CONNECTED_DAPPS_KEY = 'connected_dapps';
+
+void initDeveloperModeLogging();
 
 // In-memory storage for the current session
 class SessionManager {

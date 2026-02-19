@@ -41,6 +41,12 @@ export const FEATURES = {
    * Parse and show transaction summaries instead of raw data
    */
   TX_TRANSLATION: true,
+
+  /**
+   * Developer mode logging
+   * Enables console output for debugging; disabled by default.
+   */
+  DEVELOPER_MODE: false,
 };
 
 /**

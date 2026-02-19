@@ -17,6 +17,7 @@ import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
 import { EncryptedStorage } from '@/lib/storage/encrypted-storage';
 import { FEATURES } from '@/lib/config/features';
+import { setDeveloperModeLogging } from '@/lib/debug/developerMode';
 
 // Settings storage key (must match inject.ts)
 const SETTINGS_KEY = 'vidulum_settings';
@@ -26,6 +27,7 @@ interface FeatureSettings {
   WALLET_CONNECT?: boolean;
   AUTO_OPEN_POPUP?: boolean;
   TX_TRANSLATION?: boolean;
+  DEVELOPER_MODE?: boolean;
 }
 
 interface DAppCompatibilitySettings {
@@ -56,6 +58,7 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
     WALLET_CONNECT: FEATURES.WALLET_CONNECT,
     AUTO_OPEN_POPUP: FEATURES.AUTO_OPEN_POPUP,
     TX_TRANSLATION: FEATURES.TX_TRANSLATION,
+    DEVELOPER_MODE: FEATURES.DEVELOPER_MODE,
   });
   const [featuresExpanded, setFeaturesExpanded] = useState(false);
   const [replacementCompatExpanded, setReplacementCompatExpanded] = useState(false);
@@ -77,6 +80,7 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
           WALLET_CONNECT: settings.features?.WALLET_CONNECT ?? FEATURES.WALLET_CONNECT,
           AUTO_OPEN_POPUP: settings.features?.AUTO_OPEN_POPUP ?? FEATURES.AUTO_OPEN_POPUP,
           TX_TRANSLATION: settings.features?.TX_TRANSLATION ?? FEATURES.TX_TRANSLATION,
+          DEVELOPER_MODE: settings.features?.DEVELOPER_MODE ?? FEATURES.DEVELOPER_MODE,
         });
       } catch (error) {
         // Storage access failed, use default
@@ -191,6 +195,9 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   // Handle feature toggle
   const handleFeatureToggle = async (featureKey: keyof FeatureSettings, enabled: boolean) => {
     setFeatureSettings((prev) => ({ ...prev, [featureKey]: enabled }));
+    if (featureKey === 'DEVELOPER_MODE') {
+      setDeveloperModeLogging(enabled);
+    }
     try {
       const result = await browser.storage.local.get(SETTINGS_KEY);
       const settings = result[SETTINGS_KEY] || {};
@@ -210,6 +217,9 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
         duration: 2000,
       });
       setFeatureSettings((prev) => ({ ...prev, [featureKey]: !enabled })); // Revert
+      if (featureKey === 'DEVELOPER_MODE') {
+        setDeveloperModeLogging(!enabled);
+      }
     }
   };
 
@@ -614,6 +624,26 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
                     colorScheme="cyan"
                     isChecked={featureSettings.TX_TRANSLATION}
                     onChange={(e) => handleFeatureToggle('TX_TRANSLATION', e.target.checked)}
+                    isDisabled={loadingSettings}
+                  />
+                </HStack>
+
+                <Divider borderColor="#1a1a1a" />
+
+                {/* Developer Mode */}
+                <HStack justify="space-between" align="center">
+                  <VStack align="start" spacing={0} flex={1}>
+                    <Text fontSize="sm" color="white">
+                      Developer Mode
+                    </Text>
+                    <Text fontSize="xs" color="gray.500">
+                      Enable console logging for debugging
+                    </Text>
+                  </VStack>
+                  <Switch
+                    colorScheme="cyan"
+                    isChecked={featureSettings.DEVELOPER_MODE}
+                    onChange={(e) => handleFeatureToggle('DEVELOPER_MODE', e.target.checked)}
                     isDisabled={loadingSettings}
                   />
                 </HStack>
