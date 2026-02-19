@@ -384,6 +384,69 @@ export class Keyring {
     return wallet;
   }
 
+  /**
+   * Get a combined signer (Amino + Direct) for a specific chain prefix.
+   * Some integrations (e.g. Skip Go Widget) require both signAmino and signDirect
+   * to be available on the same signer object.
+   * @param prefix - The bech32 prefix for the chain
+   * @param accountIndex - Optional specific account index to include
+   */
+  async getCombinedSignerForChain(
+    prefix: string,
+    accountIndex?: number
+  ): Promise<{ getAccounts: () => Promise<readonly import('@cosmjs/amino').AccountData[]>; signAmino: Secp256k1HdWallet['signAmino']; signDirect: DirectSecp256k1HdWallet['signDirect'] }> {
+    // Preferred path: derive prefix-specific wallets from mnemonic when available.
+    if (this.mnemonic) {
+      let accountIndices = this.accounts.map((acc) => acc.accountIndex);
+      if (accountIndex !== undefined && !accountIndices.includes(accountIndex)) {
+        accountIndices = [...accountIndices, accountIndex];
+      }
+      if (accountIndices.length === 0) {
+        accountIndices = [0];
+      }
+      const hdPaths = accountIndices.map((index) => makeCosmoshubPath(index));
+
+      const [aminoWallet, directWallet] = await Promise.all([
+        Secp256k1HdWallet.fromMnemonic(this.mnemonic, { prefix, hdPaths }),
+        DirectSecp256k1HdWallet.fromMnemonic(this.mnemonic, { prefix, hdPaths }),
+      ]);
+
+      return {
+        getAccounts: () => directWallet.getAccounts(),
+        signAmino: (signerAddress: string, signDoc: StdSignDoc) =>
+          aminoWallet.signAmino(signerAddress, signDoc),
+        signDirect: (signerAddress: string, signDoc: Parameters<DirectSecp256k1HdWallet['signDirect']>[1]) =>
+          directWallet.signDirect(signerAddress, signDoc),
+      };
+    }
+
+    // Fallback path: wallet restored from serialized session without mnemonic.
+    // In this mode, reuse existing wallets and map signer addresses between prefixes.
+    if (!this.wallet || !this.aminoWallet) {
+      throw new Error('Wallet not initialized');
+    }
+
+    const basePrefix = this.prefix;
+    const mapToBasePrefix = (address: string) =>
+      prefix === basePrefix ? address : Keyring.convertAddress(address, basePrefix);
+    const mapToTargetPrefix = (address: string) =>
+      prefix === basePrefix ? address : Keyring.convertAddress(address, prefix);
+
+    return {
+      getAccounts: async () => {
+        const accounts = await this.wallet!.getAccounts();
+        return accounts.map((account) => ({
+          ...account,
+          address: mapToTargetPrefix(account.address),
+        }));
+      },
+      signAmino: (signerAddress: string, signDoc: StdSignDoc) =>
+        this.aminoWallet!.signAmino(mapToBasePrefix(signerAddress), signDoc),
+      signDirect: (signerAddress: string, signDoc: Parameters<DirectSecp256k1HdWallet['signDirect']>[1]) =>
+        this.wallet!.signDirect(mapToBasePrefix(signerAddress), signDoc),
+    };
+  }
+
   // ============================================================================
   // Bitcoin Support
   // ============================================================================
