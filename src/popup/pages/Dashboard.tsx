@@ -34,6 +34,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from '@chakra-ui/icons';
+import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
 import { useChainStore } from '@/store/chainStore';
 import { UI_CHAINS, SUPPORTED_CHAINS, getNetworkType } from '@/lib/cosmos/chains';
@@ -57,6 +58,21 @@ interface DashboardProps {
   onNavigateToSettings?: () => void;
   onNavigateToEarn?: () => void;
   onNavigateToSwap?: () => void;
+}
+
+const CUSTOM_ASSET_NAMES_KEY = 'custom_asset_names';
+
+type CustomAssetNamesByChain = Record<string, Record<string, string>>;
+
+interface TokenConfig {
+  symbol: string;
+  name: string;
+  decimals: number;
+  color: string;
+  logoUrl?: string;
+  priceUsd: number;
+  isUnknownIbc?: boolean;
+  hasCustomName?: boolean;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({
@@ -92,6 +108,11 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [chainAssets, setChainAssets] = useState<RegistryAsset[]>([]);
   const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [customAssetNamesByChain, setCustomAssetNamesByChain] = useState<CustomAssetNamesByChain>(
+    {}
+  );
+  const [editingTokenDenom, setEditingTokenDenom] = useState<string | null>(null);
+  const [editingTokenName, setEditingTokenName] = useState('');
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [addAccountStep, setAddAccountStep] = useState<
     | 'none'
@@ -427,8 +448,47 @@ const Dashboard: React.FC<DashboardProps> = ({
     }
   }, [selectedChainId, isCosmosSelected]);
 
+  useEffect(() => {
+    const loadCustomAssetNames = async () => {
+      try {
+        const result = await browser.storage.local.get(CUSTOM_ASSET_NAMES_KEY);
+        const customNames = (result[CUSTOM_ASSET_NAMES_KEY] as CustomAssetNamesByChain) || {};
+        setCustomAssetNamesByChain(customNames);
+      } catch (error) {
+        console.warn('Failed to load custom asset names:', error);
+      }
+    };
+
+    loadCustomAssetNames();
+  }, []);
+
+  const truncateMiddle = (value: string, start = 7, end = 5) => {
+    if (value.length <= start + end + 3) return value;
+    return `${value.slice(0, start)}...${value.slice(-end)}`;
+  };
+
+  const persistCustomAssetName = async (denom: string, name: string) => {
+    const trimmedName = name.trim();
+    const current = customAssetNamesByChain[selectedChainId] || {};
+    const nextForChain = { ...current };
+
+    if (trimmedName) {
+      nextForChain[denom] = trimmedName;
+    } else {
+      delete nextForChain[denom];
+    }
+
+    const nextAll: CustomAssetNamesByChain = {
+      ...customAssetNamesByChain,
+      [selectedChainId]: nextForChain,
+    };
+
+    setCustomAssetNamesByChain(nextAll);
+    await browser.storage.local.set({ [CUSTOM_ASSET_NAMES_KEY]: nextAll });
+  };
+
   // Get token config from chain registry or fallback
-  const getTokenConfig = (denom: string) => {
+  const getTokenConfig = (denom: string): TokenConfig => {
     const asset = chainAssets.find((a) => a.denom === denom);
     if (asset) {
       return {
@@ -453,14 +513,19 @@ const Dashboard: React.FC<DashboardProps> = ({
       };
     }
     console.log('Unknown token:', denom);
+    const isUnknownIbc = denom.startsWith('ibc/');
+    const customName = customAssetNamesByChain[selectedChainId]?.[denom];
+
     // Fallback for unknown tokens
     return {
-      symbol: denom.startsWith('ibc/') ? 'IBC' : denom.slice(0, 6).toUpperCase(),
-      name: denom.startsWith('ibc/') ? 'IBC Token' : denom,
+      symbol: isUnknownIbc ? 'Unknown' : denom.slice(0, 6).toUpperCase(),
+      name: isUnknownIbc ? customName || truncateMiddle(denom) : denom,
       decimals: 6,
       color: '#718096',
       logoUrl: undefined,
       priceUsd: 0,
+      isUnknownIbc,
+      hasCustomName: Boolean(customName),
     };
   };
 
@@ -1621,19 +1686,16 @@ const Dashboard: React.FC<DashboardProps> = ({
             </Text>
             <Menu>
               <MenuButton
+                as={IconButton}
+                icon={<AddIcon />}
+                size="xs"
+                variant="ghost"
+                color="gray.500"
                 borderColor="#3a3a3a"
                 borderRadius="xl"
                 _hover={{ color: 'cyan.400', bg: 'whiteAlpha.100' }}
                 aria-label="More Quick Actions"
-              >
-                <IconButton
-                  icon={<AddIcon />}
-                  size="xs"
-                  variant="ghost"
-                  color="gray.500"
-                  aria-label={'More Quick Actions'}
-                />
-              </MenuButton>
+              />
               <MenuList bg="#1a1a1a" borderColor="#2a2a2a" minW="180px">
                 <MenuItem
                   bg="transparent"
@@ -1943,6 +2005,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                     const usdValue = amount * config.priceUsd;
                     const isUpdating = updatingTokens.has(b.denom);
                     const isZeroBalance = parseInt(b.amount) === 0;
+                    const isEditingToken = editingTokenDenom === b.denom;
+                    const tokenDisplayName =
+                      config.isUnknownIbc && !config.hasCustomName
+                        ? truncateMiddle(config.name)
+                        : config.name;
                     const hasIbcConnections =
                       isCosmosSelected && ibcConnections.length > 0 && !isZeroBalance;
 
@@ -1963,9 +2030,98 @@ const Dashboard: React.FC<DashboardProps> = ({
                           <VStack align="start" spacing={0}>
                             <HStack spacing={2}>
                               <Text fontWeight="semibold">{config.symbol}</Text>
-                              <Text color="gray.500" fontSize="sm">
-                                {config.name}
-                              </Text>
+                              {isEditingToken ? (
+                                <HStack spacing={1}>
+                                  <Input
+                                    size="xs"
+                                    value={editingTokenName}
+                                    onChange={(e) => setEditingTokenName(e.target.value)}
+                                    placeholder="Custom token name"
+                                    bg="#1c1c1c"
+                                    borderColor="#303030"
+                                    w="180px"
+                                    autoFocus
+                                    onKeyDown={async (e) => {
+                                      if (e.key === 'Enter') {
+                                        try {
+                                          await persistCustomAssetName(b.denom, editingTokenName);
+                                          setEditingTokenDenom(null);
+                                          setEditingTokenName('');
+                                          toast({
+                                            title: 'Token name updated',
+                                            status: 'success',
+                                            duration: 2000,
+                                          });
+                                        } catch (error) {
+                                          console.error('Failed to save custom token name:', error);
+                                          toast({
+                                            title: 'Failed to save token name',
+                                            status: 'error',
+                                            duration: 2000,
+                                          });
+                                        }
+                                      } else if (e.key === 'Escape') {
+                                        setEditingTokenDenom(null);
+                                        setEditingTokenName('');
+                                      }
+                                    }}
+                                  />
+                                  <IconButton
+                                    aria-label="Save token name"
+                                    icon={<CheckIcon />}
+                                    size="xs"
+                                    variant="ghost"
+                                    colorScheme="green"
+                                    onClick={async () => {
+                                      try {
+                                        await persistCustomAssetName(b.denom, editingTokenName);
+                                        setEditingTokenDenom(null);
+                                        setEditingTokenName('');
+                                        toast({
+                                          title: 'Token name updated',
+                                          status: 'success',
+                                          duration: 2000,
+                                        });
+                                      } catch (error) {
+                                        console.error('Failed to save custom token name:', error);
+                                        toast({
+                                          title: 'Failed to save token name',
+                                          status: 'error',
+                                          duration: 2000,
+                                        });
+                                      }
+                                    }}
+                                  />
+                                </HStack>
+                              ) : (
+                                <HStack spacing={1}>
+                                  <Tooltip
+                                    label={config.name}
+                                    isDisabled={tokenDisplayName === config.name}
+                                    placement="top-start"
+                                  >
+                                    <Text color="gray.500" fontSize="sm">
+                                      {tokenDisplayName}
+                                    </Text>
+                                  </Tooltip>
+                                  {config.isUnknownIbc && (
+                                    <IconButton
+                                      aria-label="Rename unknown IBC asset"
+                                      icon={<EditIcon boxSize={3} />}
+                                      size="xs"
+                                      variant="ghost"
+                                      color="gray.500"
+                                      _hover={{ color: 'white', bg: 'whiteAlpha.100' }}
+                                      onClick={() => {
+                                        setEditingTokenDenom(b.denom);
+                                        setEditingTokenName(
+                                          config.hasCustomName ? config.name : ''
+                                        );
+                                      }}
+                                    />
+                                  )}
+                                </HStack>
+                              )}
                               {isUpdating && <Spinner size="xs" color="cyan.400" />}
                             </HStack>
                             <Text
@@ -2001,12 +2157,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                                   }}
                                   cursor="pointer"
                                   transition="all 0.2s"
+                                  display={'inline-flex'}
                                 >
-                                  <ChevronLeftIcon display={'inline-flex'} />
-                                  <Text fontSize={'xs'} display={'inline-flex'}>
-                                    IBC
-                                  </Text>
-                                  <ChevronRightIcon display={'inline-flex'} />
+                                  <ChevronLeftIcon />
+                                  <Text fontSize={'xs'}>IBC</Text>
+                                  <ChevronRightIcon />
                                 </Box>
                               </Tooltip>
                             )}
