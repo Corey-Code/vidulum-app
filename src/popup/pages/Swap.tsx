@@ -25,6 +25,7 @@ import { Keypair, PublicKey } from '@solana/web3.js';
  */
 const VIDULUM_FEE_BPS = import.meta.env.VIDULUM_FEE_BPS || '';
 const VIDULUM_FEE_BASE_ADDRESS = import.meta.env.VIDULUM_FEE_BASE_ADDRESS || '';
+const SKIP_API_URL = 'https://api.vidulum.app/skip/api/skip/v2';
 
 const skipSvmChainIdByNetworkId: Record<string, string> = {
   'solana-mainnet': 'solana',
@@ -568,6 +569,7 @@ const SwapPage: React.FC<SwapPageProps> = ({ onBack }) => {
       <Box flex="1" overflow="auto" p={2}>
         <Box w="100%" maxW="480px" mx="auto">
           <Widget
+            apiUrl={SKIP_API_URL}
             // --- Default route: start with Osmosis OSMO ---
             defaultRoute={{
               srcChainId: 'osmosis-1',
