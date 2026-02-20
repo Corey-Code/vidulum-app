@@ -292,16 +292,24 @@ const SwapPage: React.FC<SwapPageProps> = ({ onBack }) => {
 
     for (const network of enabledNetworks) {
       if (isCosmosNetwork(network)) {
-        filter[network.id] = undefined;
+        if (connectedAddresses[network.id]) {
+          filter[network.id] = undefined;
+        }
       } else if (isEvmNetwork(network)) {
-        filter[String(network.chainId)] = undefined;
+        const skipChainId = String(network.chainId);
+        if (connectedAddresses[skipChainId]) {
+          filter[skipChainId] = undefined;
+        }
       } else if (isSvmNetwork(network)) {
-        filter[getSkipSvmChainId(network)] = undefined;
+        const skipChainId = getSkipSvmChainId(network);
+        if (connectedAddresses[skipChainId]) {
+          filter[skipChainId] = undefined;
+        }
       }
     }
 
     return filter;
-  }, [getEnabledNetworks]);
+  }, [getEnabledNetworks, connectedAddresses]);
 
   /**
    * Build chainIdsToAffiliates for Vidulum's fee collection.
@@ -587,12 +595,18 @@ const SwapPage: React.FC<SwapPageProps> = ({ onBack }) => {
             }}
             // --- Theme ---
             theme={widgetTheme}
+            // --- Disable external WalletConnect integration ---
+            walletConnect={{
+              options: null,
+              walletConnectModal: null,
+            }}
             // --- Custom endpoints from our failover system ---
             endpointOptions={endpointOptions}
             // --- Affiliate fees: 0.75% to Vidulum on every chain ---
             chainIdsToAffiliates={chainIdsToAffiliates}
             // --- Injected wallet: pass connected addresses + Cosmos signer ---
             connectedAddresses={connectedAddresses}
+            hideAssetsUnlessWalletTypeConnected={true}
             getCosmosSigner={getCosmosSigner}
             getEvmSigner={getEvmSigner}
             getSvmSigner={getSvmSigner}
