@@ -42,6 +42,8 @@ export interface SimulateResult {
   gasWanted: number;
 }
 
+const BZE_SIMULATE_PROXY_URL = 'https://api.vidulum.app/bze/cosmos/tx/v1beta1/simulate';
+
 // Cache for params
 let tradebinParamsCache: TradebinParams | null = null;
 let tradebinParamsCacheTime = 0;
@@ -164,7 +166,11 @@ export async function simulateTransaction(
 
     const txBytes = TxRaw.encode(txRaw).finish();
 
-    const response = await fetch(`${restEndpoint}/cosmos/tx/v1beta1/simulate`, {
+    const simulateUrl = restEndpoint.includes('rest.getbze.com')
+      ? BZE_SIMULATE_PROXY_URL
+      : `${restEndpoint}/cosmos/tx/v1beta1/simulate`;
+
+    const response = await fetch(simulateUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
