@@ -96,6 +96,7 @@ interface StoredPreferences {
   selectedAccountId?: string;
   selectedChainId?: string;
   autoLockMinutes?: number;
+  utxoAddressStyle?: Record<string, 'vidulum' | 'standard'>;
 }
 
 const CURRENT_PREFERENCES_VERSION = 1;
@@ -512,6 +513,7 @@ export class EncryptedStorage {
     selectedAccountId?: string;
     selectedChainId?: string;
     autoLockMinutes?: number;
+    utxoAddressStyle?: Record<string, 'vidulum' | 'standard'>;
   }): Promise<void> {
     const current = await this.getPreferences();
     const updated: StoredPreferences = {
@@ -528,6 +530,7 @@ export class EncryptedStorage {
     selectedAccountId?: string;
     selectedChainId?: string;
     autoLockMinutes?: number;
+    utxoAddressStyle?: Record<string, 'vidulum' | 'standard'>;
   }> {
     const result = await browser.storage.local.get(this.PREFERENCES_KEY);
     const prefs = result[this.PREFERENCES_KEY];

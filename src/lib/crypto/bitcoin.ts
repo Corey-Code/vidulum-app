@@ -229,7 +229,8 @@ export function getBitcoinDerivationPath(
   addressIndex: number = 0,
   isChange: boolean = false,
   addressType: 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' = 'p2wpkh',
-  network: BitcoinNetwork = 'mainnet'
+  network: BitcoinNetwork = 'mainnet',
+  derivationMode: UtxoDerivationMode = 'keplr'
 ): string {
   // BIP44 purpose based on address type
   const purpose = addressType === 'p2wpkh' ? 84 : addressType === 'p2sh-p2wpkh' ? 49 : 44;
@@ -237,9 +238,11 @@ export function getBitcoinDerivationPath(
   const coinType = network === 'mainnet' ? 0 : 1;
   const change = isChange ? 1 : 0;
 
-  // Use address index position for account (Keplr-compatible)
-  // Path: m/purpose'/coinType'/0'/change/accountIndex
-  // This matches Cosmos: m/44'/118'/0'/0/accountIndex
+  if (derivationMode === 'bip44') {
+    return `m/${purpose}'/${coinType}'/${accountIndex}'/${change}/${addressIndex}`;
+  }
+
+  // Keplr-compatible: m/purpose'/coinType'/0'/change/accountIndex
   return `m/${purpose}'/${coinType}'/0'/${change}/${accountIndex}`;
 }
 
@@ -498,29 +501,53 @@ export function getUtxoAddress(
   }
 }
 
+export type UtxoAddressStyle = 'vidulum' | 'standard';
+export type UtxoDerivationMode = 'keplr' | 'bip44';
+export type UtxoScriptType = 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent' | 'taproot';
+
+/**
+ * Vidulum (default): native SegWit for BTC/LTC, Keplr address-index accounts.
+ * Standard: BIP44 account' path and legacy P2PKH where other wallets typically
+ * show a different receive address than Vidulum.
+ */
+export function resolveUtxoAddressStyle(
+  networkAddressType: UtxoScriptType,
+  style: UtxoAddressStyle
+): { addressType: UtxoScriptType; derivationMode: UtxoDerivationMode } {
+  if (style === 'standard') {
+    const addressType: UtxoScriptType =
+      networkAddressType === 'p2wpkh' || networkAddressType === 'p2sh-p2wpkh'
+        ? 'p2pkh'
+        : networkAddressType;
+    return { addressType, derivationMode: 'bip44' };
+  }
+  return { addressType: networkAddressType, derivationMode: 'keplr' };
+}
+
+export function utxoStyleToggleApplies(
+  networkAddressType: UtxoScriptType,
+  accountIndex: number
+): boolean {
+  if (networkAddressType === 'p2wpkh' || networkAddressType === 'p2sh-p2wpkh') {
+    return true;
+  }
+  return accountIndex > 0;
+}
+
 /**
  * Get the derivation path for a UTXO chain
  *
- * Uses Keplr-compatible derivation where different "accounts" use different
- * address indices (last position), not different account indices (third position).
- * This matches how Cosmos chains derive multiple accounts: m/44'/118'/0'/0/addressIndex
- *
- * For Bitcoin native SegWit (bc1...), uses BIP84 with purpose 84 to match Keplr.
- * For Bitcoin taproot, uses BIP86 with purpose 86.
- * For other UTXO chains, uses BIP44 with purpose 44.
- *
- * @param networkId - The UTXO network ID
- * @param accountIndex - The "account" number, which is used as the address index for Keplr compatibility
- * @param addressIndex - Additional address index (typically 0, ignored when accountIndex > 0)
- * @param isChange - Whether this is a change address
- * @param addressType - The address type (determines BIP purpose for Bitcoin)
+ * Keplr mode (default): different "accounts" use different address indices
+ * (last position). BIP44 mode: different accounts use the account' index
+ * (third position), which matches Electrum / Sparrow / Ledger.
  */
 export function getUtxoDerivationPath(
   networkId: UtxoNetworkId,
   accountIndex: number = 0,
   addressIndex: number = 0,
   isChange: boolean = false,
-  addressType: 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent' | 'taproot' = 'p2pkh'
+  addressType: UtxoScriptType = 'p2pkh',
+  derivationMode: UtxoDerivationMode = 'keplr'
 ): string {
   const networkParams = UTXO_NETWORKS[networkId];
   const coinType = networkParams.coinType;
@@ -542,9 +569,11 @@ export function getUtxoDerivationPath(
     purpose = 44; // BIP44 legacy
   }
 
-  // Use address index position for account (Keplr-compatible)
-  // Path: m/purpose'/coinType'/0'/change/accountIndex
-  // This matches Keplr: m/84'/0'/0'/0/addressIndex for native SegWit
+  if (derivationMode === 'bip44') {
+    return `m/${purpose}'/${coinType}'/${accountIndex}'/${change}/${addressIndex}`;
+  }
+
+  // Keplr-compatible: m/purpose'/coinType'/0'/change/accountIndex
   return `m/${purpose}'/${coinType}'/0'/${change}/${accountIndex}`;
 }
 

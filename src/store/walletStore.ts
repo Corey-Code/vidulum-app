@@ -15,6 +15,10 @@ import { coin } from '@cosmjs/stargate';
 import { networkRegistry } from '@/lib/networks';
 import { MessageType } from '@/types/messages';
 import { DirectSecp256k1HdWallet, makeCosmoshubPath } from '@cosmjs/proto-signing';
+import {
+  UtxoAddressStyle,
+  resolveUtxoAddressStyle,
+} from '@/lib/crypto/bitcoin';
 
 /**
  * Sync keyring state with background service worker
@@ -129,6 +133,7 @@ interface WalletState {
   autoLockMinutes: number;
   connectedDapps: Map<string, Set<string>>; // origin -> chainIds
   keyring: Keyring | null;
+  utxoAddressStyle: Record<string, UtxoAddressStyle>;
 
   // Actions
   initialize: () => Promise<void>;
@@ -206,6 +211,8 @@ interface WalletState {
 
   // Session management
   updateSession: () => Promise<void>;
+  getUtxoAddressStyle: (networkId: string) => UtxoAddressStyle;
+  setUtxoAddressStyle: (networkId: string, style: UtxoAddressStyle) => Promise<void>;
 
   // Bitcoin-specific methods
   // cosmosAddress is used to identify imported accounts (which have their own mnemonics)
@@ -247,6 +254,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   autoLockMinutes: 15,
   connectedDapps: new Map(),
   keyring: null,
+  utxoAddressStyle: {},
 
   initialize: async () => {
     const hasWallet = await EncryptedStorage.hasWallet();
@@ -266,6 +274,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
         isInitialized: hasWallet,
         isLocked: true,
         autoLockMinutes: preferences.autoLockMinutes ?? 15,
+        utxoAddressStyle: preferences.utxoAddressStyle ?? {},
       });
       return;
     }
@@ -330,6 +339,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
             selectedAccount,
             selectedChainId: preferences.selectedChainId || 'beezee-1',
             autoLockMinutes: preferences.autoLockMinutes ?? 15,
+            utxoAddressStyle: preferences.utxoAddressStyle ?? {},
             keyring,
           });
           return;
@@ -345,6 +355,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       isInitialized: hasWallet,
       isLocked: hasWallet, // If wallet exists, show unlock; otherwise show create
       autoLockMinutes: preferences.autoLockMinutes ?? 15,
+      utxoAddressStyle: preferences.utxoAddressStyle ?? {},
     });
   },
 
@@ -484,6 +495,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       selectedAccount,
       selectedChainId,
       autoLockMinutes: preferences.autoLockMinutes ?? 15,
+      utxoAddressStyle: preferences.utxoAddressStyle ?? {},
       keyring,
     });
   },
@@ -1476,6 +1488,16 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     }
   },
 
+  getUtxoAddressStyle: (networkId: string) => {
+    return get().utxoAddressStyle[networkId] ?? 'vidulum';
+  },
+
+  setUtxoAddressStyle: async (networkId: string, style: UtxoAddressStyle) => {
+    const next = { ...get().utxoAddressStyle, [networkId]: style };
+    set({ utxoAddressStyle: next });
+    await EncryptedStorage.savePreferences({ utxoAddressStyle: next });
+  },
+
   // Bitcoin-specific methods
   getBitcoinAddress: async (networkId: string, accountIndex?: number, cosmosAddress?: string) => {
     const { keyring, selectedAccount, accounts, updateSession } = get();
@@ -1503,9 +1525,10 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     // For main wallet accounts, use the keyring
     // Use provided accountIndex or fall back to selected account's index
     const idx = accountIndex ?? selectedAccount?.accountIndex ?? 0;
+    const style = get().utxoAddressStyle[networkId] ?? 'vidulum';
 
     // Try to get existing Bitcoin account (may have address from session restore)
-    let btcAccount = keyring.getBitcoinAccount(networkId, idx);
+    let btcAccount = keyring.getBitcoinAccount(networkId, idx, style);
 
     // Return cached address if available (from session restore or previous derivation)
     if (btcAccount?.address) {
@@ -1518,13 +1541,18 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     if (keyring.hasMnemonic()) {
       const network = networkRegistry.getBitcoin(networkId);
       if (!network) return null;
+      const { addressType, derivationMode } = resolveUtxoAddressStyle(
+        network.addressType,
+        style
+      );
 
       try {
         btcAccount = await keyring.deriveBitcoinAccount(
           networkId,
           network.network,
           idx,
-          network.addressType
+          addressType === 'taproot' ? 'p2wpkh' : addressType,
+          derivationMode
         );
         // Update session with newly derived address
         await updateSession();
@@ -1546,13 +1574,19 @@ export const useWalletStore = create<WalletState>((set, get) => ({
 
     // Use provided accountIndex or fall back to selected account's index
     const idx = accountIndex ?? selectedAccount?.accountIndex ?? 0;
+    const style = get().utxoAddressStyle[networkId] ?? 'vidulum';
+    const { addressType, derivationMode } = resolveUtxoAddressStyle(
+      network.addressType,
+      style
+    );
 
     try {
       const account = await keyring.deriveBitcoinAccount(
         networkId,
         network.network,
         idx,
-        network.addressType
+        addressType === 'taproot' ? 'p2wpkh' : addressType,
+        derivationMode
       );
       // Update session with newly derived address
       await updateSession();

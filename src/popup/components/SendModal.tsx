@@ -33,7 +33,7 @@ import { useChainStore } from '@/store/chainStore';
 import { ChainInfo } from '@/types/wallet';
 import { fetchChainAssets, RegistryAsset, parseBeeZeeLPToken } from '@/lib/assets/chainRegistry';
 import { simulateSendFee, FeeEstimate } from '@/lib/cosmos/fees';
-import { isValidBitcoinAddress } from '@/lib/crypto/bitcoin';
+import { isValidBitcoinAddress, resolveUtxoAddressStyle } from '@/lib/crypto/bitcoin';
 import { getBitcoinClient, createSendTransaction, btcToSats } from '@/lib/bitcoin';
 import { isValidEvmAddress } from '@/lib/crypto/evm';
 import { getEvmClient, formatEther } from '@/lib/evm/client';
@@ -60,7 +60,7 @@ const SendModal: React.FC<SendModalProps> = ({
   bitcoinAddress = '',
   evmAddress = '',
 }) => {
-  const { selectedAccount, sendTokens, getAddressForChain } = useWalletStore();
+  const { selectedAccount, sendTokens, getAddressForChain, utxoAddressStyle } = useWalletStore();
   const { getBalance, fetchBalance } = useChainStore();
 
   const [recipient, setRecipient] = useState('');
@@ -93,7 +93,9 @@ const SendModal: React.FC<SendModalProps> = ({
     // UTXO chains - check address type from network config
     if (networkConfig?.type === 'bitcoin') {
       const btcConfig = networkConfig;
-      switch (btcConfig.addressType) {
+      const style = utxoAddressStyle[chainId] ?? 'vidulum';
+      const { addressType } = resolveUtxoAddressStyle(btcConfig.addressType, style);
+      switch (addressType) {
         case 'p2wpkh': // Native SegWit (bc1..., ltc1...)
           return btcConfig.addressPrefix?.bech32
             ? `${btcConfig.addressPrefix.bech32}1...`
@@ -443,8 +445,12 @@ const SendModal: React.FC<SendModalProps> = ({
 
         // Determine if network supports SegWit for accurate size calculation
         const btcNetwork = networkRegistry.getBitcoin(chainId);
+        const style = utxoAddressStyle[chainId] ?? 'vidulum';
+        const resolved = btcNetwork
+          ? resolveUtxoAddressStyle(btcNetwork.addressType, style)
+          : { addressType: btcNetwork?.addressType };
         const isSegWit =
-          btcNetwork?.addressType === 'p2wpkh' || btcNetwork?.addressType === 'p2sh-p2wpkh';
+          resolved.addressType === 'p2wpkh' || resolved.addressType === 'p2sh-p2wpkh';
 
         // Calculate estimated transaction size based on actual UTXO count
         // For SegWit P2WPKH: ~68 vbytes per input + ~31 vbytes for output + 11 vbytes overhead
@@ -594,8 +600,10 @@ const SendModal: React.FC<SendModalProps> = ({
           return;
         }
 
-        const privateKey = await keyring.getBitcoinPrivateKey(chainId);
-        const publicKey = await keyring.getBitcoinPublicKey(chainId);
+        const utxoStyle = utxoAddressStyle[chainId] ?? 'vidulum';
+        const accountIndex = selectedAccount?.accountIndex ?? 0;
+        const privateKey = await keyring.getBitcoinPrivateKey(chainId, accountIndex, utxoStyle);
+        const publicKey = await keyring.getBitcoinPublicKey(chainId, accountIndex, utxoStyle);
 
         if (!privateKey || !publicKey || privateKey.length === 0 || publicKey.length === 0) {
           throw new Error('Failed to derive Bitcoin keys. Please try unlocking your wallet again.');

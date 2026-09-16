@@ -45,7 +45,11 @@ import {
   getTokenColor,
   parseBeeZeeLPToken,
 } from '@/lib/assets/chainRegistry';
-import { getExplorerAccountUrl } from '@/lib/networks';
+import { getExplorerAccountUrl, networkRegistry } from '@/lib/networks';
+import {
+  utxoStyleToggleApplies,
+  resolveUtxoAddressStyle,
+} from '@/lib/crypto/bitcoin';
 import SendModal from '../components/SendModal';
 import SwapModal from '../components/SwapModal';
 import NetworkManagerModal from '../components/NetworkManagerModal';
@@ -98,6 +102,8 @@ const Dashboard: React.FC<DashboardProps> = ({
     getEvmAddress,
     getSvmAddress,
     updateActivity,
+    setUtxoAddressStyle,
+    utxoAddressStyle,
   } = useWalletStore();
 
   const { fetchBalance, getBalance, subscribeToBalanceUpdates, unsubscribeAll, loadingStatus } =
@@ -178,6 +184,21 @@ const Dashboard: React.FC<DashboardProps> = ({
   const isBitcoinSelected = selectedNetworkType === 'bitcoin';
   const isEvmSelected = selectedNetworkType === 'evm';
   const isSvmSelected = selectedNetworkType === 'svm';
+  const btcNetwork = isBitcoinSelected ? networkRegistry.getBitcoin(selectedChainId) : undefined;
+  const currentUtxoStyle = utxoAddressStyle[selectedChainId] ?? 'vidulum';
+  const showUtxoStyleToggle = Boolean(
+    btcNetwork &&
+      utxoStyleToggleApplies(btcNetwork.addressType, selectedAccount?.accountIndex ?? 0)
+  );
+  const utxoStyleLabel =
+    currentUtxoStyle === 'standard'
+      ? btcNetwork && resolveUtxoAddressStyle(btcNetwork.addressType, 'standard').addressType ===
+        'p2pkh'
+        ? 'Legacy (other wallets)'
+        : 'BIP44 (other wallets)'
+      : btcNetwork?.addressType === 'p2wpkh'
+        ? 'Native SegWit (this wallet)'
+        : 'This wallet';
 
   // State for EVM address
   const [evmAddress, setEvmAddress] = useState<string>('');
@@ -190,7 +211,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Clear Bitcoin address display immediately when chain changes to prevent stale address display
   useEffect(() => {
     setBitcoinAddress('');
-  }, [selectedChainId]);
+  }, [selectedChainId, currentUtxoStyle]);
 
   // Clear EVM address display immediately when chain changes
   useEffect(() => {
@@ -218,7 +239,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           setLoadingBtcAddress(false);
         });
     }
-  }, [isBitcoinSelected, selectedChainId, selectedAccount, getBitcoinAddress]);
+  }, [isBitcoinSelected, selectedChainId, selectedAccount, getBitcoinAddress, currentUtxoStyle]);
 
   // Derive EVM address when EVM network is selected
   useEffect(() => {
@@ -266,7 +287,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
         for (const account of accounts) {
           const accountCache = bitcoinAddressCacheRef.current.get(account.address);
-          if (!accountCache?.has(selectedChainId)) {
+          if (!accountCache?.has(`${selectedChainId}:${currentUtxoStyle}`)) {
             // Mark this address for derivation
             addressesToDerive.push({ account, cosmosAddress: account.address });
           }
@@ -298,7 +319,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               const updatedAccountCache = accountCache
                 ? new Map(accountCache)
                 : new Map<string, string>();
-              updatedAccountCache.set(selectedChainId, address);
+              updatedAccountCache.set(`${selectedChainId}:${currentUtxoStyle}`, address);
               bitcoinAddressCacheRef.current.set(cosmosAddress, updatedAccountCache);
             }
             // Trigger re-render to update UI
@@ -308,7 +329,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       };
       deriveAllBitcoinAddresses();
     }
-  }, [isBitcoinSelected, selectedChainId, accounts, getBitcoinAddress]);
+  }, [isBitcoinSelected, selectedChainId, accounts, getBitcoinAddress, currentUtxoStyle]);
 
   // Derive EVM addresses for all accounts when EVM network is selected
   useEffect(() => {
@@ -564,7 +585,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     // For Bitcoin, use cached derived address (keyed by cosmos address)
     if (isBitcoinSelected) {
       const accountCache = bitcoinAddressCacheRef.current.get(account.address);
-      const cachedAddr = accountCache?.get(selectedChainId);
+      const cachedAddr = accountCache?.get(`${selectedChainId}:${currentUtxoStyle}`);
       return cachedAddr || 'Deriving...';
     }
 
@@ -841,6 +862,35 @@ const Dashboard: React.FC<DashboardProps> = ({
                       }}
                     />
                   </HStack>
+                  {showUtxoStyleToggle && (
+                    <HStack
+                      spacing={2}
+                      pt={1}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                    >
+                      <Switch
+                        size="sm"
+                        colorScheme="purple"
+                        isChecked={currentUtxoStyle === 'standard'}
+                        onChange={(e) => {
+                          setUtxoAddressStyle(
+                            selectedChainId,
+                            e.target.checked ? 'standard' : 'vidulum'
+                          );
+                        }}
+                      />
+                      <Text color="gray.500" fontSize="xs">
+                        {utxoStyleLabel}
+                      </Text>
+                    </HStack>
+                  )}
                 </VStack>
               </MenuButton>
 

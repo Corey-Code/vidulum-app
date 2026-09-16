@@ -20,6 +20,9 @@ import {
   BitcoinNetwork,
   UtxoNetworkId,
   UTXO_NETWORKS,
+  UtxoAddressStyle,
+  UtxoDerivationMode,
+  resolveUtxoAddressStyle,
 } from './bitcoin';
 import { deriveEvmKeyPair, getEvmDerivationPath } from './evm';
 import { deriveSolanaKeyPair, getSolanaDerivationPath } from './solana';
@@ -86,8 +89,14 @@ export class Keyring {
   private prefix: string = 'bze';
 
   // Helper to create composite key for account maps
-  private getAccountKey(networkId: string, accountIndex: number): string {
-    return `${networkId}-${accountIndex}`;
+  private getAccountKey(
+    networkId: string,
+    accountIndex: number,
+    style: UtxoAddressStyle = 'vidulum'
+  ): string {
+    return style === 'vidulum'
+      ? `${networkId}-${accountIndex}`
+      : `${networkId}-${accountIndex}-${style}`;
   }
 
   async createFromMnemonic(
@@ -459,14 +468,17 @@ export class Keyring {
     networkId: string,
     network: BitcoinNetwork = 'mainnet',
     accountIndex: number = 0,
-    addressType: 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent' = 'p2wpkh'
+    addressType: 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent' = 'p2wpkh',
+    derivationMode: UtxoDerivationMode = 'keplr'
   ): Promise<BitcoinKeyringAccount> {
     if (!this.mnemonic) {
       throw new Error('Wallet not initialized');
     }
 
+    const style: UtxoAddressStyle = derivationMode === 'bip44' ? 'standard' : 'vidulum';
+
     // Check if already derived using composite key
-    const accountKey = this.getAccountKey(networkId, accountIndex);
+    const accountKey = this.getAccountKey(networkId, accountIndex, style);
     const existing = this.bitcoinAccounts.get(accountKey);
 
     // Return existing if it has valid keys (non-empty)
@@ -486,7 +498,14 @@ export class Keyring {
       // Use UTXO-specific derivation path and address generation
       const utxoNetworkId = networkId as UtxoNetworkId;
       // Pass addressType to get correct BIP purpose (84 for native SegWit, 44 for legacy, etc.)
-      path = getUtxoDerivationPath(utxoNetworkId, accountIndex, 0, false, addressType);
+      path = getUtxoDerivationPath(
+        utxoNetworkId,
+        accountIndex,
+        0,
+        false,
+        addressType,
+        derivationMode
+      );
       const keyPair = await deriveBitcoinKeyPairFromSeed(seed, path);
       address = getUtxoAddress(keyPair.publicKey, utxoNetworkId, addressType);
 
@@ -511,7 +530,8 @@ export class Keyring {
         0,
         false,
         addressType === 'transparent' ? 'p2pkh' : addressType,
-        network
+        network,
+        derivationMode
       );
       const keyPair = await deriveBitcoinKeyPairFromSeed(seed, path);
       address = getBitcoinAddress(
@@ -542,9 +562,10 @@ export class Keyring {
    */
   getBitcoinAccount(
     networkId: string,
-    accountIndex: number = 0
+    accountIndex: number = 0,
+    style: UtxoAddressStyle = 'vidulum'
   ): BitcoinKeyringAccount | undefined {
-    const accountKey = this.getAccountKey(networkId, accountIndex);
+    const accountKey = this.getAccountKey(networkId, accountIndex, style);
     return this.bitcoinAccounts.get(accountKey);
   }
 
@@ -558,8 +579,12 @@ export class Keyring {
   /**
    * Get Bitcoin address for a network and account index
    */
-  getBitcoinAddress(networkId: string, accountIndex: number = 0): string | undefined {
-    const accountKey = this.getAccountKey(networkId, accountIndex);
+  getBitcoinAddress(
+    networkId: string,
+    accountIndex: number = 0,
+    style: UtxoAddressStyle = 'vidulum'
+  ): string | undefined {
+    const accountKey = this.getAccountKey(networkId, accountIndex, style);
     return this.bitcoinAccounts.get(accountKey)?.address;
   }
 
@@ -569,20 +594,26 @@ export class Keyring {
    */
   async getBitcoinPrivateKey(
     networkId: string,
-    accountIndex: number = 0
+    accountIndex: number = 0,
+    style: UtxoAddressStyle = 'vidulum'
   ): Promise<Uint8Array | undefined> {
-    const accountKey = this.getAccountKey(networkId, accountIndex);
+    const accountKey = this.getAccountKey(networkId, accountIndex, style);
     let account = this.bitcoinAccounts.get(accountKey);
 
     // If account doesn't exist or keys are empty, try to derive
     if ((!account || account.privateKey.length === 0) && this.mnemonic) {
       const network = networkRegistry.getBitcoin(networkId);
       if (network) {
+        const { addressType, derivationMode } = resolveUtxoAddressStyle(
+          network.addressType as 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent',
+          style
+        );
         const reDerived = await this.deriveBitcoinAccount(
           networkId,
           network.network,
           accountIndex,
-          network.addressType as 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent'
+          addressType === 'taproot' ? 'p2wpkh' : addressType,
+          derivationMode
         );
         return reDerived?.privateKey;
       }
@@ -597,20 +628,26 @@ export class Keyring {
    */
   async getBitcoinPublicKey(
     networkId: string,
-    accountIndex: number = 0
+    accountIndex: number = 0,
+    style: UtxoAddressStyle = 'vidulum'
   ): Promise<Uint8Array | undefined> {
-    const accountKey = this.getAccountKey(networkId, accountIndex);
+    const accountKey = this.getAccountKey(networkId, accountIndex, style);
     let account = this.bitcoinAccounts.get(accountKey);
 
     // If account doesn't exist or keys are empty, try to derive
     if ((!account || account.publicKey.length === 0) && this.mnemonic) {
       const network = networkRegistry.getBitcoin(networkId);
       if (network) {
+        const { addressType, derivationMode } = resolveUtxoAddressStyle(
+          network.addressType as 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent',
+          style
+        );
         const reDerived = await this.deriveBitcoinAccount(
           networkId,
           network.network,
           accountIndex,
-          network.addressType as 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent'
+          addressType === 'taproot' ? 'p2wpkh' : addressType,
+          derivationMode
         );
         return reDerived?.publicKey;
       }
