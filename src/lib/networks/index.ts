@@ -34,6 +34,18 @@ export {
   getEnabledSvmNetworks,
 } from './solana';
 
+export {
+  SUPPORTED_NETWORK_CATALOG,
+  SUPPORTED_NETWORK_CATALOG_REVIEWED_AT,
+  DEPRECATED_SVM_ENDPOINT_HOSTS,
+  getSupportedNetworkFamilyLabel,
+  getSupportedNetworkFamilySummary,
+  getSupportedNetworksByFamily,
+  formatCatalogReviewMonth,
+  type SupportedNetworkFamily,
+  type SupportedNetworkEntry,
+} from './supported-catalog';
+
 // EVM Registry (auto-generated from ethereum-lists/chains)
 export {
   EVM_REGISTRY_CHAINS,

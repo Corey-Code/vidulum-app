@@ -2,7 +2,7 @@
  * Unified Network Registry
  *
  * This module provides a centralized registry for all supported networks.
- * It supports different network types (Cosmos, Bitcoin, EVM) with a common interface.
+ * It supports different network types (Cosmos, Bitcoin/UTXO, EVM, SVM) with a common interface.
  */
 
 import {
