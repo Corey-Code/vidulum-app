@@ -1364,6 +1364,8 @@ npm install bip39
 
 ## Example: SVM (Solana) Implementation
 
+To add another Solana-like chain to the existing SVM type, see [Adding an SVM Chain](ADDING_SVM_CHAIN.md).
+
 For a complete reference implementation, see the SVM (Solana) support added in:
 
 - `src/lib/networks/types.ts` - SvmNetworkConfig interface
