@@ -41,4 +41,18 @@ describe('SupportedNetworksPanel', () => {
     expect(screen.getByText(/Ethereum, OP Mainnet, BNB Chain, Polygon, Base, Arbitrum One/)).toBeInTheDocument();
     expect(screen.getByText(/^Solana$/)).toBeInTheDocument();
   });
+
+  it('lists current Bitcoin-like explorers including CipherScan and Ravencoin Explorer', () => {
+    renderPanel();
+
+    expect(screen.getByText('Bitcoin-like explorers')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /When you look up a Bitcoin-like address, this wallet opens these websites\. Checked September 2026\./
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText('Zcash: cipherscan.app')).toBeInTheDocument();
+    expect(screen.getByText('Ravencoin: ravencoinexplorer.com')).toBeInTheDocument();
+    expect(screen.getByText('Bitcoin: blockstream.info')).toBeInTheDocument();
+  });
 });

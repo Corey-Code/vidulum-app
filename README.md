@@ -40,6 +40,8 @@ Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/
 | BitcoinZ  | bitcoinz-mainnet  | BTCZ   | t1... (Transparent) | Enabled |
 | NOSO      | noso-mainnet      | NOSO   | X... (P2PKH)        | Enabled |
 
+Bitcoin-like explorers were last checked in September 2026. Zcash address lookups now open [CipherScan](https://cipherscan.app). Ravencoin lookups open [Ravencoin Explorer](https://ravencoinexplorer.com). The same list appears in Settings.
+
 ### EVM Chains
 
 | Network      | Network ID   | Symbol | Chain ID | Status  |

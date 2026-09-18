@@ -44,6 +44,16 @@ export const NEWCOIN_MAINNET: BitcoinNetworkConfig = {
 };
 ```
 
+### Endpoint freshness
+
+Do not add retired hosts such as `zcha.in`, `zcashblockexplorer.com`, `zelcash.online`, `api.ravencoin.org`, `ravencoin.network`, or `btczexplorer.blockhub.info`.
+
+Prefer a current public HTTPS explorer that serves `/address/{address}` and `/tx/{txHash}` pages. Bitcoin and Litecoin APIs should stay Esplora-compatible (`/address`, `/tx`, `/fee-estimates`). If a chain has no Esplora API, leave `apiUrls` empty rather than pointing at a dead host.
+
+After changing explorers, update `DEPRECATED_UTXO_ENDPOINT_HOSTS` in `src/lib/networks/utxo-endpoints.ts` and confirm Settings still lists the new host.
+
+Last reviewed: September 2026.
+
 ### Configuration Fields
 
 | Field           | Description                        | Example                                 |
