@@ -84,7 +84,9 @@ The runtime client:
 
 - Fetches chain data from chainid.network
 - Caches results in `browser.storage.local` for 24 hours
-- Filters out deprecated chains and invalid RPC endpoints
+- Filters out deprecated chains, invalid RPC endpoints, and retired public hosts
+  (MyCrypto, MaticVigil, old Polygon/Fantom gateways). See
+  `src/lib/networks/evm-endpoints.ts`.
 
 ## Method 3: Manual Configuration (Legacy)
 
@@ -210,6 +212,10 @@ npm run sync:evm:all
 npx ts-node --esm scripts/sync-evm-registry.ts --chains 1,56,137,8453
 ```
 
+The sync script and runtime client both drop retired public hosts listed in
+`src/lib/networks/evm-endpoints.ts` so a later registry pull does not
+reintroduce MyCrypto, MaticVigil, or the old Polygon/Fantom gateways.
+
 ### Pre-bundled Chains
 
 The following chains are pre-bundled by default:
@@ -266,6 +272,7 @@ The EVM implementation consists of:
 | ----------------------------------------- | ------------------------------------------ |
 | `src/lib/networks/evm.ts`                 | Manual network configurations              |
 | `src/lib/networks/evm-registry.ts`        | Auto-generated from chain registry         |
+| `src/lib/networks/evm-endpoints.ts`       | Retired public-RPC denylist and filter     |
 | `src/lib/networks/evm-registry-client.ts` | Runtime client for dynamic fetching        |
 | `src/lib/evm/client.ts`                   | JSON-RPC client (read ops + raw broadcast) |
 | `src/lib/crypto/evm.ts`                   | Key derivation and address generation      |

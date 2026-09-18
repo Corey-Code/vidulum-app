@@ -21,6 +21,22 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as process from 'node:process';
 
+// Keep in sync with src/lib/networks/evm-endpoints.ts
+const DEPRECATED_EVM_ENDPOINT_HOSTS = [
+  'mycryptoapi.com',
+  'rpc.blocknative.com',
+  'rpc-mainnet.matic.network',
+  'matic-mainnet.chainstacklabs.com',
+  'maticvigil.com',
+  'polygon-rpc.com',
+  'gnosischain-rpc.gateway.pokt.network',
+  'gnosis-mainnet.public.blastapi.io',
+  'scroll-mainnet.chainstacklabs.com',
+  'rpc.ftm.tools',
+  'fantom-rpc.publicnode.com',
+  'ftmscan.com',
+] as const;
+
 const CHAINS_JSON_URL = 'https://chainid.network/chains.json';
 
 // Default chains to include in the bundle (popular by usage/TVL)
@@ -147,6 +163,8 @@ function filterRpcUrls(urls: string[]): string[] {
       if (/192\.168\.|10\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\./.test(url)) return false;
       // Filter out archive nodes (typically rate-limited/paid)
       if (url.toLowerCase().includes('archive')) return false;
+      // Retired public hosts that fail after the lull
+      if (DEPRECATED_EVM_ENDPOINT_HOSTS.some((host) => url.includes(host))) return false;
       return true;
     })
     .slice(0, 5); // Max 5 endpoints
@@ -216,8 +234,12 @@ function transformChain(chain: ChainRegistryEntry): WalletEvmConfig | null {
     return null;
   }
 
-  // Get explorer info (prefer EIP-3091 compliant)
-  const explorer = chain.explorers?.find((e) => e.standard === 'EIP3091') || chain.explorers?.[0];
+  // Get explorer info (prefer EIP-3091 compliant, skip retired hosts)
+  const explorers = (chain.explorers ?? []).filter((entry) => {
+    if (!entry.url?.startsWith('https://')) return false;
+    return !DEPRECATED_EVM_ENDPOINT_HOSTS.some((host) => entry.url.includes(host));
+  });
+  const explorer = explorers.find((entry) => entry.standard === 'EIP3091') || explorers[0];
 
   const testnet = isTestnet(chain);
 

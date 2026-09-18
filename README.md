@@ -53,6 +53,8 @@ Bitcoin and Litecoin load balances through Esplora APIs (Blockstream, Mempool.sp
 | Base         | base-mainnet | ETH    | 8453     | Enabled |
 | Arbitrum One | arb1-mainnet | ETH    | 42161    | Enabled |
 
+Advertised EVM networks load balances through current public RPCs (PublicNode, DRPC, Cloudflare, and official chain endpoints). Retired hosts such as MyCrypto, MaticVigil, and the old `polygon-rpc.com` gateway were removed.
+
 ### SVM Chains (Solana-like)
 
 | Network | Network ID      | Symbol | Address Format | Status  |

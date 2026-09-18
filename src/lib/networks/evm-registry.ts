@@ -7,6 +7,7 @@
  * DO NOT EDIT MANUALLY - Run `npm run sync:evm` to update
  *
  * Generated: 2026-01-29T16:53:55.293Z
+ * RPC lists refreshed 2026-09-18 to drop retired public hosts.
  */
 
 import { EvmNetworkConfig } from './types';
@@ -35,11 +36,11 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     coinType: 60,
     chainId: 1,
     rpcUrls: [
-      'https://api.mycryptoapi.com/eth',
       'https://cloudflare-eth.com',
       'https://ethereum-rpc.publicnode.com',
-      'https://mainnet.gateway.tenderly.co',
-      'https://rpc.blocknative.com/boost'
+      'https://eth.drpc.org',
+      'https://1rpc.io/eth',
+      'https://mainnet.gateway.tenderly.co'
     ],
     nativeCurrency: {
       name: 'Ether',
@@ -118,10 +119,8 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     coinType: 966,
     chainId: 137,
     rpcUrls: [
-      'https://polygon-rpc.com/',
-      'https://rpc-mainnet.matic.network',
-      'https://matic-mainnet.chainstacklabs.com',
-      'https://rpc-mainnet.maticvigil.com',
+      'https://polygon-bor-rpc.publicnode.com',
+      'https://polygon.drpc.org',
       'https://rpc-mainnet.matic.quiknode.pro'
     ],
     nativeCurrency: {
@@ -226,9 +225,7 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     rpcUrls: [
       'https://rpc.gnosischain.com',
       'https://rpc.gnosis.gateway.fm',
-      'https://rpc.ankr.com/gnosis',
-      'https://gnosischain-rpc.gateway.pokt.network',
-      'https://gnosis-mainnet.public.blastapi.io'
+      'https://rpc.ankr.com/gnosis'
     ],
     nativeCurrency: {
       name: 'xDAI',
@@ -277,8 +274,6 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     coinType: 60,
     chainId: 250,
     rpcUrls: [
-      'https://rpc.ftm.tools',
-      'https://fantom-rpc.publicnode.com',
       'https://fantom.drpc.org'
     ],
     nativeCurrency: {
@@ -286,9 +281,9 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
       symbol: 'FTM',
       decimals: 18
     },
-    explorerUrl: 'https://ftmscan.com',
+    explorerUrl: 'https://explorer.fantom.network',
     explorerAccountPath: '/address/{address}',
-    explorerTxPath: '/tx/{txHash}',
+    explorerTxPath: '/transactions/{txHash}',
     infoUrl: 'https://fantom.foundation',
     isTestnet: false
   },
@@ -589,7 +584,6 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     rpcUrls: [
       'https://rpc.scroll.io',
       'https://rpc.ankr.com/scroll',
-      'https://scroll-mainnet.chainstacklabs.com',
       'https://scroll-rpc.publicnode.com'
     ],
     nativeCurrency: {
