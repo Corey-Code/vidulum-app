@@ -76,18 +76,16 @@ export const ZCASH_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 133, // BIP44 coin type for Zcash
   network: 'mainnet',
-  apiUrls: [
-    'https://api.zcha.in/v2',
-    'https://zcashblockexplorer.com/api',
-  ],
+  // No public Esplora-compatible Zcash API is advertised; lookups use CipherScan.
+  apiUrls: [],
   addressType: 'transparent', // t1... transparent addresses
   addressPrefix: {
     pubKeyHash: 0x1cb8, // t1 addresses (two bytes: 0x1c, 0xb8)
     scriptHash: 0x1cbd, // t3 addresses
   },
-  explorerUrl: 'https://explorer.zcha.in',
-  explorerAccountPath: '/accounts/{address}',
-  explorerTxPath: '/transactions/{txHash}',
+  explorerUrl: 'https://cipherscan.app',
+  explorerAccountPath: '/address/{address}',
+  explorerTxPath: '/tx/{txHash}',
 };
 
 // ============================================================================
@@ -106,7 +104,6 @@ export const FLUX_MAINNET: BitcoinNetworkConfig = {
   network: 'mainnet',
   apiUrls: [
     'https://explorer.runonflux.io/api',
-    'https://explorer.zelcash.online/api',
   ],
   addressType: 'transparent', // t1... transparent addresses (Zcash-derived)
   addressPrefix: {
@@ -132,16 +129,14 @@ export const RAVENCOIN_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 175, // BIP44 coin type for Ravencoin
   network: 'mainnet',
-  apiUrls: [
-    'https://api.ravencoin.org/api',
-    'https://ravencoin.network/api',
-  ],
+  // Retired ravencoin.network / api.ravencoin.org hosts; explorer is current.
+  apiUrls: [],
   addressType: 'p2pkh', // R... addresses (legacy P2PKH)
   addressPrefix: {
     pubKeyHash: 0x3c, // R addresses (60 in decimal)
     scriptHash: 0x7a, // r addresses (122 in decimal)
   },
-  explorerUrl: 'https://ravencoin.network',
+  explorerUrl: 'https://ravencoinexplorer.com',
   explorerAccountPath: '/address/{address}',
   explorerTxPath: '/tx/{txHash}',
 };
@@ -191,7 +186,6 @@ export const BITCOINZ_MAINNET: BitcoinNetworkConfig = {
   network: 'mainnet',
   apiUrls: [
     'https://explorer.btcz.rocks/api',
-    'https://btczexplorer.blockhub.info/api',
   ],
   addressType: 'transparent', // t1... transparent addresses (Zcash-derived)
   addressPrefix: {

@@ -19,7 +19,13 @@ export type {
 // Network configurations (manual overrides only - most come from auto-generated registries)
 export { BEEZEE_TESTNET, COSMOS_NETWORKS } from './cosmos';
 
-export { BITCOIN_MAINNET, BITCOIN_TESTNET, BITCOIN_NETWORKS } from './bitcoin';
+export {
+  BITCOIN_MAINNET,
+  BITCOIN_TESTNET,
+  BITCOIN_NETWORKS,
+  ZCASH_MAINNET,
+  RAVENCOIN_MAINNET,
+} from './bitcoin';
 
 export { EVM_NETWORKS } from './evm';
 
@@ -45,6 +51,15 @@ export {
   type SupportedNetworkFamily,
   type SupportedNetworkEntry,
 } from './supported-catalog';
+
+export {
+  UTXO_ENDPOINTS_REVIEWED_AT,
+  DEPRECATED_UTXO_ENDPOINT_HOSTS,
+  getEnabledUtxoExplorerSummaries,
+  formatUtxoExplorerLine,
+  utxoNetworkUsesDeprecatedHost,
+  type UtxoExplorerSummary,
+} from './utxo-endpoints';
 
 // EVM Registry (auto-generated from ethereum-lists/chains)
 export {
