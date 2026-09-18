@@ -46,6 +46,9 @@ describe('Supported network catalog', () => {
       expect(getSupportedNetworkFamilyLabel(family).length).toBeGreaterThan(0);
       expect(getSupportedNetworkFamilySummary(family).length).toBeGreaterThan(0);
     });
+    expect(getSupportedNetworkFamilySummary('utxo')).toMatch(
+      /Bitcoin and Litecoin can load balances today/
+    );
   });
 
   it('formats the catalog review month for Settings copy', () => {

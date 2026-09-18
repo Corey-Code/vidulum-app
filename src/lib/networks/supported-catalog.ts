@@ -71,7 +71,7 @@ export function getSupportedNetworkFamilySummary(family: SupportedNetworkFamily)
     case 'cosmos':
       return 'Staking, IBC transfers, and Cosmos assets';
     case 'utxo':
-      return 'Bitcoin and similar UTXO networks';
+      return 'Bitcoin and Litecoin can load balances today. Other Bitcoin-like networks still show your address; some old data servers shut down.';
     case 'evm':
       return 'Ethereum and compatible networks';
     case 'svm':
