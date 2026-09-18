@@ -28,6 +28,25 @@ function expectCaretMajor(
   expect(packageName.length).toBeGreaterThan(0);
 }
 
+function caretVersionTuple(range: string | undefined): [number, number, number] {
+  expect(range).toMatch(/^\^\d+\.\d+\.\d+$/);
+  const [major, minor, patch] = range!.slice(1).split('.').map(Number);
+  return [major, minor, patch];
+}
+
+function expectCaretAtLeast(
+  range: string | undefined,
+  packageName: string,
+  minimum: string
+): void {
+  const current = caretVersionTuple(range);
+  const [minMajor, minMinor, minPatch] = minimum.split('.').map(Number);
+  const currentRank = current[0] * 1_000_000 + current[1] * 1_000 + current[2];
+  const minimumRank = minMajor * 1_000_000 + minMinor * 1_000 + minPatch;
+  expect(currentRank).toBeGreaterThanOrEqual(minimumRank);
+  expect(packageName.length).toBeGreaterThan(0);
+}
+
 describe('dependency policy', () => {
   it('keeps UI runtime majors on the current supported lines', () => {
     expectCaretMajor(pkg.dependencies.react, 'react', '18');
@@ -83,5 +102,28 @@ describe('dependency policy', () => {
     for (const name of cosmjsPackages) {
       expectCaretMajor(pkg.dependencies[name], name, '0.32');
     }
+  });
+
+  it('raises leftover same-line floors that in-range caret could not reach', () => {
+    expectCaretAtLeast(pkg.dependencies['@chakra-ui/icons'], '@chakra-ui/icons', '2.2.6');
+    expectCaretAtLeast(
+      pkg.devDependencies['vite-plugin-node-polyfills'],
+      'vite-plugin-node-polyfills',
+      '0.28.0'
+    );
+    expectCaretAtLeast(pkg.devDependencies['@types/chrome'], '@types/chrome', '0.0.332');
+  });
+
+  it('freezes seed and signing package majors without upgrading them', () => {
+    expectCaretMajor(pkg.dependencies['@noble/curves'], '@noble/curves', '2');
+    expectCaretMajor(pkg.dependencies['@noble/hashes'], '@noble/hashes', '1');
+    expectCaretMajor(pkg.dependencies['@noble/secp256k1'], '@noble/secp256k1', '2');
+    expectCaretMajor(pkg.dependencies.bip32, 'bip32', '4');
+    expectCaretMajor(pkg.dependencies.bip39, 'bip39', '3');
+    expectCaretMajor(
+      pkg.dependencies['webextension-polyfill'],
+      'webextension-polyfill',
+      '0.10'
+    );
   });
 });
