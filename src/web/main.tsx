@@ -108,10 +108,9 @@ const WebAppFrame: React.FC<{ children: React.ReactNode }> = ({ children }) => (
       <Text fontSize="sm" fontWeight="semibold" mb={1}>
         Vidulum Wallet
       </Text>
-      <Text fontSize="xs" color="gray.400">
-        Vidulum is a cross-chain wallet for Cosmos, Bitcoin-like, EVM, and Solana networks. Use
-        Vidulum for IBC transfers, multi-chain swaps, and asset management across supported
-        networks.
+      <Text fontSize="sm" color="gray.300" lineHeight="tall">
+        Vidulum is a cross-chain wallet for Cosmos, Bitcoin-like, EVM, and Solana networks. Bitcoin-like
+        address lookups use current public explorers last checked in September 2026.
       </Text>
     </Box>
   </Flex>
