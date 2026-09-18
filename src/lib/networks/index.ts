@@ -46,6 +46,15 @@ export {
   type SupportedNetworkEntry,
 } from './supported-catalog';
 
+export {
+  DEPRECATED_UTXO_ENDPOINT_HOSTS,
+  INCOMPATIBLE_UTXO_API_HOSTS,
+  ESPLORA_UTXO_NETWORK_IDS,
+  utxoEndpointHaystack,
+  usesDeprecatedUtxoHost,
+  usesIncompatibleUtxoApiHost,
+} from './utxo-endpoints';
+
 // EVM Registry (auto-generated from ethereum-lists/chains)
 export {
   EVM_REGISTRY_CHAINS,

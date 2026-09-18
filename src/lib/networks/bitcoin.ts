@@ -24,7 +24,6 @@ export const BITCOIN_MAINNET: BitcoinNetworkConfig = {
   apiUrls: [
     'https://blockstream.info/api',
     'https://mempool.space/api',
-    'https://api.blockcypher.com/v1/btc/main',
   ],
   addressType: 'p2wpkh', // Native SegWit (bc1...)
   addressPrefix: {
@@ -76,18 +75,17 @@ export const ZCASH_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 133, // BIP44 coin type for Zcash
   network: 'mainnet',
-  apiUrls: [
-    'https://api.zcha.in/v2',
-    'https://zcashblockexplorer.com/api',
-  ],
+  // No public Esplora API remains after zcha.in retired. CipherScan is live
+  // for explorers but uses a different JSON shape than BitcoinClient.
+  apiUrls: [],
   addressType: 'transparent', // t1... transparent addresses
   addressPrefix: {
     pubKeyHash: 0x1cb8, // t1 addresses (two bytes: 0x1c, 0xb8)
     scriptHash: 0x1cbd, // t3 addresses
   },
-  explorerUrl: 'https://explorer.zcha.in',
-  explorerAccountPath: '/accounts/{address}',
-  explorerTxPath: '/transactions/{txHash}',
+  explorerUrl: 'https://cipherscan.app',
+  explorerAccountPath: '/address/{address}',
+  explorerTxPath: '/tx/{txHash}',
 };
 
 // ============================================================================
@@ -104,10 +102,8 @@ export const FLUX_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 19167, // BIP44 coin type for Flux
   network: 'mainnet',
-  apiUrls: [
-    'https://explorer.runonflux.io/api',
-    'https://explorer.zelcash.online/api',
-  ],
+  // Insight explorer is live; it is not Esplora-compatible.
+  apiUrls: [],
   addressType: 'transparent', // t1... transparent addresses (Zcash-derived)
   addressPrefix: {
     pubKeyHash: 0x1cb8, // t1 addresses (same as Zcash)
@@ -132,10 +128,8 @@ export const RAVENCOIN_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 175, // BIP44 coin type for Ravencoin
   network: 'mainnet',
-  apiUrls: [
-    'https://api.ravencoin.org/api',
-    'https://ravencoin.network/api',
-  ],
+  // Public Insight hosts timed out or returned 520 after the lull.
+  apiUrls: [],
   addressType: 'p2pkh', // R... addresses (legacy P2PKH)
   addressPrefix: {
     pubKeyHash: 0x3c, // R addresses (60 in decimal)
@@ -160,10 +154,7 @@ export const LITECOIN_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 2, // BIP44 coin type for Litecoin
   network: 'mainnet',
-  apiUrls: [
-    'https://litecoinspace.org/api',
-    'https://api.blockcypher.com/v1/ltc/main',
-  ],
+  apiUrls: ['https://litecoinspace.org/api'],
   addressType: 'p2wpkh', // Native SegWit (ltc1...)
   addressPrefix: {
     pubKeyHash: 0x30, // L addresses (48 in decimal)
@@ -189,10 +180,8 @@ export const BITCOINZ_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 177, // BIP44 coin type for BitcoinZ
   network: 'mainnet',
-  apiUrls: [
-    'https://explorer.btcz.rocks/api',
-    'https://btczexplorer.blockhub.info/api',
-  ],
+  // Explorer site is live; /api is not Esplora.
+  apiUrls: [],
   addressType: 'transparent', // t1... transparent addresses (Zcash-derived)
   addressPrefix: {
     pubKeyHash: 0x1cb8, // t1 addresses (same as Zcash)
@@ -217,10 +206,8 @@ export const DOGECOIN_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 3, // BIP44 coin type for Dogecoin
   network: 'mainnet',
-  apiUrls: [
-    'https://dogechain.info/api/v1',
-    'https://api.blockcypher.com/v1/doge/main',
-  ],
+  // dogechain.info serves a Cloudflare interstitial; BlockCypher is not Esplora.
+  apiUrls: [],
   addressType: 'p2pkh', // D... addresses (no SegWit support)
   addressPrefix: {
     pubKeyHash: 0x1e, // D addresses (30)
@@ -245,9 +232,8 @@ export const RITOCOIN_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 175, // Uses Ravencoin's coin type (fork)
   network: 'mainnet',
-  apiUrls: [
-    'https://explorer.ritocoin.org/api',
-  ],
+  // explorer.ritocoin.org TLS handshake fails.
+  apiUrls: [],
   addressType: 'p2pkh', // R... addresses (like Ravencoin)
   addressPrefix: {
     pubKeyHash: 0x19, // R addresses (25 in decimal)
@@ -272,9 +258,8 @@ export const NOSO_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 5, // Uses Dash's coin type (fork)
   network: 'mainnet',
-  apiUrls: [
-    'https://explorer.nosocoin.com/api',
-  ],
+  // Explorer site is live; /api is not Esplora.
+  apiUrls: [],
   addressType: 'p2pkh', // X... addresses (like Dash)
   addressPrefix: {
     pubKeyHash: 0x4c, // X addresses (76 in decimal, like Dash)

@@ -40,6 +40,8 @@ Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/
 | BitcoinZ  | bitcoinz-mainnet  | BTCZ   | t1... (Transparent) | Enabled |
 | NOSO      | noso-mainnet      | NOSO   | X... (P2PKH)        | Enabled |
 
+Bitcoin and Litecoin load balances through Esplora APIs (Blockstream, Mempool.space, Litecoin Space). Other Bitcoin-like networks still show addresses; retired explorers such as zcha.in were removed.
+
 ### EVM Chains
 
 | Network      | Network ID   | Symbol | Chain ID | Status  |
@@ -84,7 +86,7 @@ Visit [vidulum.app](https://vidulum.app) - no installation required.
 
 ```bash
 # Clone the repository
-git clone https://github.com/corey-code/vidulum-app.git
+git clone https://github.com/Corey-Code/vidulum-app.git
 cd vidulum-app
 
 # Install dependencies
