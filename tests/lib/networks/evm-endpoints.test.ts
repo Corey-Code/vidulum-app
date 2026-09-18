@@ -12,6 +12,8 @@ import {
   getEvmChainByInternalId,
   SUPPORTED_NETWORK_CATALOG,
 } from '@/lib/networks';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   DEPRECATED_EVM_ENDPOINT_HOSTS,
   evmEndpointHaystack,
@@ -106,5 +108,12 @@ describe('EVM endpoint freshness', () => {
         'https://eth.drpc.org',
       ])
     ).toEqual(['https://ethereum-rpc.publicnode.com', 'https://eth.drpc.org']);
+  });
+
+  it('keeps the sync-script denylist aligned with evm-endpoints', () => {
+    const script = readFileSync(join(__dirname, '../../../scripts/sync-evm-registry.ts'), 'utf8');
+    DEPRECATED_EVM_ENDPOINT_HOSTS.forEach((host) => {
+      expect(script).toContain(host);
+    });
   });
 });
