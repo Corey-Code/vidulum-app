@@ -48,7 +48,7 @@ export interface BitcoinNetworkConfig extends BaseNetworkConfig {
   type: 'bitcoin';
   network: 'mainnet' | 'testnet';
   rpcUrls?: string[]; // Optional RPC endpoints for direct node access
-  apiUrls: string[]; // Blockstream/Mempool-style API or chain-specific API
+  apiUrls: string[]; // Esplora (Blockstream/Mempool) bases only; empty if none remain
   addressType: 'p2wpkh' | 'p2sh-p2wpkh' | 'p2pkh' | 'transparent'; // Default address type
   // Chain-specific address configuration
   addressPrefix?: {
