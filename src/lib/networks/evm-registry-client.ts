@@ -10,7 +10,7 @@
 
 import { EvmNetworkConfig } from './types';
 import browser from 'webextension-polyfill';
-import { filterPublicEvmRpcUrls } from './evm-endpoints';
+import { filterPublicEvmRpcUrls, selectPublicEvmExplorer } from './evm-endpoints';
 
 const CHAINS_JSON_URL = 'https://chainid.network/chains.json';
 const CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 hours
@@ -179,7 +179,7 @@ class EvmRegistryClient {
     const rpcUrls = filterRpcUrls(chain.rpc);
     if (rpcUrls.length === 0) return null;
 
-    const explorer = chain.explorers?.find((e) => e.standard === 'EIP3091') || chain.explorers?.[0];
+    const explorer = selectPublicEvmExplorer(chain.explorers);
 
     const testnet = isTestnet(chain);
 

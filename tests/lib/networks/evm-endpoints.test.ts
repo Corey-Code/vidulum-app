@@ -10,6 +10,7 @@ import {
   EVM_REGISTRY_CHAINS,
   getEnabledEvmChains,
   getEvmChainByInternalId,
+  getExplorerTxUrl,
   SUPPORTED_NETWORK_CATALOG,
 } from '@/lib/networks';
 import { readFileSync } from 'node:fs';
@@ -18,6 +19,7 @@ import {
   DEPRECATED_EVM_ENDPOINT_HOSTS,
   evmEndpointHaystack,
   filterPublicEvmRpcUrls,
+  selectPublicEvmExplorer,
   usesDeprecatedEvmHost,
 } from '@/lib/networks/evm-endpoints';
 
@@ -83,7 +85,12 @@ describe('EVM endpoint freshness', () => {
   it('points Fantom users at a live explorer instead of ftmscan.com', () => {
     const fantom = getEvmChainByInternalId('ftm-mainnet');
     expect(fantom?.explorerUrl).toBe('https://explorer.fantom.network');
+    expect(fantom?.explorerAccountPath).toBe('/address/{address}');
+    expect(fantom?.explorerTxPath).toBe('/transactions/{txHash}');
     expect(fantom?.rpcUrls).toEqual(['https://fantom.drpc.org']);
+    expect(getExplorerTxUrl('ftm-mainnet', 'abcd')).toBe(
+      'https://explorer.fantom.network/transactions/abcd'
+    );
   });
 
   it('keeps enabled advertised chains aligned with the live registry', () => {
@@ -108,6 +115,14 @@ describe('EVM endpoint freshness', () => {
         'https://eth.drpc.org',
       ])
     ).toEqual(['https://ethereum-rpc.publicnode.com', 'https://eth.drpc.org']);
+
+    expect(
+      selectPublicEvmExplorer([
+        { url: 'https://ftmscan.com', standard: 'EIP3091' },
+        { url: 'https://explorer.fantom.network' },
+      ])?.url
+    ).toBe('https://explorer.fantom.network');
+    expect(selectPublicEvmExplorer([{ url: 'https://ftmscan.com' }])).toBeUndefined();
   });
 
   it('keeps the sync-script denylist aligned with evm-endpoints', () => {
@@ -115,5 +130,6 @@ describe('EVM endpoint freshness', () => {
     DEPRECATED_EVM_ENDPOINT_HOSTS.forEach((host) => {
       expect(script).toContain(host);
     });
+    expect(script).toMatch(/explorers[\s\S]*DEPRECATED_EVM_ENDPOINT_HOSTS/);
   });
 });

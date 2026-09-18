@@ -234,8 +234,12 @@ function transformChain(chain: ChainRegistryEntry): WalletEvmConfig | null {
     return null;
   }
 
-  // Get explorer info (prefer EIP-3091 compliant)
-  const explorer = chain.explorers?.find((e) => e.standard === 'EIP3091') || chain.explorers?.[0];
+  // Get explorer info (prefer EIP-3091 compliant, skip retired hosts)
+  const explorers = (chain.explorers ?? []).filter((entry) => {
+    if (!entry.url?.startsWith('https://')) return false;
+    return !DEPRECATED_EVM_ENDPOINT_HOSTS.some((host) => entry.url.includes(host));
+  });
+  const explorer = explorers.find((entry) => entry.standard === 'EIP3091') || explorers[0];
 
   const testnet = isTestnet(chain);
 

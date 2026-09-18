@@ -60,6 +60,8 @@ export {
   evmEndpointHaystack,
   usesDeprecatedEvmHost,
   filterPublicEvmRpcUrls,
+  selectPublicEvmExplorer,
+  type EvmExplorerCandidate,
 } from './evm-endpoints';
 
 // EVM Registry (auto-generated from ethereum-lists/chains)

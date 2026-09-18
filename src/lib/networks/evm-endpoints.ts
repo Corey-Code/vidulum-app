@@ -46,3 +46,21 @@ export function filterPublicEvmRpcUrls(urls: string[]): string[] {
     })
     .slice(0, 5);
 }
+
+export interface EvmExplorerCandidate {
+  url?: string;
+  standard?: string;
+}
+
+/**
+ * Pick a live public explorer, skipping retired hosts such as ftmscan.com.
+ */
+export function selectPublicEvmExplorer(
+  explorers: readonly EvmExplorerCandidate[] = []
+): EvmExplorerCandidate | undefined {
+  const usable = explorers.filter((explorer) => {
+    const url = explorer.url;
+    return Boolean(url && url.startsWith('https://') && !usesDeprecatedEvmHost(url));
+  });
+  return usable.find((explorer) => explorer.standard === 'EIP3091') ?? usable[0];
+}

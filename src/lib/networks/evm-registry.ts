@@ -283,7 +283,7 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     },
     explorerUrl: 'https://explorer.fantom.network',
     explorerAccountPath: '/address/{address}',
-    explorerTxPath: '/tx/{txHash}',
+    explorerTxPath: '/transactions/{txHash}',
     infoUrl: 'https://fantom.foundation',
     isTestnet: false
   },
