@@ -77,11 +77,11 @@ npm run build
 
 ### Branch Strategy
 
-1. Keep your fork up to date:
+1. Keep your fork up to date with the default `develop` branch:
    ```bash
    git fetch upstream
-   git checkout main
-   git merge upstream/main
+   git checkout develop
+   git merge upstream/develop
    ```
 
 2. Create a feature branch:
@@ -233,6 +233,8 @@ Detailed guides are available for adding different types of networks:
 - [Adding a Cosmos Chain](docs/ADDING_COSMOS_CHAIN.md) - For Cosmos SDK-based networks
 - [Adding a UTXO Chain](docs/ADDING_UTXO_CHAIN.md) - For Bitcoin-like networks
 - [Adding an EVM Chain](docs/ADDING_EVM_CHAIN.md) - For Ethereum-compatible networks
+- [Adding an SVM Chain](docs/ADDING_SVM_CHAIN.md) - For Solana and SVM-compatible networks
+- [Adding a Network Type](docs/ADDING_NETWORK_TYPE.md) - For a brand-new network family
 
 ### General Process
 

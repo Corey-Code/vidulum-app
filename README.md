@@ -51,13 +51,26 @@ Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/
 | Base         | base-mainnet | ETH    | 8453     | Enabled |
 | Arbitrum One | arb1-mainnet | ETH    | 42161    | Enabled |
 
+### SVM Chains (Solana-like)
+
+| Network | Network ID      | Symbol | Address Format | Status  |
+| ------- | --------------- | ------ | -------------- | ------- |
+| Solana  | solana-mainnet  | SOL    | Base58         | Enabled |
+
+Eclipse, Solana Devnet, and Solana Testnet are defined in config but disabled by default.
+
 ## Features
 
 - Multi-chain wallet from a single mnemonic
 - Cosmos staking with validator APR display
 - REStake compatibility detection
 - BeeZee staking pools (Offers)
-- IBC token support
+- IBC transfers and IBC token support
+- Multi-chain swaps via Skip.go
+- Solana (SVM) addresses and balances
+- EVM and Bitcoin-like (UTXO) account views
+
+Supported networks were last reviewed in September 2026. The same curated list appears in Settings.
 
 ## Installation
 
@@ -115,27 +128,28 @@ Detailed documentation is available in the `docs/` folder:
 - [Adding a Cosmos Chain](docs/ADDING_COSMOS_CHAIN.md) - Add new Cosmos SDK networks
 - [Adding a UTXO Chain](docs/ADDING_UTXO_CHAIN.md) - Add new Bitcoin-like networks
 - [Adding an EVM Chain](docs/ADDING_EVM_CHAIN.md) - Add new EVM networks
+- [Adding an SVM Chain](docs/ADDING_SVM_CHAIN.md) - Add Solana or SVM-compatible networks
+- [Adding a Network Type](docs/ADDING_NETWORK_TYPE.md) - Add a brand-new network family
 
 ## Project Structure
 
 ```
 src/
   lib/
-    networks/           - Network configurations
-      cosmos.ts         - Cosmos chain configs
+    networks/           - Network configurations and curated catalog
+      cosmos.ts         - Manual Cosmos overrides
       bitcoin.ts        - UTXO chain configs
-      evm.ts            - EVM chain configs
-    crypto/             - Cryptographic operations
-      keyring.ts        - Key management
-      bitcoin.ts        - UTXO address derivation
-      evm.ts            - EVM address derivation
+      evm.ts            - Manual EVM overrides
+      solana.ts         - SVM chain configs
+      supported-catalog.ts - User-facing supported-network list
     cosmos/             - Cosmos-specific code
-      chainRegistry.ts  - Asset definitions
-      client.ts         - Cosmos client
+    evm/                - EVM client
+    solana/             - Solana RPC client
     storage/            - Encrypted storage
   popup/
-    pages/              - Extension UI pages
+    pages/              - Extension and web UI pages
     components/         - Reusable components
+  web/                  - Web app entry (vidulum.app)
   background/           - Service worker
 docs/                   - Documentation
 ```
