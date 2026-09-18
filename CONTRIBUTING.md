@@ -104,11 +104,17 @@ npm run build
 ### Development Commands
 
 ```bash
-# Start development server with hot reload
+# Start development server with hot reload (extension)
 npm run dev
+
+# Development server (web app)
+npm run dev:web
 
 # Build all components
 npm run build
+
+# Production build (web app)
+npm run build:web
 
 # Run tests
 npm test

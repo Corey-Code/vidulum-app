@@ -28,9 +28,9 @@ export const NEWCOIN_MAINNET: BitcoinNetworkConfig = {
   coinType: 123, // BIP44 coin type (unique per chain)
   network: 'mainnet',
   apiUrls: [
-    // Array of API endpoints (in failover order)
-    'https://api.newcoin.io/api',
-    'https://backup-api.newcoin.io/api',
+    // Esplora (Blockstream/Mempool) bases only, in failover order
+    'https://esplora.newcoin.example/api',
+    'https://esplora-backup.newcoin.example/api',
   ],
   addressType: 'p2pkh', // See address types below
   addressPrefix: {
@@ -197,7 +197,9 @@ Common prefixes:
 
 ## API Requirements
 
-The wallet expects a Blockstream/Mempool-style API. Required endpoints:
+The wallet expects an Esplora (Blockstream/Mempool) API. Insight, BlockCypher, and CipherScan JSON are not drop-in replacements. Leave `apiUrls` empty when no Esplora host exists — do not add retired hosts such as zcha.in.
+
+Required endpoints:
 
 ```
 GET /address/{address}              - Get address info
@@ -218,11 +220,12 @@ The wallet automatically handles endpoint failover:
 - Healthy endpoints are preferred for subsequent requests
 - Include at least 2 endpoints for reliability when possible
 
-**Common API providers:**
+**Common Esplora providers:**
 
-- Blockstream API (Bitcoin, Liquid)
+- Blockstream API (Bitcoin)
 - Mempool.space (Bitcoin)
-- Chain-specific explorers (varies by chain)
+- Litecoin Space (Litecoin)
+- A chain-specific Esplora host (only if it implements the paths above)
 
 ## Testing
 
