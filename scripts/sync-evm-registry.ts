@@ -20,6 +20,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as process from 'node:process';
+import { filterPublicEvmRpcUrls } from '../src/lib/networks/evm-endpoints';
 
 const CHAINS_JSON_URL = 'https://chainid.network/chains.json';
 
@@ -135,21 +136,7 @@ async function fetchJson<T>(url: string): Promise<T | null> {
  * Filter RPC URLs to only include usable public endpoints
  */
 function filterRpcUrls(urls: string[]): string[] {
-  return urls
-    .filter((url) => {
-      // Must be HTTPS
-      if (!url.startsWith('https://')) return false;
-      // No placeholders (e.g., ${INFURA_API_KEY})
-      if (url.includes('${')) return false;
-      // No localhost or private IPs
-      if (url.includes('localhost')) return false;
-      if (url.includes('127.0.0.1')) return false;
-      if (/192\.168\.|10\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\./.test(url)) return false;
-      // Filter out archive nodes (typically rate-limited/paid)
-      if (url.toLowerCase().includes('archive')) return false;
-      return true;
-    })
-    .slice(0, 5); // Max 5 endpoints
+  return filterPublicEvmRpcUrls(urls);
 }
 
 /**

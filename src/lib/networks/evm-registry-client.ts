@@ -10,6 +10,7 @@
 
 import { EvmNetworkConfig } from './types';
 import browser from 'webextension-polyfill';
+import { filterPublicEvmRpcUrls } from './evm-endpoints';
 
 const CHAINS_JSON_URL = 'https://chainid.network/chains.json';
 const CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 hours
@@ -64,17 +65,7 @@ interface EvmRegistryCache {
  * Filter RPC URLs to only include usable public endpoints
  */
 function filterRpcUrls(urls: string[]): string[] {
-  return urls
-    .filter((url) => {
-      if (!url.startsWith('https://')) return false;
-      if (url.includes('${')) return false;
-      if (url.includes('localhost')) return false;
-      if (url.includes('127.0.0.1')) return false;
-      if (/192\.168\.|10\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\./.test(url)) return false;
-      if (url.toLowerCase().includes('archive')) return false;
-      return true;
-    })
-    .slice(0, 5);
+  return filterPublicEvmRpcUrls(urls);
 }
 
 /**

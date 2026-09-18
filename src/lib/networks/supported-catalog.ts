@@ -4,7 +4,7 @@
  * The live registry can include additional auto-synced chains. This list is the
  * curated set shown in Settings and kept in sync with README.md.
  *
- * Last reviewed: 2026-09-17 (post-lull spine refresh).
+ * Last reviewed: 2026-09-18 (EVM public RPC refresh).
  */
 
 export type SupportedNetworkFamily = 'cosmos' | 'utxo' | 'evm' | 'svm';
@@ -16,7 +16,7 @@ export interface SupportedNetworkEntry {
   family: SupportedNetworkFamily;
 }
 
-export const SUPPORTED_NETWORK_CATALOG_REVIEWED_AT = '2026-09-17';
+export const SUPPORTED_NETWORK_CATALOG_REVIEWED_AT = '2026-09-18';
 
 export const SUPPORTED_NETWORK_CATALOG: readonly SupportedNetworkEntry[] = [
   { id: 'beezee-1', name: 'BeeZee', symbol: 'BZE', family: 'cosmos' },
@@ -73,7 +73,7 @@ export function getSupportedNetworkFamilySummary(family: SupportedNetworkFamily)
     case 'utxo':
       return 'Bitcoin and Litecoin can load balances today. Other Bitcoin-like networks still show your address; some old data servers shut down.';
     case 'evm':
-      return 'Ethereum and compatible networks';
+      return 'Ethereum and compatible networks load balances through current public RPCs. Retired hosts such as MyCrypto and MaticVigil were removed.';
     case 'svm':
       return 'Solana mainnet balances and addresses';
     default: {

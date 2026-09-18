@@ -55,6 +55,13 @@ export {
   usesIncompatibleUtxoApiHost,
 } from './utxo-endpoints';
 
+export {
+  DEPRECATED_EVM_ENDPOINT_HOSTS,
+  evmEndpointHaystack,
+  usesDeprecatedEvmHost,
+  filterPublicEvmRpcUrls,
+} from './evm-endpoints';
+
 // EVM Registry (auto-generated from ethereum-lists/chains)
 export {
   EVM_REGISTRY_CHAINS,

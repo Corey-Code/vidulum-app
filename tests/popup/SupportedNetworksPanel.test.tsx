@@ -42,6 +42,7 @@ describe('SupportedNetworksPanel', () => {
       screen.getByText(/Bitcoin and Litecoin can load balances today/)
     ).toBeInTheDocument();
     expect(screen.getByText(/Ethereum, OP Mainnet, BNB Chain, Polygon, Base, Arbitrum One/)).toBeInTheDocument();
+    expect(screen.getByText(/current public RPCs/)).toBeInTheDocument();
     expect(screen.getByText(/^Solana$/)).toBeInTheDocument();
   });
 });
