@@ -64,6 +64,21 @@ export {
   type EvmExplorerCandidate,
 } from './evm-endpoints';
 
+export {
+  DEPRECATED_COSMOS_ENDPOINT_HOSTS,
+  cosmosEndpointHaystack,
+  usesDeprecatedCosmosHost,
+  filterPublicCosmosEndpoints,
+} from './cosmos-endpoints';
+
+export {
+  COSMOS_REGISTRY_CHAINS,
+  getChainByName,
+  getChainById,
+  getEnabledChains,
+  type CosmosRegistryConfig,
+} from './cosmos-registry';
+
 // EVM Registry (auto-generated from ethereum-lists/chains)
 export {
   EVM_REGISTRY_CHAINS,

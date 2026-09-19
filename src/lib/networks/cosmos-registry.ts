@@ -7,6 +7,7 @@
  * DO NOT EDIT MANUALLY - Run `npm run sync:chains` to update
  * 
  * Generated: 2026-02-03T14:31:34.995Z
+ * RPC/LCD lists refreshed 2026-09-19 to drop retired public hosts.
  */
 
 import { CosmosNetworkConfig } from './types';
@@ -34,17 +35,17 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     coinType: 118,
     rpc: [
       'https://rpc.cosmoshub-main.ccvalidators.com:443',
-      'https://cosmoshub.tendermintrpc.lava.build:443',
-      'https://cosmos-rpc.quickapi.com:443',
-      'https://cosmos-rpc.onivalidator.com',
-      'https://rpc-cosmoshub.whispernode.com:443'
+      'https://rpc.lavenderfive.com:443/cosmoshub',
+      'https://cosmos-rpc.polkachu.com',
+      'https://cosmos-rpc.publicnode.com:443',
+      'https://rpc-cosmoshub.ecostake.com'
     ],
     rest: [
       'https://rest.cosmoshub-main.ccvalidators.com:443',
-      'https://cosmoshub.lava.build:443',
-      'https://cosmos-lcd.quickapi.com:443',
-      'https://rest.cosmoshub.goldenratiostaking.net',
-      'https://rest.lavenderfive.com:443/cosmoshub'
+      'https://rest.lavenderfive.com:443/cosmoshub',
+      'https://cosmos-rest.publicnode.com',
+      'https://cosmos-api.polkachu.com',
+      'https://cosmos-lcd.easy2stake.com'
     ],
     bech32Prefix: 'cosmos',
     feeDenom: 'uatom',
@@ -77,7 +78,6 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     ],
     rest: [
       'https://lcd.osmosis.zone/',
-      'https://rest.osmosis.goldenratiostaking.net',
       'https://rest.lavenderfive.com:443/osmosis',
       'https://rest-osmosis.ecostake.com',
       'https://osmosis-api.polkachu.com'
@@ -114,7 +114,6 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     rest: [
       'https://public-celestia-lcd.numia.xyz',
       'https://celestia-rest.mesa.newmetric.xyz',
-      'http://celestia.rpc.nodersteam.com:1617',
       'https://api.lunaroasis.net',
       'https://api.celestia.nodestake.org'
     ],
@@ -143,14 +142,11 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     rpc: [
       'https://dydx-rpc.kingnodes.com:443',
       'https://dydx-dao-rpc.polkachu.com',
-      'https://dydx-mainnet-full-rpc.public.blastapi.io',
       'https://rpc.lavenderfive.com:443/dydx',
       'https://dydx-mainnet-rpc.autostake.com:443'
     ],
     rest: [
-      'https://community.nuxian-node.ch:6797/dydx/crpc',
       'https://dydx-dao-api.polkachu.com',
-      'https://dydx-mainnet-full-lcd.public.blastapi.io',
       'https://dydx-rest.kingnodes.com:443',
       'https://rest.lavenderfive.com:443/dydx'
     ],
@@ -216,15 +212,13 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
       'https://rpc.sei-apis.com',
       'https://rpc.lavenderfive.com:443/sei',
       'https://sei-rpc.polkachu.com',
-      'https://rpc-sei.stingray.plus',
-      'https://rpc-sei.whispernode.com:443'
+      'https://rpc-sei.stingray.plus'
     ],
     rest: [
       'https://rest.sei-apis.com',
       'https://rest.lavenderfive.com:443/sei',
       'https://sei-api.polkachu.com',
-      'https://api-sei.stingray.plus',
-      'https://lcd-sei.whispernode.com:443'
+      'https://api-sei.stingray.plus'
     ],
     bech32Prefix: 'sei',
     feeDenom: 'usei',
@@ -250,16 +244,12 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     coinType: 118,
     rpc: [
       'https://rpc.stargaze-apis.com/',
-      'https://rpc-stargaze.pupmos.network',
       'https://rpc-stargaze.ezstaking.dev',
-      'https://stargaze-rpc.polkachu.com',
-      'https://rpc-stargaze-ia.cosmosia.notional.ventures/'
+      'https://stargaze-rpc.polkachu.com'
     ],
     rest: [
       'https://rest.stargaze-apis.com/',
-      'https://api-stargaze.pupmos.network',
       'https://api-stargaze.ezstaking.dev',
-      'https://api-stargaze-ia.cosmosia.notional.ventures/',
       'https://stargaze.c29r3.xyz:443/api/'
     ],
     bech32Prefix: 'stars',
@@ -360,14 +350,12 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
       'https://rpc.kaiyo.kujira.setten.io',
       'https://kujira-rpc.polkachu.com',
       'https://rpc.lavenderfive.com:443/kujira',
-      'https://rpc-kujira-ia.cosmosia.notional.ventures/',
       'https://kujira.ibs.team:443/rpc'
     ],
     rest: [
       'https://lcd.kaiyo.kujira.setten.io',
       'https://rest.lavenderfive.com:443/kujira',
       'https://kujira-api.polkachu.com/',
-      'https://api-kujira-ia.cosmosia.notional.ventures/',
       'https://kujira-lcd.wildsage.io/'
     ],
     bech32Prefix: 'kujira',
@@ -465,14 +453,12 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     coinType: 118,
     rpc: [
       'https://rpc-axelar.imperator.co:443',
-      'https://axelar-rpc.quickapi.com:443',
       'https://rpc-axelar.cosmos-spaces.cloud',
       'https://axelar-rpc.pops.one:443',
       'https://axelar-rpc.qubelabs.io:443'
     ],
     rest: [
       'https://lcd-axelar.imperator.co:443',
-      'https://axelar-lcd.quickapi.com:443',
       'https://api-axelar.cosmos-spaces.cloud',
       'https://axelar-lcd.qubelabs.io:443',
       'https://api-1.axelar.nodes.guru:443'
@@ -502,14 +488,11 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     rpc: [
       'https://rpc.lavenderfive.com:443/evmos',
       'https://tendermint.bd.evmos.org:26657',
-      'https://rpc-evmos-ia.cosmosia.notional.ventures:443',
-      'https://rpc.evmos.testnet.run',
       'https://evmos-rpc.polkachu.com'
     ],
     rest: [
       'https://rest.bd.evmos.org:1317',
       'https://rest.lavenderfive.com:443/evmos',
-      'https://api-evmos-ia.cosmosia.notional.ventures/',
       'https://evmos-api.polkachu.com',
       'https://api.evmos.silentvalidator.com/'
     ],
@@ -569,7 +552,6 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     coinType: 118,
     rpc: [
       'https://stride-rpc.polkachu.com/',
-      'https://stride-rpc.onivalidator.com',
       'https://rpc.lavenderfive.com:443/stride',
       'https://rpc.stride.silentvalidator.com/',
       'https://rpc-stride.cosmos-spaces.cloud'
@@ -611,7 +593,6 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
       'https://rpc-terra-01.stakeflow.io'
     ],
     rest: [
-      'https://phoenix-lcd.terra.dev:443',
       'https://terra-rest.publicnode.com',
       'https://api-terra-01.stakeflow.io',
       'https://terra-phoenix-api.highstakes.ch',
@@ -642,14 +623,12 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     rpc: [
       'https://rpc.getbze.com',
       'https://rpc-1.getbze.com',
-      'https://rpc-2.getbze.com',
-      'https://beezee_mainnet_rpc.chain.whenmoonwhenlambo.money'
+      'https://rpc-2.getbze.com'
     ],
     rest: [
       'https://rest.getbze.com',
       'https://rest-1.getbze.com',
-      'https://rest-2.getbze.com',
-      'https://beezee_mainnet_api.chain.whenmoonwhenlambo.money'
+      'https://rest-2.getbze.com'
     ],
     bech32Prefix: 'bze',
     feeDenom: 'ubze',
@@ -660,7 +639,7 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
       'no-legacy-stdTx'
     ],
     logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/beezee/images/bze.png',
-    explorerUrl: 'https://ping.pub/beezee',
+    explorerUrl: 'https://explorer.getbze.com/beezee',
     explorerAccountPath: '/account/{address}',
     explorerTxPath: '/tx/{txHash}'
   },

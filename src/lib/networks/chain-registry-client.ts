@@ -9,6 +9,7 @@
 
 import { CosmosNetworkConfig } from './types';
 import browser from 'webextension-polyfill';
+import { usesDeprecatedCosmosHost } from './cosmos-endpoints';
 
 const CHAIN_REGISTRY_BASE = 'https://raw.githubusercontent.com/cosmos/chain-registry/master';
 const CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 hours
@@ -252,6 +253,10 @@ class ChainRegistryClient {
 
       // 192.168.0.0/16
       if (hostname.startsWith('192.168.')) {
+        return false;
+      }
+
+      if (usesDeprecatedCosmosHost(url)) {
         return false;
       }
 
