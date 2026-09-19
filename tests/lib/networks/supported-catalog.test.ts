@@ -52,6 +52,9 @@ describe('Supported network catalog', () => {
     expect(getSupportedNetworkFamilySummary('evm')).toMatch(
       /current public RPCs/
     );
+    expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
+      /current public RPC and LCD/
+    );
   });
 
   it('formats the catalog review month for Settings copy', () => {
