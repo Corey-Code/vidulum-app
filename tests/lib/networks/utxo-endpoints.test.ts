@@ -92,6 +92,32 @@ describe('UTXO endpoint freshness', () => {
     expect(getExplorerTxUrl('zcash-mainnet', 'abcd')).toBe('https://cipherscan.app/tx/abcd');
   });
 
+  it('points Ravencoin users at Ravencoin Explorer instead of ravencoin.network', () => {
+    expect(RAVENCOIN_MAINNET.explorerUrl).toBe('https://ravencoinexplorer.com');
+    expect(RAVENCOIN_MAINNET.explorerAccountPath).toBe('/address/{address}');
+    expect(RAVENCOIN_MAINNET.explorerTxPath).toBe('/tx/{txHash}');
+    expect(getExplorerAccountUrl('ravencoin-mainnet', 'RVexample')).toBe(
+      'https://ravencoinexplorer.com/address/RVexample'
+    );
+    expect(getExplorerTxUrl('ravencoin-mainnet', 'abcd')).toBe(
+      'https://ravencoinexplorer.com/tx/abcd'
+    );
+  });
+
+  it('omits Ritocoin explorer links after the public hosts went dark', () => {
+    expect(RITOCOIN_MAINNET.explorerUrl).toBeUndefined();
+    expect(getExplorerAccountUrl('ritocoin-mainnet', 'Rexample')).toBeNull();
+    expect(getExplorerTxUrl('ritocoin-mainnet', 'abcd')).toBeNull();
+  });
+
+  it('keeps live explorers on Flux, BitcoinZ, NOSO, Bitcoin, and Litecoin', () => {
+    expect(FLUX_MAINNET.explorerUrl).toBe('https://explorer.runonflux.io');
+    expect(BITCOINZ_MAINNET.explorerUrl).toBe('https://explorer.btcz.rocks');
+    expect(NOSO_MAINNET.explorerUrl).toBe('https://explorer.nosocoin.com');
+    expect(BITCOIN_MAINNET.explorerUrl).toBe('https://blockstream.info');
+    expect(LITECOIN_MAINNET.explorerUrl).toBe('https://litecoinspace.org');
+  });
+
   it('does not advertise Insight-style APIs that BitcoinClient cannot read', () => {
     const nonEsplora = [
       FLUX_MAINNET,

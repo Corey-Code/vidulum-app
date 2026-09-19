@@ -12,6 +12,8 @@
  * After a period of low activity, several configs still pointed at retired
  * explorers or at live hosts that return a different JSON shape. Keep those
  * hosts out of apiUrls so failover does not burn time on a guaranteed miss.
+ * Also keep retired explorer sites (401, TLS-dead) out of explorerUrl so
+ * Settings and Dashboard do not send users to a dead page.
  */
 
 export const DEPRECATED_UTXO_ENDPOINT_HOSTS = [
@@ -19,6 +21,9 @@ export const DEPRECATED_UTXO_ENDPOINT_HOSTS = [
   'zcashblockexplorer.com',
   'zelcash.online',
   'blockhub.info',
+  'ravencoin.network',
+  'explorer.ritocoin.org',
+  'blockbook.ritocoin.org',
 ] as const;
 
 /** Live hosts that are not Esplora-compatible. */
