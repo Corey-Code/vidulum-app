@@ -135,7 +135,9 @@ export const RAVENCOIN_MAINNET: BitcoinNetworkConfig = {
     pubKeyHash: 0x3c, // R addresses (60 in decimal)
     scriptHash: 0x7a, // r addresses (122 in decimal)
   },
-  explorerUrl: 'https://ravencoin.network',
+  // ravencoin.network now returns 401. Ravencoin Explorer is live and uses
+  // the same /address/{address} and /tx/{txHash} paths.
+  explorerUrl: 'https://ravencoinexplorer.com',
   explorerAccountPath: '/address/{address}',
   explorerTxPath: '/tx/{txHash}',
 };
@@ -232,16 +234,14 @@ export const RITOCOIN_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 175, // Uses Ravencoin's coin type (fork)
   network: 'mainnet',
-  // explorer.ritocoin.org TLS handshake fails.
+  // No public Esplora API remains. explorer.ritocoin.org fails TLS, and
+  // blockbook.ritocoin.org / ritocoin.org no longer resolve or handshake.
   apiUrls: [],
   addressType: 'p2pkh', // R... addresses (like Ravencoin)
   addressPrefix: {
     pubKeyHash: 0x19, // R addresses (25 in decimal)
     scriptHash: 0x69, // r addresses (105 in decimal)
   },
-  explorerUrl: 'https://explorer.ritocoin.org',
-  explorerAccountPath: '/address/{address}',
-  explorerTxPath: '/tx/{txHash}',
 };
 
 // ============================================================================
