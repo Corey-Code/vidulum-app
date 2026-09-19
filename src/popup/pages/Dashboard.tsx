@@ -786,10 +786,9 @@ const Dashboard: React.FC<DashboardProps> = ({
     return `${addr.slice(0, 12)}…${addr.slice(-12)}`;
   };
 
-  const getExplorerUrl = () => {
-    const url = getExplorerAccountUrl(selectedChainId, chainAddress);
-    return url || '#';
-  };
+  const explorerAccountUrl = getExplorerAccountUrl(selectedChainId, chainAddress);
+
+  const getExplorerUrl = () => explorerAccountUrl || '#';
 
   return (
     <Box
@@ -1754,6 +1753,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   href={getExplorerUrl()}
                   target="_blank"
                   isDisabled={
+                    !explorerAccountUrl ||
                     !chainAddress ||
                     chainAddress === 'Loading...' ||
                     chainAddress === 'Deriving address...'
