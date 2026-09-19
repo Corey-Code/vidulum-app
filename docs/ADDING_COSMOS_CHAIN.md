@@ -136,6 +136,8 @@ The dynamic client:
 - Fetches from the chain registry on-demand
 - Caches results in `browser.storage.local` for 24 hours
 - Works for any chain in the registry
+- Filters out retired public hosts (QuickApi, Lava public RPC, Whispernode,
+  Notional cosmosia, and others). See `src/lib/networks/cosmos-endpoints.ts`.
 
 ## Method 3: Manual Configuration (Legacy)
 
@@ -233,9 +235,13 @@ The wallet automatically handles endpoint failover:
 **Recommended RPC providers:**
 
 - [Polkachu](https://polkachu.com/public_rpc)
-- [Notional](https://notional.ventures/)
 - [Lavender.Five](https://www.lavenderfive.com/)
+- [PublicNode](https://publicnode.com/)
 - Chain's official endpoints
+
+The sync script and runtime client both drop retired public hosts listed in
+`src/lib/networks/cosmos-endpoints.ts` so a later registry pull does not
+reintroduce QuickApi, Lava public RPC, Whispernode, or Notional cosmosia.
 
 ## Sync Script Reference
 
@@ -254,6 +260,9 @@ The sync script generates:
 
 - `src/lib/networks/cosmos-registry.ts` - Chain configurations
 - `src/lib/assets/cosmos-registry.ts` - Asset definitions with logos
+- `src/lib/assets/ibc-registry.ts` - IBC channel metadata
+
+Retired-host filtering lives in `src/lib/networks/cosmos-endpoints.ts`.
 
 ## Testing
 

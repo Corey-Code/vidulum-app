@@ -4,7 +4,7 @@
  * The live registry can include additional auto-synced chains. This list is the
  * curated set shown in Settings and kept in sync with README.md.
  *
- * Last reviewed: 2026-09-18 (EVM public RPC refresh).
+ * Last reviewed: 2026-09-19 (Cosmos public RPC/LCD refresh).
  */
 
 export type SupportedNetworkFamily = 'cosmos' | 'utxo' | 'evm' | 'svm';
@@ -16,7 +16,7 @@ export interface SupportedNetworkEntry {
   family: SupportedNetworkFamily;
 }
 
-export const SUPPORTED_NETWORK_CATALOG_REVIEWED_AT = '2026-09-18';
+export const SUPPORTED_NETWORK_CATALOG_REVIEWED_AT = '2026-09-19';
 
 export const SUPPORTED_NETWORK_CATALOG: readonly SupportedNetworkEntry[] = [
   { id: 'beezee-1', name: 'BeeZee', symbol: 'BZE', family: 'cosmos' },
@@ -69,7 +69,7 @@ export function getSupportedNetworkFamilyLabel(family: SupportedNetworkFamily): 
 export function getSupportedNetworkFamilySummary(family: SupportedNetworkFamily): string {
   switch (family) {
     case 'cosmos':
-      return 'Staking, IBC transfers, and Cosmos assets';
+      return 'Staking, IBC transfers, and Cosmos assets load through current public RPC and LCD hosts. Retired hosts such as QuickApi, Lava public RPC, and ping.pub for BeeZee were removed.';
     case 'utxo':
       return 'Bitcoin and Litecoin can load balances today. Other Bitcoin-like networks still show your address; some old data servers shut down.';
     case 'evm':

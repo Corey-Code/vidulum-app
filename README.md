@@ -15,7 +15,7 @@ Available as:
 
 ### Cosmos SDK Chains
 
-Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/cosmos/chain-registry).
+Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/cosmos/chain-registry). Advertised Cosmos networks load balances through current public RPC and LCD hosts (CryptoCrew, Lavender.Five, Polkachu, PublicNode, and official chain endpoints). Retired hosts such as QuickApi, Lava public RPC, Whispernode, and ping.pub for BeeZee were removed.
 
 | Network    | Chain ID    | Symbol | Status  |
 | ---------- | ----------- | ------ | ------- |

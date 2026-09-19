@@ -37,6 +37,7 @@ describe('SupportedNetworksPanel', () => {
     renderPanel();
 
     expect(screen.getByText(/BeeZee, Osmosis, AtomOne, Cosmos Hub/)).toBeInTheDocument();
+    expect(screen.getByText(/current public RPC and LCD/)).toBeInTheDocument();
     expect(screen.getByText(/Bitcoin, Litecoin, Dogecoin, Zcash/)).toBeInTheDocument();
     expect(
       screen.getByText(/Bitcoin and Litecoin can load balances today/)

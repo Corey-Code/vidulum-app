@@ -24,6 +24,21 @@ import * as process from 'node:process';
 
 const CHAIN_REGISTRY_BASE = 'https://raw.githubusercontent.com/cosmos/chain-registry/master';
 
+// Keep in sync with src/lib/networks/cosmos-endpoints.ts
+const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
+  'quickapi.com',
+  'lava.build',
+  'onivalidator.com',
+  'whispernode.com',
+  'cosmosia.notional.ventures',
+  'pupmos.network',
+  'public.blastapi.io',
+  'evmos.testnet.run',
+  'phoenix-lcd.terra.dev',
+  'whenmoonwhenlambo.money',
+  'community.nuxian-node.ch',
+] as const;
+
 // Default chains to include in the bundle (most popular by TVL/usage)
 const DEFAULT_CHAINS = [
   'cosmoshub',
@@ -231,19 +246,24 @@ function transformChain(chain: ChainRegistryChain): WalletChainConfig | null {
     return null;
   }
 
-  // Extract RPC endpoints (filter out localhost/private IPs)
+  const isPublicHttpsEndpoint = (url: string): boolean => {
+    if (!url.startsWith('https://')) return false;
+    if (url.includes('localhost') || url.includes('127.0.0.1') || url.includes('192.168.')) {
+      return false;
+    }
+    if (DEPRECATED_COSMOS_ENDPOINT_HOSTS.some((host) => url.includes(host))) return false;
+    return true;
+  };
+
+  // Extract RPC/REST endpoints (public HTTPS only; drop retired hosts)
   const rpcEndpoints = (chain.apis?.rpc || [])
     .map((r) => r.address)
-    .filter(
-      (url) => !url.includes('localhost') && !url.includes('127.0.0.1') && !url.includes('192.168.')
-    )
+    .filter(isPublicHttpsEndpoint)
     .slice(0, 5); // Max 5 endpoints
 
   const restEndpoints = (chain.apis?.rest || [])
     .map((r) => r.address)
-    .filter(
-      (url) => !url.includes('localhost') && !url.includes('127.0.0.1') && !url.includes('192.168.')
-    )
+    .filter(isPublicHttpsEndpoint)
     .slice(0, 5);
 
   if (rpcEndpoints.length === 0 || restEndpoints.length === 0) {
