@@ -61,6 +61,8 @@ Advertised EVM networks load balances through current public RPCs (PublicNode, D
 | ------- | --------------- | ------ | -------------- | ------- |
 | Solana  | solana-mainnet  | SOL    | Base58         | Enabled |
 
+Advertised Solana mainnet loads balances through current public RPCs (official Solana and PublicNode). Retired or key-gated hosts such as Ankr public RPC and Solana dRPC were removed.
+
 Eclipse, Solana Devnet, and Solana Testnet are defined in config but disabled by default.
 
 ## Features

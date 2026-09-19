@@ -54,7 +54,7 @@ export const NEW_SVM_MAINNET: SvmNetworkConfig = {
 | `rpcUrls`    | RPC endpoints, failover order       | public HTTPS RPCs    |
 | `enabled`    | Whether users see the network       | `true` for mainnets  |
 
-Use more than one public HTTPS RPC so failover can skip a dead host. Do not add retired endpoints such as Project Serum.
+Use more than one public HTTPS RPC so failover can skip a dead host. Do not add retired or key-gated endpoints such as Project Serum, Ankr public RPC (`rpc.ankr.com`), Solana dRPC, or Lava's discontinued Solana host.
 
 ## Step 2: Register and Advertise
 
@@ -75,6 +75,7 @@ Then run the web app or extension, open Settings, and confirm the network family
 ## Related Files
 
 - `src/lib/networks/solana.ts` — SVM network configs
+- `src/lib/networks/svm-endpoints.ts` — public-RPC denylist and filters
 - `src/lib/networks/supported-catalog.ts` — curated user-facing list
 - `src/lib/solana/client.ts` — JSON-RPC balance and account reads
 - `src/popup/components/SupportedNetworksPanel.tsx` — Settings summary

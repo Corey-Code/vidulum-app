@@ -47,6 +47,12 @@ export {
 } from './supported-catalog';
 
 export {
+  svmEndpointHaystack,
+  usesDeprecatedSvmHost,
+  filterPublicSvmRpcUrls,
+} from './svm-endpoints';
+
+export {
   DEPRECATED_UTXO_ENDPOINT_HOSTS,
   INCOMPATIBLE_UTXO_API_HOSTS,
   ESPLORA_UTXO_NETWORK_IDS,

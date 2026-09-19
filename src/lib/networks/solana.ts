@@ -25,8 +25,7 @@ export const SOLANA_MAINNET: SvmNetworkConfig = {
   rpcUrls: [
     'https://api.mainnet-beta.solana.com',
     'https://solana-rpc.publicnode.com',
-    'https://solana.drpc.org',
-    'https://rpc.ankr.com/solana',
+    'https://solana.publicnode.com',
   ],
   logoUrl:
     'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/info/logo.png',

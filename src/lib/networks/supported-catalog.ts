@@ -4,8 +4,10 @@
  * The live registry can include additional auto-synced chains. This list is the
  * curated set shown in Settings and kept in sync with README.md.
  *
- * Last reviewed: 2026-09-19 (Cosmos public RPC/LCD refresh).
+ * Last reviewed: 2026-09-19 (Solana public RPC refresh).
  */
+
+export { DEPRECATED_SVM_ENDPOINT_HOSTS } from './svm-endpoints';
 
 export type SupportedNetworkFamily = 'cosmos' | 'utxo' | 'evm' | 'svm';
 
@@ -44,11 +46,6 @@ export const SUPPORTED_NETWORK_CATALOG: readonly SupportedNetworkEntry[] = [
   { id: 'solana-mainnet', name: 'Solana', symbol: 'SOL', family: 'svm' },
 ];
 
-export const DEPRECATED_SVM_ENDPOINT_HOSTS = [
-  'projectserum.com',
-  'solana-labs/token-list',
-] as const;
-
 export function getSupportedNetworkFamilyLabel(family: SupportedNetworkFamily): string {
   switch (family) {
     case 'cosmos':
@@ -75,7 +72,7 @@ export function getSupportedNetworkFamilySummary(family: SupportedNetworkFamily)
     case 'evm':
       return 'Ethereum and compatible networks load balances through current public RPCs. Retired hosts such as MyCrypto and MaticVigil were removed.';
     case 'svm':
-      return 'Solana mainnet balances and addresses';
+      return 'Solana mainnet balances load through current public RPCs (official Solana and PublicNode). Retired or key-gated hosts such as Ankr public RPC and Solana dRPC were removed.';
     default: {
       const _exhaustive: never = family;
       return _exhaustive;
