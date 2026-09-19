@@ -18,6 +18,7 @@ export const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'phoenix-lcd.terra.dev',
   'whenmoonwhenlambo.money',
   'community.nuxian-node.ch',
+  'explorer.allinbits.com',
 ] as const;
 
 export function cosmosEndpointHaystack(
@@ -47,4 +48,44 @@ export function filterPublicCosmosEndpoints(urls: string[]): string[] {
       return true;
     })
     .slice(0, 5);
+}
+
+export interface CosmosExplorerCandidate {
+  kind?: string;
+  url?: string;
+  tx_page?: string;
+  account_page?: string;
+}
+
+/**
+ * Pick a live public explorer, skipping retired hosts such as
+ * explorer.allinbits.com (times out). Prefer mintscan when present.
+ */
+export function selectPublicCosmosExplorer(
+  explorers: readonly CosmosExplorerCandidate[] = []
+): CosmosExplorerCandidate | undefined {
+  const usable = explorers.filter((explorer) => {
+    const url = explorer.url;
+    return Boolean(url && url.startsWith('https://') && !usesDeprecatedCosmosHost(url));
+  });
+  return usable.find((explorer) => explorer.kind === 'mintscan') ?? usable[0];
+}
+
+/**
+ * Governance pages for advertised Cosmos networks.
+ * AtomOne now uses Mintscan so account, tx, and governance links stay on one host.
+ */
+export function getAdvertisedCosmosGovernanceUrl(chainId: string): string | undefined {
+  switch (chainId) {
+    case 'beezee-1':
+      return 'https://explorer.getbze.com/beezee/gov';
+    case 'atomone-1':
+      return 'https://www.mintscan.io/atomone/proposals';
+    case 'cosmoshub-4':
+      return 'https://www.mintscan.io/cosmos/proposals';
+    case 'osmosis-1':
+      return 'https://www.mintscan.io/osmosis/proposals';
+    default:
+      return undefined;
+  }
 }

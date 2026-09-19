@@ -37,6 +37,7 @@ const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'phoenix-lcd.terra.dev',
   'whenmoonwhenlambo.money',
   'community.nuxian-node.ch',
+  'explorer.allinbits.com',
 ] as const;
 
 // Default chains to include in the bundle (most popular by TVL/usage)
@@ -285,8 +286,17 @@ function transformChain(chain: ChainRegistryChain): WalletChainConfig | null {
     features.push('cosmwasm');
   }
 
-  // Get explorer info
-  const explorer = chain.explorers?.find((e) => e.kind === 'mintscan') || chain.explorers?.[0];
+  // Get explorer info (prefer mintscan; skip retired hosts such as explorer.allinbits.com)
+  const usableExplorers = (chain.explorers || []).filter((explorer) => {
+    const url = explorer.url;
+    return Boolean(
+      url &&
+        url.startsWith('https://') &&
+        !DEPRECATED_COSMOS_ENDPOINT_HOSTS.some((host) => url.includes(host))
+    );
+  });
+  const explorer =
+    usableExplorers.find((e) => e.kind === 'mintscan') || usableExplorers[0];
 
   // Extract relative paths from explorer URLs if they are absolute
   let explorerAccountPath = explorer?.account_page?.replace('${accountAddress}', '{address}');

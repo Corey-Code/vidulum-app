@@ -8,6 +8,7 @@
  * 
  * Generated: 2026-02-03T14:31:34.995Z
  * RPC/LCD lists refreshed 2026-09-19 to drop retired public hosts.
+ * AtomOne explorer refreshed 2026-09-19 after explorer.allinbits.com timed out.
  */
 
 import { CosmosNetworkConfig } from './types';
@@ -663,8 +664,7 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
       'https://atomone-api.allinbits.com',
       'https://atomone-api.cogwheel.zone',
       'https://atomone.api.nodeshub.online',
-      'https://api-atomone.nodeist.net',
-      'https://rest-atomone-1.cros-nest.com:443'
+      'https://api-atomone.nodeist.net'
     ],
     bech32Prefix: 'atone',
     feeDenom: 'uphoton',
@@ -675,9 +675,9 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
       'no-legacy-stdTx'
     ],
     logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/atomone/images/atomone.png',
-    explorerUrl: 'https://explorer.allinbits.com/atomone',
-    explorerAccountPath: '/account/{address}',
-    explorerTxPath: '/tx/{txHash}'
+    explorerUrl: 'https://www.mintscan.io/atomone',
+    explorerAccountPath: '/accounts/{address}',
+    explorerTxPath: '/transactions/{txHash}'
   }
 ];
 

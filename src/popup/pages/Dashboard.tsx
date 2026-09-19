@@ -45,7 +45,7 @@ import {
   getTokenColor,
   parseBeeZeeLPToken,
 } from '@/lib/assets/chainRegistry';
-import { getExplorerAccountUrl, networkRegistry } from '@/lib/networks';
+import { getAdvertisedCosmosGovernanceUrl, getExplorerAccountUrl, networkRegistry } from '@/lib/networks';
 import {
   utxoStyleToggleApplies,
   resolveUtxoAddressStyle,
@@ -1773,13 +1773,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                       _hover={{ bg: 'whiteAlpha.100' }}
                       as="a"
                       href={
-                        selectedChainId === 'beezee-1'
-                          ? 'https://explorer.getbze.com/beezee/gov'
-                          : selectedChainId === 'atomone-1'
-                            ? 'https://explorer.govgen.io/atomone/gov'
-                            : selectedChainId === 'cosmoshub-4'
-                              ? 'https://www.mintscan.io/cosmos/proposals'
-                              : 'https://www.mintscan.io/osmosis/proposals'
+                        getAdvertisedCosmosGovernanceUrl(selectedChainId) ??
+                        'https://www.mintscan.io/osmosis/proposals'
                       }
                       target="_blank"
                     >
