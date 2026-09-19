@@ -43,7 +43,9 @@ describe('SupportedNetworksPanel', () => {
       screen.getByText(/Bitcoin and Litecoin can load balances today/)
     ).toBeInTheDocument();
     expect(screen.getByText(/Ethereum, OP Mainnet, BNB Chain, Polygon, Base, Arbitrum One/)).toBeInTheDocument();
-    expect(screen.getByText(/current public RPCs/)).toBeInTheDocument();
+    expect(screen.getByText(/Ethereum and compatible networks load balances through current public RPCs/)).toBeInTheDocument();
     expect(screen.getByText(/^Solana$/)).toBeInTheDocument();
+    expect(screen.getByText(/official Solana and PublicNode/)).toBeInTheDocument();
+    expect(screen.getByText(/Ankr public RPC and Solana dRPC/)).toBeInTheDocument();
   });
 });

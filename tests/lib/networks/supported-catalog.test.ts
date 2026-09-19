@@ -55,6 +55,9 @@ describe('Supported network catalog', () => {
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
       /current public RPC and LCD/
     );
+    expect(getSupportedNetworkFamilySummary('svm')).toMatch(
+      /current public RPCs/
+    );
   });
 
   it('formats the catalog review month for Settings copy', () => {
@@ -72,7 +75,7 @@ describe('Supported network catalog', () => {
 describe('SVM endpoint freshness', () => {
   const svmConfigs = [SOLANA_MAINNET, SOLANA_DEVNET, SOLANA_TESTNET];
 
-  it('omits retired Project Serum and archived token-list hosts', () => {
+  it('omits retired Project Serum, Ankr, dRPC, and archived token-list hosts', () => {
     svmConfigs.forEach((network) => {
       const haystack = [...network.rpcUrls, network.logoUrl ?? ''].join(' ');
       DEPRECATED_SVM_ENDPOINT_HOSTS.forEach((host) => {
