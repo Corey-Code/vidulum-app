@@ -4,7 +4,7 @@
  * The live registry can include additional auto-synced chains. This list is the
  * curated set shown in Settings and kept in sync with README.md.
  *
- * Last reviewed: 2026-09-19 (Bitcoin-like explorer refresh).
+ * Last reviewed: 2026-09-19 (AtomOne explorer refresh).
  */
 
 export { DEPRECATED_SVM_ENDPOINT_HOSTS } from './svm-endpoints';
@@ -66,7 +66,7 @@ export function getSupportedNetworkFamilyLabel(family: SupportedNetworkFamily): 
 export function getSupportedNetworkFamilySummary(family: SupportedNetworkFamily): string {
   switch (family) {
     case 'cosmos':
-      return 'Staking, IBC transfers, and Cosmos assets load through current public RPC and LCD hosts. Retired hosts such as QuickApi, Lava public RPC, and ping.pub for BeeZee were removed.';
+      return 'Staking, IBC transfers, and Cosmos assets load through current public RPC and LCD hosts. Explorer links use current hosts (Mintscan, BeeZee Explorer); the retired AtomOne explorer explorer.allinbits.com was removed.';
     case 'utxo':
       return 'Bitcoin and Litecoin can load balances today. Other Bitcoin-like networks still show your address. Explorer links use current hosts (CipherScan, Ravencoin Explorer); retired sites such as ravencoin.network and explorer.ritocoin.org were removed.';
     case 'evm':

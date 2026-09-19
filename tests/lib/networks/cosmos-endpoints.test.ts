@@ -9,10 +9,12 @@
 
 import {
   COSMOS_REGISTRY_CHAINS,
+  getAdvertisedCosmosGovernanceUrl,
   getChainById,
   getEnabledChains,
   getExplorerAccountUrl,
   getExplorerTxUrl,
+  selectPublicCosmosExplorer,
   SUPPORTED_NETWORK_CATALOG,
 } from '@/lib/networks';
 import { readFileSync } from 'node:fs';
@@ -87,6 +89,53 @@ describe('Cosmos endpoint freshness', () => {
     ]);
   });
 
+  it('points AtomOne users at Mintscan instead of explorer.allinbits.com', () => {
+    const atomone = getChainById('atomone-1');
+    expect(atomone?.explorerUrl).toBe('https://www.mintscan.io/atomone');
+    expect(atomone?.explorerAccountPath).toBe('/accounts/{address}');
+    expect(atomone?.explorerTxPath).toBe('/transactions/{txHash}');
+    expect(getExplorerAccountUrl('atomone-1', 'atone1abc')).toBe(
+      'https://www.mintscan.io/atomone/accounts/atone1abc'
+    );
+    expect(getExplorerTxUrl('atomone-1', 'abcd')).toBe(
+      'https://www.mintscan.io/atomone/transactions/abcd'
+    );
+    expect(atomone?.rest).not.toEqual(
+      expect.arrayContaining([expect.stringContaining('cros-nest.com')])
+    );
+    expect(atomone?.explorerUrl).not.toContain('allinbits.com');
+  });
+
+  it('points advertised Cosmos governance links at current explorers', () => {
+    expect(getAdvertisedCosmosGovernanceUrl('beezee-1')).toBe(
+      'https://explorer.getbze.com/beezee/gov'
+    );
+    expect(getAdvertisedCosmosGovernanceUrl('atomone-1')).toBe(
+      'https://www.mintscan.io/atomone/proposals'
+    );
+    expect(getAdvertisedCosmosGovernanceUrl('cosmoshub-4')).toBe(
+      'https://www.mintscan.io/cosmos/proposals'
+    );
+    expect(getAdvertisedCosmosGovernanceUrl('osmosis-1')).toBe(
+      'https://www.mintscan.io/osmosis/proposals'
+    );
+    expect(getAdvertisedCosmosGovernanceUrl('juno-1')).toBeUndefined();
+  });
+
+  it('skips retired AtomOne explorers when selecting from registry candidates', () => {
+    const selected = selectPublicCosmosExplorer([
+      {
+        kind: 'ping.pub',
+        url: 'https://explorer.allinbits.com/atomone',
+      },
+      {
+        kind: 'mintscan',
+        url: 'https://www.mintscan.io/atomone',
+      },
+    ]);
+    expect(selected?.url).toBe('https://www.mintscan.io/atomone');
+  });
+
   it('points BeeZee users at a live explorer instead of ping.pub', () => {
     const beezee = getChainById('beezee-1');
     expect(beezee?.explorerUrl).toBe('https://explorer.getbze.com/beezee');
@@ -123,6 +172,8 @@ describe('Cosmos endpoint freshness', () => {
     expect(usesDeprecatedCosmosHost('https://cosmos-rpc.quickapi.com:443')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://cosmoshub.lava.build:443')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://rpc-cosmoshub.whispernode.com:443')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://explorer.allinbits.com/atomone')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://www.mintscan.io/atomone')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://rpc.lavenderfive.com:443/cosmoshub')).toBe(false);
 
     expect(

@@ -75,6 +75,9 @@ export {
   cosmosEndpointHaystack,
   usesDeprecatedCosmosHost,
   filterPublicCosmosEndpoints,
+  selectPublicCosmosExplorer,
+  getAdvertisedCosmosGovernanceUrl,
+  type CosmosExplorerCandidate,
 } from './cosmos-endpoints';
 
 export {
