@@ -13,6 +13,9 @@
  * (Mintscan for Celestia/Archway; ATOMScan after Mintscan dropped Juno/Kujira).
  * Leftover side-chain RPC/LCD hops refreshed 2026-09-20 after ezstaking.dev
  * (521), itastakers.com (DNS-dead), and setten.io (TLS mismatch).
+ * Leftover official Neutron RPC/LCD hops refreshed 2026-09-20 after
+ * rpc-lb.neutron.org / rest-lb.neutron.org started serving HTML and
+ * rest-*.neutron-1.neutron.org LCD hosts failed TLS.
  */
 
 import { CosmosNetworkConfig } from './types';
@@ -386,16 +389,18 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     symbol: 'NTRN',
     decimals: 6,
     coinType: 118,
+    // Official rpc-lb / rest-lb now 302 to an HTML site. rest-voidara
+    // and rest-pulsarix fail TLS (sslv3 alert handshake failure).
+    // Lavender.Five, Polkachu, and Solva remain public JSON hops.
     rpc: [
-      'https://rpc-lb.neutron.org',
       'https://rpc.lavenderfive.com:443/neutron',
-      'https://neutron-rpc.polkachu.com:443'
+      'https://neutron-rpc.polkachu.com:443',
+      'https://rpc.neutron.solva.solutions:443'
     ],
     rest: [
-      'https://rest-lb.neutron.org',
       'https://rest.lavenderfive.com:443/neutron',
-      'https://rest-voidara.neutron-1.neutron.org',
-      'https://rest-pulsarix.neutron-1.neutron.org'
+      'https://neutron-api.polkachu.com',
+      'https://rest.neutron.solva.solutions:443'
     ],
     bech32Prefix: 'neutron',
     feeDenom: 'untrn',

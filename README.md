@@ -15,7 +15,7 @@ Available as:
 
 ### Cosmos SDK Chains
 
-Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/cosmos/chain-registry). Advertised Cosmos networks load balances through current public RPC and LCD hosts (CryptoCrew, Lavender.Five, Polkachu, PublicNode, and official chain endpoints). Retired leftover RPC/LCD hops such as ezstaking.dev, itastakers.com, and setten.io were removed. Explorer links use current hosts (Mintscan, ATOMScan, BeeZee Explorer). Retired leftover explorers such as ezstaking.app, finder.kujira.app, and explorers.guru were removed.
+Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/cosmos/chain-registry). Advertised Cosmos networks load balances through current public RPC and LCD hosts (CryptoCrew, Lavender.Five, Polkachu, PublicNode, and official chain endpoints). Retired leftover hosts such as rpc-lb.neutron.org and neutron-1.neutron.org LCD hops were removed. Earlier leftover ezstaking.dev, itastakers.com, and setten.io hops stay denylisted. Explorer links use current hosts (Mintscan, ATOMScan, BeeZee Explorer). Retired leftover explorers such as ezstaking.app, finder.kujira.app, and explorers.guru were removed.
 
 | Network    | Chain ID    | Symbol | Status  |
 | ---------- | ----------- | ------ | ------- |

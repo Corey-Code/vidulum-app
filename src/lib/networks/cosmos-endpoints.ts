@@ -5,8 +5,10 @@
  * several bundled hosts were retired, DNS-dead, or key-gated. Leftover
  * side-chain hops still pointed at ezstaking.dev (Cloudflare 521),
  * itastakers.com (DNS-dead), setten.io (TLS hostname mismatch), and other
- * retired RPC/LCD hosts. Keep those hosts out of advertised lists so the
- * first hop can succeed.
+ * retired RPC/LCD hosts. Leftover official Neutron hops then lingered:
+ * rpc-lb.neutron.org / rest-lb.neutron.org now serve HTML (302), and
+ * rest-*.neutron-1.neutron.org LCD hosts fail TLS. Keep those hosts out
+ * of advertised lists so the first hop can succeed.
  */
 
 export const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
@@ -40,6 +42,9 @@ export const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'tm.p2p.org',
   'silentvalidator.com',
   'cosmos-spaces.cloud',
+  'rpc-lb.neutron.org',
+  'rest-lb.neutron.org',
+  'neutron-1.neutron.org',
 ] as const;
 
 export function cosmosEndpointHaystack(
