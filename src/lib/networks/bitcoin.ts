@@ -109,7 +109,9 @@ export const FLUX_MAINNET: BitcoinNetworkConfig = {
     pubKeyHash: 0x1cb8, // t1 addresses (same as Zcash)
     scriptHash: 0x1cbd, // t3 addresses
   },
-  explorerUrl: 'https://explorer.runonflux.io',
+  // explorer.runonflux.io homepage is live, but /address and /tx 404
+  // (SPA without path fallback). Trezor Blockbook serves those paths.
+  explorerUrl: 'https://blockbook.runonflux.io',
   explorerAccountPath: '/address/{address}',
   explorerTxPath: '/tx/{txHash}',
 };
@@ -208,14 +210,15 @@ export const DOGECOIN_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 3, // BIP44 coin type for Dogecoin
   network: 'mainnet',
-  // dogechain.info serves a Cloudflare interstitial; BlockCypher is not Esplora.
+  // dogechain.info is Cloudflare-blocked (403 interstitial). BlockCypher
+  // is not Esplora. OKLink serves live address and transaction pages.
   apiUrls: [],
   addressType: 'p2pkh', // D... addresses (no SegWit support)
   addressPrefix: {
     pubKeyHash: 0x1e, // D addresses (30)
     scriptHash: 0x16, // 9 or A addresses (22)
   },
-  explorerUrl: 'https://dogechain.info',
+  explorerUrl: 'https://www.oklink.com/dogecoin',
   explorerAccountPath: '/address/{address}',
   explorerTxPath: '/tx/{txHash}',
 };
@@ -258,16 +261,14 @@ export const NOSO_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 5, // Uses Dash's coin type (fork)
   network: 'mainnet',
-  // Explorer site is live; /api is not Esplora.
+  // explorer.nosocoin.com is now a V1 archive page without /address or
+  // /tx deep links (GitHub Pages 404). No public address explorer remains.
   apiUrls: [],
   addressType: 'p2pkh', // X... addresses (like Dash)
   addressPrefix: {
     pubKeyHash: 0x4c, // X addresses (76 in decimal, like Dash)
     scriptHash: 0x10, // 7 addresses (16 in decimal, like Dash)
   },
-  explorerUrl: 'https://explorer.nosocoin.com',
-  explorerAccountPath: '/address/{address}',
-  explorerTxPath: '/tx/{txHash}',
 };
 
 // ============================================================================
