@@ -26,6 +26,10 @@
  * Leftover Injective Polkachu hops refreshed 2026-09-20 after
  * injective-rpc.polkachu.com and injective-api.polkachu.com started
  * timing out. Highstakes, Lavender.Five, and PublicNode remain public.
+ * Leftover dYdX Polkachu dao hosts refreshed 2026-09-20 after the
+ * official registry moved to dydx-rpc.polkachu.com / dydx-api.polkachu.com
+ * (old dydx-dao-* names are leftover). Kingnodes, Lavender.Five, and
+ * PublicNode remain public.
  */
 
 import { CosmosNetworkConfig } from './types';
@@ -159,15 +163,17 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     symbol: 'ADYDX',
     decimals: 6,
     coinType: 118,
-    // dydx-mainnet-rpc.autostake.com now 404s. PublicNode remains public.
+    // dydx-mainnet-rpc.autostake.com now 404s. Leftover dydx-dao-*
+    // Polkachu hostnames were dropped after the official registry
+    // moved to dydx-rpc.polkachu.com / dydx-api.polkachu.com.
     rpc: [
       'https://dydx-rpc.kingnodes.com:443',
-      'https://dydx-dao-rpc.polkachu.com',
+      'https://dydx-rpc.polkachu.com:443',
       'https://rpc.lavenderfive.com:443/dydx',
       'https://dydx-rpc.publicnode.com:443'
     ],
     rest: [
-      'https://dydx-dao-api.polkachu.com',
+      'https://dydx-api.polkachu.com',
       'https://dydx-rest.kingnodes.com:443',
       'https://rest.lavenderfive.com:443/dydx',
       'https://dydx-rest.publicnode.com'
