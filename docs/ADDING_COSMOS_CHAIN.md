@@ -137,10 +137,11 @@ The dynamic client:
 - Caches results in `browser.storage.local` for 24 hours
 - Works for any chain in the registry
 - Filters out retired public hosts (QuickApi, Lava public RPC, Whispernode,
-  Notional cosmosia, leftover Injective Polkachu RPC/LCD hops, leftover
-  Kujira / Stargaze RPC/LCD hops, leftover Evmos RPC/LCD hops, leftover
-  official Neutron RPC/LCD hops, leftover ezstaking.dev / itastakers /
-  setten.io hops, and others). See `src/lib/networks/cosmos-endpoints.ts`.
+  Notional cosmosia, leftover dYdX Polkachu dao hosts, leftover Injective
+  Polkachu RPC/LCD hops, leftover Kujira / Stargaze RPC/LCD hops, leftover
+  Evmos RPC/LCD hops, leftover official Neutron RPC/LCD hops, leftover
+  ezstaking.dev / itastakers / setten.io hops, and others). See
+  `src/lib/networks/cosmos-endpoints.ts`.
 
 ## Method 3: Manual Configuration (Legacy)
 
@@ -249,7 +250,10 @@ The wallet automatically handles endpoint failover:
 The sync script and runtime client both drop retired public hosts listed in
 `src/lib/networks/cosmos-endpoints.ts` so a later registry pull does not
 reintroduce QuickApi, Lava public RPC, Whispernode, Notional cosmosia,
-leftover Injective Polkachu hops (`injective-rpc.polkachu.com` /
+leftover dYdX Polkachu dao hosts (`dydx-dao-rpc.polkachu.com` /
+`dydx-dao-api.polkachu.com`; official registry now lists
+`dydx-rpc.polkachu.com` / `dydx-api.polkachu.com`), leftover Injective
+Polkachu hops (`injective-rpc.polkachu.com` /
 `injective-api.polkachu.com` timeout), leftover Kujira hops
 (`lavenderfive.com:443/kujira` 503; Kleomedes 525; Polkachu DNS-dead),
 leftover Stargaze hops (chain-registry kill;

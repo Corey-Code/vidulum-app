@@ -79,6 +79,8 @@ const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'theamsolutions.info',
   'injective-rpc.polkachu.com',
   'injective-api.polkachu.com',
+  'dydx-dao-rpc.polkachu.com',
+  'dydx-dao-api.polkachu.com',
 ] as const;
 
 // Default chains to include in the bundle (most popular by TVL/usage)

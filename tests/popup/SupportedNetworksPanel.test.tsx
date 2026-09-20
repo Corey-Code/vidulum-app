@@ -38,6 +38,8 @@ describe('SupportedNetworksPanel', () => {
 
     expect(screen.getByText(/BeeZee, Osmosis, AtomOne, Cosmos Hub/)).toBeInTheDocument();
     expect(screen.getByText(/current public RPC and LCD/)).toBeInTheDocument();
+    expect(screen.getByText(/leftover dYdX Polkachu dao hosts/)).toBeInTheDocument();
+    expect(screen.getByText(/dydx-dao-rpc\.polkachu\.com/)).toBeInTheDocument();
     expect(screen.getByText(/leftover Injective Polkachu hops/)).toBeInTheDocument();
     expect(screen.getByText(/Kujira and Stargaze hops/)).toBeInTheDocument();
     expect(

@@ -68,6 +68,12 @@ describe('Supported network catalog', () => {
       /current public RPC and LCD/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
+      /leftover dYdX Polkachu dao hosts/
+    );
+    expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
+      /dydx-dao-rpc\.polkachu\.com/
+    );
+    expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
       /leftover Injective Polkachu hops \(timeout\)/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(

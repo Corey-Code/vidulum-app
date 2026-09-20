@@ -15,8 +15,11 @@
  * Lavender.Five now 503s both, Stargaze is killed (Kleomedes empty 200,
  * official/Polkachu DNS-dead), and Autostake public hops 404. Leftover
  * Injective Polkachu hops then lingered: injective-rpc.polkachu.com and
- * injective-api.polkachu.com now time out. Keep those hosts out of
- * advertised lists so the first hop can succeed.
+ * injective-api.polkachu.com now time out. Leftover dYdX Polkachu dao
+ * hosts then lingered: dydx-dao-rpc.polkachu.com and
+ * dydx-dao-api.polkachu.com after the official registry moved to
+ * dydx-rpc.polkachu.com / dydx-api.polkachu.com. Keep those hosts out
+ * of advertised lists so the first hop can succeed.
  */
 
 export const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
@@ -73,6 +76,8 @@ export const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'theamsolutions.info',
   'injective-rpc.polkachu.com',
   'injective-api.polkachu.com',
+  'dydx-dao-rpc.polkachu.com',
+  'dydx-dao-api.polkachu.com',
 ] as const;
 
 export function cosmosEndpointHaystack(

@@ -11,7 +11,9 @@
  * (DNS-dead) hops. Leftover Kujira and Stargaze hops then lingered
  * (Lavender.Five 503; Stargaze killed / Kleomedes empty 200; Autostake
  * 404). Leftover Injective Polkachu hops then lingered (RPC/LCD
- * timeout). This keeps those lists honest.
+ * timeout). Leftover dYdX Polkachu dao hosts then lingered after the
+ * official registry moved to dydx-rpc.polkachu.com. This keeps those
+ * lists honest.
  */
 
 import {
@@ -306,16 +308,35 @@ describe('Cosmos endpoint freshness', () => {
     expect(dydx?.rpc.concat(dydx?.rest ?? []).join(' ')).not.toContain('autostake.com');
     expect(dydx?.rpc).toEqual([
       'https://dydx-rpc.kingnodes.com:443',
-      'https://dydx-dao-rpc.polkachu.com',
+      'https://dydx-rpc.polkachu.com:443',
       'https://rpc.lavenderfive.com:443/dydx',
       'https://dydx-rpc.publicnode.com:443',
     ]);
     expect(dydx?.rest).toEqual([
-      'https://dydx-dao-api.polkachu.com',
+      'https://dydx-api.polkachu.com',
       'https://dydx-rest.kingnodes.com:443',
       'https://rest.lavenderfive.com:443/dydx',
       'https://dydx-rest.publicnode.com',
     ]);
+  });
+
+  it('replaces leftover dYdX Polkachu dao hosts with current Polkachu hops', () => {
+    const dydx = getChainById('dydx-mainnet-1');
+    expect(dydx?.rpc).toEqual([
+      'https://dydx-rpc.kingnodes.com:443',
+      'https://dydx-rpc.polkachu.com:443',
+      'https://rpc.lavenderfive.com:443/dydx',
+      'https://dydx-rpc.publicnode.com:443',
+    ]);
+    expect(dydx?.rest).toEqual([
+      'https://dydx-api.polkachu.com',
+      'https://dydx-rest.kingnodes.com:443',
+      'https://rest.lavenderfive.com:443/dydx',
+      'https://dydx-rest.publicnode.com',
+    ]);
+    expect(dydx?.rpc.concat(dydx?.rest ?? []).join(' ')).not.toMatch(
+      /dydx-dao-rpc\.polkachu\.com|dydx-dao-api\.polkachu\.com/
+    );
   });
 
   it('replaces leftover official Neutron RPC/LCD hops with current public hops', () => {
@@ -448,6 +469,10 @@ describe('Cosmos endpoint freshness', () => {
     expect(usesDeprecatedCosmosHost('https://kujira-rpc.theamsolutions.info')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://injective-rpc.polkachu.com')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://injective-api.polkachu.com')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://dydx-dao-rpc.polkachu.com')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://dydx-dao-api.polkachu.com')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://dydx-rpc.polkachu.com:443')).toBe(false);
+    expect(usesDeprecatedCosmosHost('https://dydx-api.polkachu.com')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://noble-rpc.polkachu.com')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://rpc.lavenderfive.com:443/neutron')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://juno-rpc.kleomedes.network')).toBe(false);
@@ -480,10 +505,13 @@ describe('Cosmos endpoint freshness', () => {
         'https://stargaze-rpc.kleomedes.network',
         'https://kujira-rpc.theamsolutions.info',
         'https://injective-rpc.polkachu.com',
+        'https://dydx-dao-rpc.polkachu.com',
+        'https://dydx-rpc.polkachu.com:443',
       ])
     ).toEqual([
       'https://rpc.lavenderfive.com:443/cosmoshub',
       'https://cosmos-rpc.polkachu.com',
+      'https://dydx-rpc.polkachu.com:443',
     ]);
   });
 
