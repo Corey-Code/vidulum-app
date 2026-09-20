@@ -106,6 +106,62 @@ describe('Cosmos endpoint freshness', () => {
     expect(atomone?.explorerUrl).not.toContain('allinbits.com');
   });
 
+  it('points Juno users at Mintscan instead of ezstaking.app', () => {
+    const juno = getChainById('juno-1');
+    expect(juno?.explorerUrl).toBe('https://www.mintscan.io/juno');
+    expect(juno?.explorerAccountPath).toBe('/accounts/{address}');
+    expect(juno?.explorerTxPath).toBe('/transactions/{txHash}');
+    expect(getExplorerAccountUrl('juno-1', 'juno1abc')).toBe(
+      'https://www.mintscan.io/juno/accounts/juno1abc'
+    );
+    expect(getExplorerTxUrl('juno-1', 'abcd')).toBe(
+      'https://www.mintscan.io/juno/transactions/abcd'
+    );
+    expect(juno?.explorerUrl).not.toContain('ezstaking.app');
+  });
+
+  it('points Celestia users at Mintscan instead of explorers.guru', () => {
+    const celestia = getChainById('celestia');
+    expect(celestia?.explorerUrl).toBe('https://www.mintscan.io/celestia');
+    expect(celestia?.explorerAccountPath).toBe('/accounts/{address}');
+    expect(celestia?.explorerTxPath).toBe('/transactions/{txHash}');
+    expect(getExplorerAccountUrl('celestia', 'celestia1abc')).toBe(
+      'https://www.mintscan.io/celestia/accounts/celestia1abc'
+    );
+    expect(getExplorerTxUrl('celestia', 'abcd')).toBe(
+      'https://www.mintscan.io/celestia/transactions/abcd'
+    );
+    expect(celestia?.explorerUrl).not.toContain('explorers.guru');
+  });
+
+  it('points Archway users at Mintscan after explorers.guru stopped resolving', () => {
+    const archway = getChainById('archway-1');
+    expect(archway?.explorerUrl).toBe('https://www.mintscan.io/archway');
+    expect(archway?.explorerAccountPath).toBe('/accounts/{address}');
+    expect(archway?.explorerTxPath).toBe('/transactions/{txHash}');
+    expect(getExplorerAccountUrl('archway-1', 'archway1abc')).toBe(
+      'https://www.mintscan.io/archway/accounts/archway1abc'
+    );
+    expect(getExplorerTxUrl('archway-1', 'abcd')).toBe(
+      'https://www.mintscan.io/archway/transactions/abcd'
+    );
+    expect(archway?.explorerUrl).not.toContain('explorers.guru');
+  });
+
+  it('points Kujira users at Mintscan instead of finder.kujira.app', () => {
+    const kujira = getChainById('kaiyo-1');
+    expect(kujira?.explorerUrl).toBe('https://www.mintscan.io/kujira');
+    expect(kujira?.explorerAccountPath).toBe('/accounts/{address}');
+    expect(kujira?.explorerTxPath).toBe('/transactions/{txHash}');
+    expect(getExplorerAccountUrl('kaiyo-1', 'kujira1abc')).toBe(
+      'https://www.mintscan.io/kujira/accounts/kujira1abc'
+    );
+    expect(getExplorerTxUrl('kaiyo-1', 'abcd')).toBe(
+      'https://www.mintscan.io/kujira/transactions/abcd'
+    );
+    expect(kujira?.explorerUrl).not.toContain('finder.kujira.app');
+  });
+
   it('points advertised Cosmos governance links at current explorers', () => {
     expect(getAdvertisedCosmosGovernanceUrl('beezee-1')).toBe(
       'https://explorer.getbze.com/beezee/gov'
@@ -173,7 +229,14 @@ describe('Cosmos endpoint freshness', () => {
     expect(usesDeprecatedCosmosHost('https://cosmoshub.lava.build:443')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://rpc-cosmoshub.whispernode.com:443')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://explorer.allinbits.com/atomone')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://ezstaking.app/juno/account/juno1abc')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://finder.kujira.app/kaiyo-1/tx/abcd')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://celestia.explorers.guru/account/celestia1abc')).toBe(
+      true
+    );
+    expect(usesDeprecatedCosmosHost('https://archway.explorers.guru/')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://www.mintscan.io/atomone')).toBe(false);
+    expect(usesDeprecatedCosmosHost('https://www.mintscan.io/juno')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://rpc.lavenderfive.com:443/cosmoshub')).toBe(false);
 
     expect(

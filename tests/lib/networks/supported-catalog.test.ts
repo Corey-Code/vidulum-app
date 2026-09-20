@@ -64,6 +64,9 @@ describe('Supported network catalog', () => {
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
       /Mintscan, BeeZee Explorer/
     );
+    expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
+      /ezstaking\.app, finder\.kujira\.app, and explorers\.guru/
+    );
     expect(getSupportedNetworkFamilySummary('svm')).toMatch(
       /current public RPCs/
     );

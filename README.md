@@ -15,7 +15,7 @@ Available as:
 
 ### Cosmos SDK Chains
 
-Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/cosmos/chain-registry). Advertised Cosmos networks load balances through current public RPC and LCD hosts (CryptoCrew, Lavender.Five, Polkachu, PublicNode, and official chain endpoints). Explorer links use current hosts (Mintscan, BeeZee Explorer). Retired hosts such as QuickApi, Lava public RPC, and explorer.allinbits.com were removed.
+Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/cosmos/chain-registry). Advertised Cosmos networks load balances through current public RPC and LCD hosts (CryptoCrew, Lavender.Five, Polkachu, PublicNode, and official chain endpoints). Explorer links use current hosts (Mintscan, BeeZee Explorer). Retired leftover explorers such as ezstaking.app, finder.kujira.app, and explorers.guru were removed.
 
 | Network    | Chain ID    | Symbol | Status  |
 | ---------- | ----------- | ------ | ------- |
