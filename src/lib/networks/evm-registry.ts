@@ -14,6 +14,8 @@
  * refreshed 2026-09-20 after sepolia.org discontinued and zkEVM sunset.
  * Leftover Moonriver UnitedBloc hop refreshed 2026-09-20 after
  * moonriver.unitedbloc.com stopped resolving.
+ * Leftover 1rpc.io/eth hop refreshed 2026-09-20 after 1RPC
+ * discontinued that Ethereum endpoint (HTTP 410).
  */
 
 import { EvmNetworkConfig } from './types';
@@ -43,9 +45,10 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     chainId: 1,
     rpcUrls: [
       // cloudflare-eth.com now returns JSON-RPC -32046 "Cannot fulfill request".
+      // 1rpc.io/eth is discontinued (HTTP 410). PublicNode, DRPC, and
+      // Tenderly remain public.
       'https://ethereum-rpc.publicnode.com',
       'https://eth.drpc.org',
-      'https://1rpc.io/eth',
       'https://mainnet.gateway.tenderly.co'
     ],
     nativeCurrency: {

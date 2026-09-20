@@ -6,7 +6,9 @@
  * Moonbeam/Moonriver/Blast hops also lingered. Leftover Sepolia.org RPCs
  * (404 / timeout) and the sunset zkEVM explorer still sat in side-chain
  * lists. Leftover Moonriver UnitedBloc then lingered after Moonbeam
- * UnitedBloc was denylisted. This keeps EVM RPC and explorer lists honest.
+ * UnitedBloc was denylisted. Leftover 1rpc.io/eth then lingered after
+ * 1RPC discontinued that Ethereum hop (HTTP 410). This keeps EVM RPC
+ * and explorer lists honest.
  */
 
 import {
@@ -79,10 +81,10 @@ describe('EVM endpoint freshness', () => {
     expect(ethereum?.rpcUrls).toEqual([
       'https://ethereum-rpc.publicnode.com',
       'https://eth.drpc.org',
-      'https://1rpc.io/eth',
       'https://mainnet.gateway.tenderly.co',
     ]);
     expect(ethereum?.rpcUrls.join(' ')).not.toContain('cloudflare-eth.com');
+    expect(ethereum?.rpcUrls.join(' ')).not.toContain('1rpc.io/eth');
   });
 
   it('replaces leftover Ankr and BlastAPI hops on bundled side chains', () => {
@@ -173,6 +175,8 @@ describe('EVM endpoint freshness', () => {
     expect(usesDeprecatedEvmHost('https://rpc2.sepolia.org')).toBe(true);
     expect(usesDeprecatedEvmHost('https://zkevm.polygonscan.com')).toBe(true);
     expect(usesDeprecatedEvmHost('https://moonriver.unitedbloc.com')).toBe(true);
+    expect(usesDeprecatedEvmHost('https://1rpc.io/eth')).toBe(true);
+    expect(usesDeprecatedEvmHost('https://1rpc.io/sepolia')).toBe(false);
     expect(usesDeprecatedEvmHost('https://ethereum-rpc.publicnode.com')).toBe(false);
     expect(usesDeprecatedEvmHost('https://rpc.sepolia.ethpandaops.io')).toBe(false);
 
@@ -186,6 +190,7 @@ describe('EVM endpoint freshness', () => {
         'https://cloudflare-eth.com',
         'https://rpc.ankr.com/eth',
         'https://rpc.sepolia.org',
+        'https://1rpc.io/eth',
         'https://eth.drpc.org',
       ])
     ).toEqual(['https://ethereum-rpc.publicnode.com', 'https://eth.drpc.org']);

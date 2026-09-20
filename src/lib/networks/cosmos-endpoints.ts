@@ -13,8 +13,10 @@
  * (502) plus w3coins.io / stakeflow.io (DNS-dead) hops still sat on
  * side-chain lists. Leftover Kujira and Stargaze hops then lingered:
  * Lavender.Five now 503s both, Stargaze is killed (Kleomedes empty 200,
- * official/Polkachu DNS-dead), and Autostake public hops 404. Keep
- * those hosts out of advertised lists so the first hop can succeed.
+ * official/Polkachu DNS-dead), and Autostake public hops 404. Leftover
+ * Injective Polkachu hops then lingered: injective-rpc.polkachu.com and
+ * injective-api.polkachu.com now time out. Keep those hosts out of
+ * advertised lists so the first hop can succeed.
  */
 
 export const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
@@ -69,6 +71,8 @@ export const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'kujira-rpc.polkachu.com',
   'kujira-api.polkachu.com',
   'theamsolutions.info',
+  'injective-rpc.polkachu.com',
+  'injective-api.polkachu.com',
 ] as const;
 
 export function cosmosEndpointHaystack(

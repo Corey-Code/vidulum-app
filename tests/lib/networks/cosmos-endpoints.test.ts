@@ -10,7 +10,8 @@
  * goldenratiostaking.net / owallet.io (502) and w3coins.io / stakeflow.io
  * (DNS-dead) hops. Leftover Kujira and Stargaze hops then lingered
  * (Lavender.Five 503; Stargaze killed / Kleomedes empty 200; Autostake
- * 404). This keeps those lists honest.
+ * 404). Leftover Injective Polkachu hops then lingered (RPC/LCD
+ * timeout). This keeps those lists honest.
  */
 
 import {
@@ -240,6 +241,9 @@ describe('Cosmos endpoint freshness', () => {
       /goldenratiostaking\.net|stakeflow\.io/
     );
     expect(injective?.rpc[0]).toBe('https://injective-rpc.highstakes.ch');
+    expect(injective?.rpc.concat(injective?.rest ?? []).join(' ')).not.toMatch(
+      /injective-rpc\.polkachu\.com|injective-api\.polkachu\.com/
+    );
 
     const noble = getChainById('noble-1');
     expect(noble?.rpc.concat(noble?.rest ?? []).join(' ')).not.toContain('owallet.io');
@@ -257,6 +261,24 @@ describe('Cosmos endpoint freshness', () => {
 
     const terra = getChainById('phoenix-1');
     expect(terra?.rpc.concat(terra?.rest ?? []).join(' ')).not.toContain('stakeflow.io');
+  });
+
+  it('drops leftover Injective Polkachu hops that now time out', () => {
+    const injective = getChainById('injective-1');
+    expect(injective?.rpc).toEqual([
+      'https://injective-rpc.highstakes.ch',
+      'https://rpc.lavenderfive.com:443/injective',
+      'https://injective-rpc.publicnode.com:443',
+    ]);
+    expect(injective?.rest).toEqual([
+      'https://injective-api.highstakes.ch',
+      'https://rest.lavenderfive.com:443/injective',
+      'https://injective-rest.publicnode.com',
+      'https://public.stakewolle.com/cosmos/injective/rest',
+    ]);
+    expect(injective?.rpc.concat(injective?.rest ?? []).join(' ')).not.toMatch(
+      /injective-rpc\.polkachu\.com|injective-api\.polkachu\.com/
+    );
   });
 
   it('drops leftover Kujira and Stargaze RPC/LCD hops after public hops died', () => {
@@ -424,6 +446,9 @@ describe('Cosmos endpoint freshness', () => {
     expect(usesDeprecatedCosmosHost('https://kuji-rpc.kleomedes.network')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://kujira-rpc.polkachu.com')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://kujira-rpc.theamsolutions.info')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://injective-rpc.polkachu.com')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://injective-api.polkachu.com')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://noble-rpc.polkachu.com')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://rpc.lavenderfive.com:443/neutron')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://juno-rpc.kleomedes.network')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://www.mintscan.io/atomone')).toBe(false);
@@ -454,6 +479,7 @@ describe('Cosmos endpoint freshness', () => {
         'https://dydx-mainnet-rpc.autostake.com:443',
         'https://stargaze-rpc.kleomedes.network',
         'https://kujira-rpc.theamsolutions.info',
+        'https://injective-rpc.polkachu.com',
       ])
     ).toEqual([
       'https://rpc.lavenderfive.com:443/cosmoshub',

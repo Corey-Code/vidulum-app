@@ -77,6 +77,8 @@ const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'kujira-rpc.polkachu.com',
   'kujira-api.polkachu.com',
   'theamsolutions.info',
+  'injective-rpc.polkachu.com',
+  'injective-api.polkachu.com',
 ] as const;
 
 // Default chains to include in the bundle (most popular by TVL/usage)
