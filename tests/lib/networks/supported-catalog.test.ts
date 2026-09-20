@@ -59,22 +59,22 @@ describe('Supported network catalog', () => {
       /current public RPCs \(PublicNode, DRPC/
     );
     expect(getSupportedNetworkFamilySummary('evm')).toMatch(
-      /Sepolia\.org RPCs and zkevm\.polygonscan\.com/
+      /moonriver\.unitedbloc\.com/
     );
     expect(getSupportedNetworkFamilySummary('evm')).toMatch(
-      /Cloudflare Ethereum, Ankr public RPC, and BlastAPI/
+      /Sepolia\.org RPCs, zkevm\.polygonscan\.com, Cloudflare Ethereum/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
       /current public RPC and LCD/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
-      /leftover Evmos hops \(Lavender\.Five 503 after the chain was killed\)/
+      /leftover Kujira and Stargaze hops \(Lavender\.Five 503/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
-      /goldenratiostaking\.net, owallet\.io, w3coins\.io, and stakeflow\.io/
+      /Autostake 404 hops/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
-      /official Neutron, ezstaking\.dev, itastakers\.com, and setten\.io/
+      /Evmos, official Neutron, ezstaking\.dev, itastakers\.com, and setten\.io/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
       /Mintscan, ATOMScan, BeeZee Explorer/

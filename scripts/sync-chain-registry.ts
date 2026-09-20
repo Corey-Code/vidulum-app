@@ -65,6 +65,18 @@ const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'owallet.io',
   'w3coins.io',
   'stakeflow.io',
+  'lavenderfive.com:443/kujira',
+  'lavenderfive.com/kujira',
+  'lavenderfive.com:443/stargaze',
+  'lavenderfive.com/stargaze',
+  'autostake.com',
+  'stargaze-rpc.kleomedes.network',
+  'stargaze-api.kleomedes.network',
+  'kuji-rpc.kleomedes.network',
+  'kuji-api.kleomedes.network',
+  'kujira-rpc.polkachu.com',
+  'kujira-api.polkachu.com',
+  'theamsolutions.info',
 ] as const;
 
 // Default chains to include in the bundle (most popular by TVL/usage)
@@ -75,7 +87,6 @@ const DEFAULT_CHAINS = [
   'dydx',
   'injective',
   'sei',
-  'stargaze',
   'juno',
   'akash',
   'kujira',

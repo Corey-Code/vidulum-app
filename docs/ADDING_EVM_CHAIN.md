@@ -86,8 +86,9 @@ The runtime client:
 - Caches results in `browser.storage.local` for 24 hours
 - Filters out deprecated chains, invalid RPC endpoints, and retired public hosts
   (MyCrypto, MaticVigil, Cloudflare Ethereum, Ankr public RPC, BlastAPI, leftover
-  Sepolia.org RPCs, DNS-dead zkevm.polygonscan.com, and old Polygon/Fantom/Moonbeam
-  gateways). See `src/lib/networks/evm-endpoints.ts`.
+  Sepolia.org RPCs, DNS-dead zkevm.polygonscan.com, leftover
+  moonriver.unitedbloc.com, and old Polygon/Fantom/Moonbeam gateways). See
+  `src/lib/networks/evm-endpoints.ts`.
 
 ## Method 3: Manual Configuration (Legacy)
 
@@ -217,7 +218,8 @@ The sync script and runtime client both drop retired public hosts listed in
 `src/lib/networks/evm-endpoints.ts` so a later registry pull does not
 reintroduce MyCrypto, MaticVigil, Cloudflare Ethereum, Ankr public RPC,
 BlastAPI, leftover Sepolia.org RPCs (`rpc.sepolia.org` 404, `rpc2.sepolia.org`
-timeout), DNS-dead `zkevm.polygonscan.com`, or the old Polygon/Fantom/Moonbeam
+timeout), DNS-dead `zkevm.polygonscan.com`, leftover
+`moonriver.unitedbloc.com` (DNS-dead), or the old Polygon/Fantom/Moonbeam
 gateways.
 
 ### Pre-bundled Chains

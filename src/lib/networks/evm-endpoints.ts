@@ -7,7 +7,9 @@
  * Moonbeam/Moonriver/Blast hops were still first-hop failures. Leftover
  * Sepolia.org RPCs (site discontinued: 404 / timeout) and the sunset
  * Polygon zkEVM explorer (zkevm.polygonscan.com is DNS-dead) also lingered.
- * Keep those hosts out of advertised lists so the first hop can succeed.
+ * Leftover Moonriver UnitedBloc then lingered after Moonbeam UnitedBloc
+ * was denylisted: moonriver.unitedbloc.com no longer resolves. Keep
+ * those hosts out of advertised lists so the first hop can succeed.
  */
 
 export const DEPRECATED_EVM_ENDPOINT_HOSTS = [
@@ -29,6 +31,7 @@ export const DEPRECATED_EVM_ENDPOINT_HOSTS = [
   'rpc.api.moonbeam.network',
   'moonbeam-rpc.dwellir.com',
   'moonbeam.unitedbloc.com',
+  'moonriver.unitedbloc.com',
   'rpc.api.moonriver.moonbeam.network',
   'moonriver-rpc.dwellir.com',
   'blast.din.dev',

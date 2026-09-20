@@ -5,7 +5,8 @@
  * Cloudflare's public gateway. Leftover Ankr, BlastAPI, and DNS-dead
  * Moonbeam/Moonriver/Blast hops also lingered. Leftover Sepolia.org RPCs
  * (404 / timeout) and the sunset zkEVM explorer still sat in side-chain
- * lists. This keeps EVM RPC and explorer lists honest.
+ * lists. Leftover Moonriver UnitedBloc then lingered after Moonbeam
+ * UnitedBloc was denylisted. This keeps EVM RPC and explorer lists honest.
  */
 
 import {
@@ -103,8 +104,8 @@ describe('EVM endpoint freshness', () => {
     expect(moonriver?.rpcUrls).toEqual([
       'https://moonriver.api.onfinality.io/public',
       'https://moonriver.drpc.org',
-      'https://moonriver.unitedbloc.com',
     ]);
+    expect(moonriver?.rpcUrls.join(' ')).not.toContain('unitedbloc.com');
 
     const blast = getEvmChainByInternalId('blastmainnet-mainnet');
     expect(blast?.rpcUrls).toEqual([
@@ -171,6 +172,7 @@ describe('EVM endpoint freshness', () => {
     expect(usesDeprecatedEvmHost('https://rpc.sepolia.org')).toBe(true);
     expect(usesDeprecatedEvmHost('https://rpc2.sepolia.org')).toBe(true);
     expect(usesDeprecatedEvmHost('https://zkevm.polygonscan.com')).toBe(true);
+    expect(usesDeprecatedEvmHost('https://moonriver.unitedbloc.com')).toBe(true);
     expect(usesDeprecatedEvmHost('https://ethereum-rpc.publicnode.com')).toBe(false);
     expect(usesDeprecatedEvmHost('https://rpc.sepolia.ethpandaops.io')).toBe(false);
 
