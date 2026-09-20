@@ -19,6 +19,9 @@ export const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'whenmoonwhenlambo.money',
   'community.nuxian-node.ch',
   'explorer.allinbits.com',
+  'ezstaking.app',
+  'finder.kujira.app',
+  'explorers.guru',
 ] as const;
 
 export function cosmosEndpointHaystack(
@@ -59,7 +62,9 @@ export interface CosmosExplorerCandidate {
 
 /**
  * Pick a live public explorer, skipping retired hosts such as
- * explorer.allinbits.com (times out). Prefer mintscan when present.
+ * explorer.allinbits.com (times out), ezstaking.app (account 404),
+ * finder.kujira.app (403), and explorers.guru (404 / DNS-dead).
+ * Prefer mintscan when present.
  */
 export function selectPublicCosmosExplorer(
   explorers: readonly CosmosExplorerCandidate[] = []

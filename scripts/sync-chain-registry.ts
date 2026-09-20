@@ -38,6 +38,9 @@ const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'whenmoonwhenlambo.money',
   'community.nuxian-node.ch',
   'explorer.allinbits.com',
+  'ezstaking.app',
+  'finder.kujira.app',
+  'explorers.guru',
 ] as const;
 
 // Default chains to include in the bundle (most popular by TVL/usage)
@@ -286,7 +289,7 @@ function transformChain(chain: ChainRegistryChain): WalletChainConfig | null {
     features.push('cosmwasm');
   }
 
-  // Get explorer info (prefer mintscan; skip retired hosts such as explorer.allinbits.com)
+  // Get explorer info (prefer mintscan; skip retired leftover hosts)
   const usableExplorers = (chain.explorers || []).filter((explorer) => {
     const url = explorer.url;
     return Boolean(
