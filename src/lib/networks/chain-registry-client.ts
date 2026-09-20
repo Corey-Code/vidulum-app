@@ -9,7 +9,7 @@
 
 import { CosmosNetworkConfig } from './types';
 import browser from 'webextension-polyfill';
-import { usesDeprecatedCosmosHost } from './cosmos-endpoints';
+import { selectPublicCosmosExplorer, usesDeprecatedCosmosHost } from './cosmos-endpoints';
 
 const CHAIN_REGISTRY_BASE = 'https://raw.githubusercontent.com/cosmos/chain-registry/master';
 const CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 hours
@@ -279,7 +279,7 @@ class ChainRegistryClient {
 
     const feeToken = chain.fees?.fee_tokens?.[0];
     const stakingDenom = chain.staking?.staking_tokens?.[0]?.denom;
-    const explorer = chain.explorers?.find((e) => e.kind === 'mintscan') || chain.explorers?.[0];
+    const explorer = selectPublicCosmosExplorer(chain.explorers);
 
     // Determine features
     const features = ['stargate', 'ibc-transfer', 'no-legacy-stdTx'];

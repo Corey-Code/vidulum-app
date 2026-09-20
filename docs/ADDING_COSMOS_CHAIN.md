@@ -167,6 +167,9 @@ export const NEW_CHAIN_MAINNET: CosmosNetworkConfig = {
   explorerTxPath: '/tx/{txHash}',
 };
 
+// Prefer Mintscan or a live official explorer. Do not add retired hosts
+// such as explorer.allinbits.com (times out).
+
 // Register in the networks array
 export const COSMOS_NETWORKS: CosmosNetworkConfig[] = [
   // ... existing networks
@@ -241,7 +244,8 @@ The wallet automatically handles endpoint failover:
 
 The sync script and runtime client both drop retired public hosts listed in
 `src/lib/networks/cosmos-endpoints.ts` so a later registry pull does not
-reintroduce QuickApi, Lava public RPC, Whispernode, or Notional cosmosia.
+reintroduce QuickApi, Lava public RPC, Whispernode, Notional cosmosia,
+or `explorer.allinbits.com` (times out).
 
 ## Sync Script Reference
 
