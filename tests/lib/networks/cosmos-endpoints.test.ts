@@ -12,8 +12,10 @@
  * (Lavender.Five 503; Stargaze killed / Kleomedes empty 200; Autostake
  * 404). Leftover Injective Polkachu hops then lingered (RPC/LCD
  * timeout). Leftover dYdX Polkachu dao hosts then lingered after the
- * official registry moved to dydx-rpc.polkachu.com. This keeps those
- * lists honest.
+ * official registry moved to dydx-rpc.polkachu.com. Leftover Juno
+ * Lavender.Five hops then lingered (503). Leftover Celestia lunaroasis
+ * LCD then lingered (TLS-dead) plus leftover Numia LCD (501). This
+ * keeps those lists honest.
  */
 
 import {
@@ -169,6 +171,9 @@ describe('Cosmos endpoint freshness', () => {
     const juno = getChainById('juno-1');
     expect(juno?.rpc[0]).toBe('https://juno.rpc.m.stavr.tech');
     expect(juno?.rpc.join(' ')).not.toContain('itastakers.com');
+    expect(juno?.rpc.concat(juno?.rest ?? []).join(' ')).not.toMatch(
+      /lavenderfive/
+    );
 
     const kujira = getChainById('kaiyo-1');
     expect(kujira?.rpc).toEqual([]);
@@ -181,7 +186,7 @@ describe('Cosmos endpoint freshness', () => {
   it('replaces leftover Celestia, Evmos, Archway, Axelar, Neutron, and Stride hops', () => {
     const celestia = getChainById('celestia');
     expect(celestia?.rpc.concat(celestia?.rest ?? []).join(' ')).not.toMatch(
-      /newmetric\.xyz|api\.lunaroasis\.net/
+      /newmetric\.xyz|api\.lunaroasis\.net|public-celestia-lcd\.numia\.xyz/
     );
     expect(celestia?.rpc).toEqual(
       expect.arrayContaining([
@@ -318,6 +323,40 @@ describe('Cosmos endpoint freshness', () => {
       'https://rest.lavenderfive.com:443/dydx',
       'https://dydx-rest.publicnode.com',
     ]);
+  });
+
+  it('drops leftover Juno Lavender.Five hops that now 503', () => {
+    const juno = getChainById('juno-1');
+    expect(juno?.rpc).toEqual([
+      'https://juno.rpc.m.stavr.tech',
+      'https://juno-rpc.polkachu.com',
+      'https://juno-rpc.kleomedes.network',
+      'https://juno-rpc.stakeandrelax.net',
+      'https://juno-rpc.publicnode.com:443',
+    ]);
+    expect(juno?.rest).toEqual([
+      'https://juno.api.m.stavr.tech',
+      'https://juno-api.polkachu.com',
+      'https://juno-api.kleomedes.network',
+      'https://juno-api.stakeandrelax.net',
+      'https://juno-rest.publicnode.com',
+    ]);
+    expect(juno?.rpc.concat(juno?.rest ?? []).join(' ')).not.toMatch(
+      /lavenderfive\.com/
+    );
+  });
+
+  it('drops leftover Celestia lunaroasis LCD and leftover Numia LCD', () => {
+    const celestia = getChainById('celestia');
+    expect(celestia?.rpc).toEqual(
+      expect.arrayContaining([
+        'https://public-celestia-rpc.numia.xyz',
+        'https://rpc.lunaroasis.net',
+      ])
+    );
+    expect(celestia?.rest.join(' ')).not.toMatch(
+      /api\.lunaroasis\.net|public-celestia-lcd\.numia\.xyz/
+    );
   });
 
   it('replaces leftover dYdX Polkachu dao hosts with current Polkachu hops', () => {
@@ -471,6 +510,12 @@ describe('Cosmos endpoint freshness', () => {
     expect(usesDeprecatedCosmosHost('https://injective-api.polkachu.com')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://dydx-dao-rpc.polkachu.com')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://dydx-dao-api.polkachu.com')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rpc.lavenderfive.com:443/juno')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rest.lavenderfive.com:443/juno')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://api.lunaroasis.net')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://public-celestia-lcd.numia.xyz')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rpc.lunaroasis.net')).toBe(false);
+    expect(usesDeprecatedCosmosHost('https://public-celestia-rpc.numia.xyz')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://dydx-rpc.polkachu.com:443')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://dydx-api.polkachu.com')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://noble-rpc.polkachu.com')).toBe(false);
@@ -506,12 +551,19 @@ describe('Cosmos endpoint freshness', () => {
         'https://kujira-rpc.theamsolutions.info',
         'https://injective-rpc.polkachu.com',
         'https://dydx-dao-rpc.polkachu.com',
+        'https://rpc.lavenderfive.com:443/juno',
+        'https://api.lunaroasis.net',
+        'https://public-celestia-lcd.numia.xyz',
         'https://dydx-rpc.polkachu.com:443',
+        'https://rpc.lunaroasis.net',
+        'https://public-celestia-rpc.numia.xyz',
       ])
     ).toEqual([
       'https://rpc.lavenderfive.com:443/cosmoshub',
       'https://cosmos-rpc.polkachu.com',
       'https://dydx-rpc.polkachu.com:443',
+      'https://rpc.lunaroasis.net',
+      'https://public-celestia-rpc.numia.xyz',
     ]);
   });
 

@@ -38,8 +38,9 @@ describe('SupportedNetworksPanel', () => {
 
     expect(screen.getByText(/BeeZee, Osmosis, AtomOne, Cosmos Hub/)).toBeInTheDocument();
     expect(screen.getByText(/current public RPC and LCD/)).toBeInTheDocument();
+    expect(screen.getByText(/leftover Juno Lavender\.Five hops/)).toBeInTheDocument();
+    expect(screen.getByText(/leftover Celestia lunaroasis LCD/)).toBeInTheDocument();
     expect(screen.getByText(/leftover dYdX Polkachu dao hosts/)).toBeInTheDocument();
-    expect(screen.getByText(/dydx-dao-rpc\.polkachu\.com/)).toBeInTheDocument();
     expect(screen.getByText(/leftover Injective Polkachu hops/)).toBeInTheDocument();
     expect(screen.getByText(/Kujira and Stargaze hops/)).toBeInTheDocument();
     expect(
@@ -58,8 +59,8 @@ describe('SupportedNetworksPanel', () => {
     expect(screen.getByText(/Ethereum, OP Mainnet, BNB Chain, Polygon, Base, Arbitrum One/)).toBeInTheDocument();
     expect(screen.getByText(/Ethereum and compatible networks load balances through current public RPCs/)).toBeInTheDocument();
     expect(screen.getByText(/PublicNode, DRPC, and official chain endpoints/)).toBeInTheDocument();
-    expect(screen.getByText(/1rpc\.io\/sepolia/)).toBeInTheDocument();
-    expect(screen.getByText(/1rpc\.io\/eth, moonriver\.unitedbloc\.com, Sepolia\.org RPCs, zkevm\.polygonscan\.com/)).toBeInTheDocument();
+    expect(screen.getByText(/snowscan\.xyz/)).toBeInTheDocument();
+    expect(screen.getByText(/1rpc\.io\/sepolia, leftover 1rpc\.io\/eth, moonriver\.unitedbloc\.com, Sepolia\.org RPCs, zkevm\.polygonscan\.com/)).toBeInTheDocument();
     expect(screen.getByText(/^Solana$/)).toBeInTheDocument();
     expect(screen.getByText(/official Solana and PublicNode/)).toBeInTheDocument();
     expect(screen.getByText(/Ankr public RPC and Solana dRPC/)).toBeInTheDocument();

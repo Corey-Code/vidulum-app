@@ -88,8 +88,10 @@ The runtime client:
   (MyCrypto, MaticVigil, Cloudflare Ethereum, Ankr public RPC, BlastAPI, leftover
   Sepolia.org RPCs, DNS-dead zkevm.polygonscan.com, leftover
   moonriver.unitedbloc.com, leftover discontinued 1rpc.io/eth, leftover
-  1rpc.io/sepolia (old public path; use public.1rpc.io/sepolia), and old
-  Polygon/Fantom/Moonbeam gateways). See `src/lib/networks/evm-endpoints.ts`.
+  1rpc.io/sepolia (old public path; use public.1rpc.io/sepolia), leftover
+  Avalanche snowscan.xyz (Cloudflare 403; use the official Ava Labs
+  C-Chain explorer), and old Polygon/Fantom/Moonbeam gateways). See
+  `src/lib/networks/evm-endpoints.ts`.
 
 ## Method 3: Manual Configuration (Legacy)
 
@@ -223,8 +225,9 @@ timeout), DNS-dead `zkevm.polygonscan.com`, leftover
 `moonriver.unitedbloc.com` (DNS-dead), leftover discontinued
 `1rpc.io/eth` (HTTP 410), leftover `1rpc.io/sepolia` (old public
 path; intermittent 403 after 1RPC moved public hops to
-`public.1rpc.io`), or the old Polygon/Fantom/Moonbeam
-gateways.
+`public.1rpc.io`), leftover `snowscan.xyz` (Cloudflare 403
+interstitial; official Ava Labs C-Chain explorer remains public),
+or the old Polygon/Fantom/Moonbeam gateways.
 
 ### Pre-bundled Chains
 

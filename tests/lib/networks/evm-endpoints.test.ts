@@ -9,7 +9,9 @@
  * UnitedBloc was denylisted. Leftover 1rpc.io/eth then lingered after
  * 1RPC discontinued that Ethereum hop (HTTP 410). Leftover
  * 1rpc.io/sepolia then lingered after 1RPC moved public hops to
- * public.1rpc.io. This keeps EVM RPC and explorer lists honest.
+ * public.1rpc.io. Leftover Avalanche snowscan.xyz then lingered
+ * after the explorer started returning a Cloudflare 403 interstitial.
+ * This keeps EVM RPC and explorer lists honest.
  */
 
 import {
@@ -149,6 +151,17 @@ describe('EVM endpoint freshness', () => {
     expect(endpointHaystack(zkevm!)).not.toContain('zkevm.polygonscan.com');
   });
 
+  it('points Avalanche users at the official C-Chain explorer instead of leftover snowscan.xyz', () => {
+    const avalanche = getEvmChainByInternalId('avax-mainnet');
+    expect(avalanche?.explorerUrl).toBe('https://subnets.avax.network/c-chain');
+    expect(avalanche?.explorerAccountPath).toBe('/address/{address}');
+    expect(avalanche?.explorerTxPath).toBe('/tx/{txHash}');
+    expect(getExplorerTxUrl('avax-mainnet', 'abcd')).toBe(
+      'https://subnets.avax.network/c-chain/tx/abcd'
+    );
+    expect(endpointHaystack(avalanche!)).not.toContain('snowscan.xyz');
+  });
+
   it('points Fantom users at a live explorer instead of ftmscan.com', () => {
     const fantom = getEvmChainByInternalId('ftm-mainnet');
     expect(fantom?.explorerUrl).toBe('https://explorer.fantom.network');
@@ -179,6 +192,8 @@ describe('EVM endpoint freshness', () => {
     expect(usesDeprecatedEvmHost('https://moonriver.unitedbloc.com')).toBe(true);
     expect(usesDeprecatedEvmHost('https://1rpc.io/eth')).toBe(true);
     expect(usesDeprecatedEvmHost('https://1rpc.io/sepolia')).toBe(true);
+    expect(usesDeprecatedEvmHost('https://snowscan.xyz')).toBe(true);
+    expect(usesDeprecatedEvmHost('https://subnets.avax.network/c-chain')).toBe(false);
     expect(usesDeprecatedEvmHost('https://public.1rpc.io/sepolia')).toBe(false);
     expect(usesDeprecatedEvmHost('https://ethereum-rpc.publicnode.com')).toBe(false);
     expect(usesDeprecatedEvmHost('https://rpc.sepolia.ethpandaops.io')).toBe(false);
@@ -212,6 +227,13 @@ describe('EVM endpoint freshness', () => {
     ).toBe('https://explorer.fantom.network');
     expect(selectPublicEvmExplorer([{ url: 'https://ftmscan.com' }])).toBeUndefined();
     expect(selectPublicEvmExplorer([{ url: 'https://zkevm.polygonscan.com' }])).toBeUndefined();
+    expect(selectPublicEvmExplorer([{ url: 'https://snowscan.xyz' }])).toBeUndefined();
+    expect(
+      selectPublicEvmExplorer([
+        { url: 'https://snowscan.xyz', standard: 'EIP3091' },
+        { url: 'https://subnets.avax.network/c-chain' },
+      ])?.url
+    ).toBe('https://subnets.avax.network/c-chain');
   });
 
   it('keeps the sync-script denylist aligned with evm-endpoints', () => {

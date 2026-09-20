@@ -81,6 +81,10 @@ const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'injective-api.polkachu.com',
   'dydx-dao-rpc.polkachu.com',
   'dydx-dao-api.polkachu.com',
+  'lavenderfive.com:443/juno',
+  'lavenderfive.com/juno',
+  'api.lunaroasis.net',
+  'public-celestia-lcd.numia.xyz',
 ] as const;
 
 // Default chains to include in the bundle (most popular by TVL/usage)

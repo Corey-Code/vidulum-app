@@ -18,8 +18,12 @@
  * injective-api.polkachu.com now time out. Leftover dYdX Polkachu dao
  * hosts then lingered: dydx-dao-rpc.polkachu.com and
  * dydx-dao-api.polkachu.com after the official registry moved to
- * dydx-rpc.polkachu.com / dydx-api.polkachu.com. Keep those hosts out
- * of advertised lists so the first hop can succeed.
+ * dydx-rpc.polkachu.com / dydx-api.polkachu.com. Leftover Juno
+ * Lavender.Five hops then lingered: rpc.lavenderfive.com:443/juno and
+ * rest.lavenderfive.com:443/juno now 503. Leftover Celestia lunaroasis
+ * LCD (api.lunaroasis.net) then lingered after TLS handshake failure,
+ * and leftover Numia LCD (public-celestia-lcd.numia.xyz) returns 501.
+ * Keep those hosts out of advertised lists so the first hop can succeed.
  */
 
 export const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
@@ -78,6 +82,10 @@ export const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'injective-api.polkachu.com',
   'dydx-dao-rpc.polkachu.com',
   'dydx-dao-api.polkachu.com',
+  'lavenderfive.com:443/juno',
+  'lavenderfive.com/juno',
+  'api.lunaroasis.net',
+  'public-celestia-lcd.numia.xyz',
 ] as const;
 
 export function cosmosEndpointHaystack(

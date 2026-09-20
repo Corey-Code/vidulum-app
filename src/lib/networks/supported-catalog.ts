@@ -4,7 +4,8 @@
  * The live registry can include additional auto-synced chains. This list is the
  * curated set shown in Settings and kept in sync with README.md.
  *
- * Last reviewed: 2026-09-20 (leftover dYdX Polkachu dao host refresh).
+ * Last reviewed: 2026-09-20 (leftover Avalanche snowscan explorer and
+ * leftover Juno Lavender.Five / Celestia LCD hop refresh).
  */
 
 export { DEPRECATED_SVM_ENDPOINT_HOSTS } from './svm-endpoints';
@@ -66,11 +67,11 @@ export function getSupportedNetworkFamilyLabel(family: SupportedNetworkFamily): 
 export function getSupportedNetworkFamilySummary(family: SupportedNetworkFamily): string {
   switch (family) {
     case 'cosmos':
-      return 'Staking, IBC transfers, and Cosmos assets load through current public RPC and LCD hosts. Retired leftover dYdX Polkachu dao hosts (dydx-dao-rpc.polkachu.com / dydx-dao-api.polkachu.com) were replaced with current dydx-rpc.polkachu.com hops. Earlier leftover Injective Polkachu hops (timeout), leftover Kujira and Stargaze hops, Autostake 404 hops, Evmos, official Neutron, ezstaking.dev, itastakers.com, and setten.io hops stay denylisted. Explorer links use current hosts (Mintscan, ATOMScan, BeeZee Explorer); retired leftover explorers such as ezstaking.app, finder.kujira.app, and explorers.guru were removed.';
+      return 'Staking, IBC transfers, and Cosmos assets load through current public RPC and LCD hosts. Retired leftover Juno Lavender.Five hops (rpc.lavenderfive.com:443/juno / rest.lavenderfive.com:443/juno 503) and leftover Celestia lunaroasis LCD (api.lunaroasis.net TLS-dead) were removed. Earlier leftover dYdX Polkachu dao hosts, leftover Injective Polkachu hops (timeout), leftover Kujira and Stargaze hops, Autostake 404 hops, Evmos, official Neutron, ezstaking.dev, itastakers.com, and setten.io hops stay denylisted. Explorer links use current hosts (Mintscan, ATOMScan, BeeZee Explorer); retired leftover explorers such as ezstaking.app, finder.kujira.app, and explorers.guru were removed.';
     case 'utxo':
       return 'Bitcoin and Litecoin can load balances today. Other Bitcoin-like networks still show your address. Explorer links use current hosts (CipherScan, Ravencoin Explorer, OKLink, Flux Blockbook); retired sites such as dogechain.info, explorer.runonflux.io, and explorer.nosocoin.com were removed.';
     case 'evm':
-      return 'Ethereum and compatible networks load balances through current public RPCs (PublicNode, DRPC, and official chain endpoints). Retired leftover hosts such as 1rpc.io/sepolia were removed. Earlier leftover 1rpc.io/eth, moonriver.unitedbloc.com, Sepolia.org RPCs, zkevm.polygonscan.com, Cloudflare Ethereum, Ankr public RPC, and BlastAPI hops stay denylisted.';
+      return 'Ethereum and compatible networks load balances through current public RPCs (PublicNode, DRPC, and official chain endpoints). Retired leftover hosts such as snowscan.xyz were removed. Earlier leftover 1rpc.io/sepolia, leftover 1rpc.io/eth, moonriver.unitedbloc.com, Sepolia.org RPCs, zkevm.polygonscan.com, Cloudflare Ethereum, Ankr public RPC, and BlastAPI hops stay denylisted.';
     case 'svm':
       return 'Solana mainnet balances load through current public RPCs (official Solana and PublicNode). Retired or key-gated hosts such as Ankr public RPC and Solana dRPC were removed.';
     default: {

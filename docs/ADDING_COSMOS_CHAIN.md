@@ -137,7 +137,8 @@ The dynamic client:
 - Caches results in `browser.storage.local` for 24 hours
 - Works for any chain in the registry
 - Filters out retired public hosts (QuickApi, Lava public RPC, Whispernode,
-  Notional cosmosia, leftover dYdX Polkachu dao hosts, leftover Injective
+  Notional cosmosia,   leftover Juno Lavender.Five hops, leftover Celestia lunaroasis LCD,
+  leftover dYdX Polkachu dao hosts, leftover Injective
   Polkachu RPC/LCD hops, leftover Kujira / Stargaze RPC/LCD hops, leftover
   Evmos RPC/LCD hops, leftover official Neutron RPC/LCD hops, leftover
   ezstaking.dev / itastakers / setten.io hops, and others). See
@@ -250,6 +251,9 @@ The wallet automatically handles endpoint failover:
 The sync script and runtime client both drop retired public hosts listed in
 `src/lib/networks/cosmos-endpoints.ts` so a later registry pull does not
 reintroduce QuickApi, Lava public RPC, Whispernode, Notional cosmosia,
+leftover Juno Lavender.Five hops (`lavenderfive.com:443/juno` 503),
+leftover Celestia lunaroasis LCD (`api.lunaroasis.net` TLS handshake
+failure) and leftover Numia LCD (`public-celestia-lcd.numia.xyz` 501),
 leftover dYdX Polkachu dao hosts (`dydx-dao-rpc.polkachu.com` /
 `dydx-dao-api.polkachu.com`; official registry now lists
 `dydx-rpc.polkachu.com` / `dydx-api.polkachu.com`), leftover Injective

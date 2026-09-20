@@ -12,7 +12,10 @@
  * 1rpc.io/eth then lingered after 1RPC discontinued that Ethereum hop
  * (HTTP 410). Leftover 1rpc.io/sepolia then lingered after 1RPC moved
  * public hops to public.1rpc.io (old 1rpc.io/sepolia now 403s
- * intermittently; public.1rpc.io/sepolia stays public). Keep those
+ * intermittently; public.1rpc.io/sepolia stays public). Leftover
+ * Avalanche snowscan.xyz then lingered after the explorer started
+ * returning a Cloudflare 403 interstitial. Official Ava Labs C-Chain
+ * explorer pages on subnets.avax.network remain public. Keep those
  * hosts out of advertised lists so the first hop can succeed.
  */
 
@@ -44,6 +47,7 @@ export const DEPRECATED_EVM_ENDPOINT_HOSTS = [
   'zkevm.polygonscan.com',
   '1rpc.io/eth',
   'https://1rpc.io/sepolia',
+  'snowscan.xyz',
 ] as const;
 
 export function evmEndpointHaystack(rpcUrls: readonly string[], explorerUrl?: string): string {
@@ -78,8 +82,9 @@ export interface EvmExplorerCandidate {
 }
 
 /**
- * Pick a live public explorer, skipping retired hosts such as ftmscan.com
- * and DNS-dead zkevm.polygonscan.com after the July 2026 zkEVM sunset.
+ * Pick a live public explorer, skipping retired hosts such as ftmscan.com,
+ * leftover snowscan.xyz (Cloudflare 403), and DNS-dead
+ * zkevm.polygonscan.com after the July 2026 zkEVM sunset.
  */
 export function selectPublicEvmExplorer(
   explorers: readonly EvmExplorerCandidate[] = []
