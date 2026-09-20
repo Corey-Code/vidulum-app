@@ -59,19 +59,22 @@ describe('Supported network catalog', () => {
       /current public RPCs \(PublicNode, DRPC/
     );
     expect(getSupportedNetworkFamilySummary('evm')).toMatch(
-      /1rpc\.io\/sepolia/
+      /snowscan\.xyz/
     );
     expect(getSupportedNetworkFamilySummary('evm')).toMatch(
-      /1rpc\.io\/eth, moonriver\.unitedbloc\.com, Sepolia\.org RPCs, zkevm\.polygonscan\.com/
+      /1rpc\.io\/sepolia, leftover 1rpc\.io\/eth, moonriver\.unitedbloc\.com, Sepolia\.org RPCs, zkevm\.polygonscan\.com/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
       /current public RPC and LCD/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
-      /leftover dYdX Polkachu dao hosts/
+      /leftover Juno Lavender\.Five hops/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
-      /dydx-dao-rpc\.polkachu\.com/
+      /leftover Celestia lunaroasis LCD/
+    );
+    expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
+      /leftover dYdX Polkachu dao hosts/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
       /leftover Injective Polkachu hops \(timeout\)/

@@ -15,7 +15,7 @@ Available as:
 
 ### Cosmos SDK Chains
 
-Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/cosmos/chain-registry). Advertised Cosmos networks load balances through current public RPC and LCD hosts (CryptoCrew, Lavender.Five, Polkachu, PublicNode, and official chain endpoints). Retired leftover dYdX Polkachu dao hosts (dydx-dao-rpc.polkachu.com / dydx-dao-api.polkachu.com) were replaced with current dydx-rpc.polkachu.com hops. Earlier leftover Injective Polkachu hops (timeout), leftover Kujira and Stargaze hops, Autostake 404 hops, Evmos, official Neutron, ezstaking.dev, itastakers.com, and setten.io hops stay denylisted. Explorer links use current hosts (Mintscan, ATOMScan, BeeZee Explorer). Retired leftover explorers such as ezstaking.app, finder.kujira.app, and explorers.guru were removed.
+Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/cosmos/chain-registry). Advertised Cosmos networks load balances through current public RPC and LCD hosts (CryptoCrew, Lavender.Five, Polkachu, PublicNode, and official chain endpoints). Retired leftover Juno Lavender.Five hops (rpc.lavenderfive.com:443/juno / rest.lavenderfive.com:443/juno 503) and leftover Celestia lunaroasis LCD (api.lunaroasis.net TLS-dead) were removed. Earlier leftover dYdX Polkachu dao hosts, leftover Injective Polkachu hops (timeout), leftover Kujira and Stargaze hops, Autostake 404 hops, Evmos, official Neutron, ezstaking.dev, itastakers.com, and setten.io hops stay denylisted. Explorer links use current hosts (Mintscan, ATOMScan, BeeZee Explorer). Retired leftover explorers such as ezstaking.app, finder.kujira.app, and explorers.guru were removed.
 
 | Network    | Chain ID    | Symbol | Status  |
 | ---------- | ----------- | ------ | ------- |
@@ -53,7 +53,7 @@ Bitcoin and Litecoin load balances through Esplora APIs (Blockstream, Mempool.sp
 | Base         | base-mainnet | ETH    | 8453     | Enabled |
 | Arbitrum One | arb1-mainnet | ETH    | 42161    | Enabled |
 
-Advertised EVM networks load balances through current public RPCs (PublicNode, DRPC, and official chain endpoints). Retired leftover hosts such as 1rpc.io/sepolia were removed. Earlier leftover 1rpc.io/eth, moonriver.unitedbloc.com, Sepolia.org RPCs, zkevm.polygonscan.com, Cloudflare Ethereum, Ankr public RPC, and BlastAPI hops stay denylisted.
+Advertised EVM networks load balances through current public RPCs (PublicNode, DRPC, and official chain endpoints). Retired leftover hosts such as snowscan.xyz were removed. Earlier leftover 1rpc.io/sepolia, leftover 1rpc.io/eth, moonriver.unitedbloc.com, Sepolia.org RPCs, zkevm.polygonscan.com, Cloudflare Ethereum, Ankr public RPC, and BlastAPI hops stay denylisted. Avalanche explorer links now use the official Ava Labs C-Chain explorer after leftover snowscan.xyz started returning a Cloudflare 403 interstitial.
 
 ### SVM Chains (Solana-like)
 

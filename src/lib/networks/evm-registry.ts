@@ -18,6 +18,9 @@
  * discontinued that Ethereum endpoint (HTTP 410).
  * Leftover 1rpc.io/sepolia hop refreshed 2026-09-20 after 1RPC
  * moved public hops to public.1rpc.io (old path 403s intermittently).
+ * Leftover Avalanche snowscan.xyz explorer refreshed 2026-09-20 after
+ * the host started returning a Cloudflare 403 interstitial. Official
+ * Ava Labs C-Chain explorer pages remain public.
  */
 
 import { EvmNetworkConfig } from './types';
@@ -523,7 +526,9 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
       symbol: 'AVAX',
       decimals: 18
     },
-    explorerUrl: 'https://snowscan.xyz',
+    // Leftover snowscan.xyz now returns a Cloudflare 403 interstitial.
+    // Official Ava Labs C-Chain explorer still serves address/tx pages.
+    explorerUrl: 'https://subnets.avax.network/c-chain',
     explorerAccountPath: '/address/{address}',
     explorerTxPath: '/tx/{txHash}',
     infoUrl: 'https://www.avax.network/',

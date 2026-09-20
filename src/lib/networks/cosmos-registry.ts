@@ -30,6 +30,12 @@
  * official registry moved to dydx-rpc.polkachu.com / dydx-api.polkachu.com
  * (old dydx-dao-* names are leftover). Kingnodes, Lavender.Five, and
  * PublicNode remain public.
+ * Leftover Juno Lavender.Five RPC/LCD refreshed 2026-09-20 after
+ * rpc.lavenderfive.com:443/juno and rest.lavenderfive.com:443/juno
+ * started 503ing. Leftover Celestia lunaroasis LCD
+ * (api.lunaroasis.net) fails TLS; leftover Numia LCD
+ * (public-celestia-lcd.numia.xyz) returns 501. Celestia RPC hops
+ * (including lunaroasis / Numia RPC) remain public.
  */
 
 import { CosmosNetworkConfig } from './types';
@@ -126,6 +132,9 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     symbol: 'TIA',
     decimals: 6,
     coinType: 118,
+    // Leftover lunaroasis LCD (api.lunaroasis.net) fails TLS.
+    // Leftover Numia LCD (public-celestia-lcd.numia.xyz) returns 501.
+    // lunaroasis / Numia RPC hops remain public.
     rpc: [
       'https://public-celestia-rpc.numia.xyz',
       'https://rpc.lunaroasis.net',
@@ -297,6 +306,8 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     symbol: 'JUNO',
     decimals: 6,
     coinType: 118,
+    // Leftover Lavender.Five Juno RPC/LCD now 503. Stavr, Polkachu,
+    // Kleomedes, Stake&Relax, and PublicNode remain public.
     rpc: [
       'https://juno.rpc.m.stavr.tech',
       'https://juno-rpc.polkachu.com',
