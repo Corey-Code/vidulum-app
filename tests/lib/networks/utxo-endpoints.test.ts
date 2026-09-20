@@ -110,12 +110,50 @@ describe('UTXO endpoint freshness', () => {
     expect(getExplorerTxUrl('ritocoin-mainnet', 'abcd')).toBeNull();
   });
 
-  it('keeps live explorers on Flux, BitcoinZ, NOSO, Bitcoin, and Litecoin', () => {
-    expect(FLUX_MAINNET.explorerUrl).toBe('https://explorer.runonflux.io');
+  it('points Dogecoin users at OKLink instead of dogechain.info', () => {
+    expect(DOGECOIN_MAINNET.explorerUrl).toBe('https://www.oklink.com/dogecoin');
+    expect(DOGECOIN_MAINNET.explorerAccountPath).toBe('/address/{address}');
+    expect(DOGECOIN_MAINNET.explorerTxPath).toBe('/tx/{txHash}');
+    expect(getExplorerAccountUrl('dogecoin-mainnet', 'Dexample')).toBe(
+      'https://www.oklink.com/dogecoin/address/Dexample'
+    );
+    expect(getExplorerTxUrl('dogecoin-mainnet', 'abcd')).toBe(
+      'https://www.oklink.com/dogecoin/tx/abcd'
+    );
+    expect(DOGECOIN_MAINNET.explorerUrl).not.toContain('dogechain.info');
+  });
+
+  it('points Flux users at Blockbook instead of explorer.runonflux.io', () => {
+    expect(FLUX_MAINNET.explorerUrl).toBe('https://blockbook.runonflux.io');
+    expect(FLUX_MAINNET.explorerAccountPath).toBe('/address/{address}');
+    expect(FLUX_MAINNET.explorerTxPath).toBe('/tx/{txHash}');
+    expect(getExplorerAccountUrl('flux-mainnet', 't1example')).toBe(
+      'https://blockbook.runonflux.io/address/t1example'
+    );
+    expect(getExplorerTxUrl('flux-mainnet', 'abcd')).toBe(
+      'https://blockbook.runonflux.io/tx/abcd'
+    );
+    expect(FLUX_MAINNET.explorerUrl).not.toContain('explorer.runonflux.io');
+  });
+
+  it('omits NOSO explorer links after the archive page lost address URLs', () => {
+    expect(NOSO_MAINNET.explorerUrl).toBeUndefined();
+    expect(getExplorerAccountUrl('noso-mainnet', 'Xexample')).toBeNull();
+    expect(getExplorerTxUrl('noso-mainnet', 'abcd')).toBeNull();
+  });
+
+  it('keeps live explorers on BitcoinZ, Bitcoin, and Litecoin', () => {
     expect(BITCOINZ_MAINNET.explorerUrl).toBe('https://explorer.btcz.rocks');
-    expect(NOSO_MAINNET.explorerUrl).toBe('https://explorer.nosocoin.com');
     expect(BITCOIN_MAINNET.explorerUrl).toBe('https://blockstream.info');
     expect(LITECOIN_MAINNET.explorerUrl).toBe('https://litecoinspace.org');
+  });
+
+  it('classifies leftover retired Bitcoin-like explorer hosts', () => {
+    expect(usesDeprecatedUtxoHost('https://dogechain.info/address/Dexample')).toBe(true);
+    expect(usesDeprecatedUtxoHost('https://explorer.runonflux.io/address/t1example')).toBe(true);
+    expect(usesDeprecatedUtxoHost('https://explorer.nosocoin.com/address/Xexample')).toBe(true);
+    expect(usesDeprecatedUtxoHost('https://www.oklink.com/dogecoin/address/Dexample')).toBe(false);
+    expect(usesDeprecatedUtxoHost('https://blockbook.runonflux.io/address/t1example')).toBe(false);
   });
 
   it('does not advertise Insight-style APIs that BitcoinClient cannot read', () => {

@@ -12,8 +12,9 @@
  * After a period of low activity, several configs still pointed at retired
  * explorers or at live hosts that return a different JSON shape. Keep those
  * hosts out of apiUrls so failover does not burn time on a guaranteed miss.
- * Also keep retired explorer sites (401, TLS-dead) out of explorerUrl so
- * Settings and Dashboard do not send users to a dead page.
+ * Also keep retired explorer sites (401, TLS-dead, Cloudflare 403, or
+ * address/tx 404) out of explorerUrl so Settings and Dashboard do not
+ * send users to a dead page.
  */
 
 export const DEPRECATED_UTXO_ENDPOINT_HOSTS = [
@@ -24,6 +25,9 @@ export const DEPRECATED_UTXO_ENDPOINT_HOSTS = [
   'ravencoin.network',
   'explorer.ritocoin.org',
   'blockbook.ritocoin.org',
+  'dogechain.info',
+  'explorer.runonflux.io',
+  'explorer.nosocoin.com',
 ] as const;
 
 /** Live hosts that are not Esplora-compatible. */

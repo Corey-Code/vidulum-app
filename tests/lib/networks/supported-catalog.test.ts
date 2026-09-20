@@ -50,7 +50,10 @@ describe('Supported network catalog', () => {
       /Bitcoin and Litecoin can load balances today/
     );
     expect(getSupportedNetworkFamilySummary('utxo')).toMatch(
-      /CipherScan, Ravencoin Explorer/
+      /CipherScan, Ravencoin Explorer, OKLink, Flux Blockbook/
+    );
+    expect(getSupportedNetworkFamilySummary('utxo')).toMatch(
+      /dogechain\.info, explorer\.runonflux\.io, and explorer\.nosocoin\.com/
     );
     expect(getSupportedNetworkFamilySummary('evm')).toMatch(
       /current public RPCs/
