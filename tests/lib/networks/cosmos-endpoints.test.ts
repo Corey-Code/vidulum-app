@@ -4,7 +4,8 @@
  * After the lull, advertised Cosmos Hub still led with Lava, QuickApi, and
  * DNS-dead Whispernode/Onivalidator hops. Leftover side-chain RPC/LCD lists
  * still pointed at ezstaking.dev (521), itastakers (DNS-dead), setten.io
- * (TLS hostname mismatch), and other retired hops. This keeps those lists honest.
+ * (TLS hostname mismatch), and other retired hops. Leftover official Neutron
+ * hops then lingered (HTML 302 / TLS-dead LCD). This keeps those lists honest.
  */
 
 import {
@@ -202,19 +203,33 @@ describe('Cosmos endpoint freshness', () => {
     expect(axelar?.rpc.concat(axelar?.rest ?? []).join(' ')).not.toContain('imperator.co');
 
     const neutron = getChainById('neutron-1');
-    expect(neutron?.rpc.concat(neutron?.rest ?? []).join(' ')).not.toContain('tm.p2p.org');
-    expect(neutron?.rpc).toEqual(
-      expect.arrayContaining([
-        'https://rpc-lb.neutron.org',
-        'https://neutron-rpc.polkachu.com:443',
-      ])
+    expect(neutron?.rpc.concat(neutron?.rest ?? []).join(' ')).not.toMatch(
+      /tm\.p2p\.org|rpc-lb\.neutron\.org|voidara|pulsarix/
     );
+    expect(neutron?.rpc[0]).toBe('https://rpc.lavenderfive.com:443/neutron');
 
     const stride = getChainById('stride-1');
     expect(stride?.rpc.concat(stride?.rest ?? []).join(' ')).not.toMatch(
       /silentvalidator\.com|cosmos-spaces\.cloud/
     );
     expect(stride?.rpc[0]).toBe('https://stride-rpc.polkachu.com/');
+  });
+
+  it('replaces leftover official Neutron RPC/LCD hops with current public hops', () => {
+    const neutron = getChainById('neutron-1');
+    expect(neutron?.rpc).toEqual([
+      'https://rpc.lavenderfive.com:443/neutron',
+      'https://neutron-rpc.polkachu.com:443',
+      'https://rpc.neutron.solva.solutions:443',
+    ]);
+    expect(neutron?.rest).toEqual([
+      'https://rest.lavenderfive.com:443/neutron',
+      'https://neutron-api.polkachu.com',
+      'https://rest.neutron.solva.solutions:443',
+    ]);
+    expect(neutron?.rpc.concat(neutron?.rest ?? []).join(' ')).not.toMatch(
+      /rpc-lb\.neutron\.org|rest-lb\.neutron\.org|neutron-1\.neutron\.org/
+    );
   });
 
   it('points Kujira users at ATOMScan instead of finder.kujira.app', () => {
@@ -311,6 +326,11 @@ describe('Cosmos endpoint freshness', () => {
     expect(usesDeprecatedCosmosHost('https://celestia-rpc.mesa.newmetric.xyz')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://tendermint.bd.evmos.org:26657')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://rpc.novel.remedy.tm.p2p.org')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rpc-lb.neutron.org')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rest-lb.neutron.org')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rest-voidara.neutron-1.neutron.org')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rest-pulsarix.neutron-1.neutron.org')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rpc.lavenderfive.com:443/neutron')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://www.mintscan.io/atomone')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://atomscan.com/juno')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://www.mintscan.io/celestia')).toBe(false);
@@ -327,6 +347,8 @@ describe('Cosmos endpoint freshness', () => {
         'https://rpc-stargaze.ezstaking.dev',
         'https://rpc-juno.itastakers.com',
         'https://rpc.kaiyo.kujira.setten.io',
+        'https://rpc-lb.neutron.org',
+        'https://rest-voidara.neutron-1.neutron.org',
       ])
     ).toEqual([
       'https://rpc.lavenderfive.com:443/cosmoshub',

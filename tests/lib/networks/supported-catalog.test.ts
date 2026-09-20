@@ -68,6 +68,9 @@ describe('Supported network catalog', () => {
       /current public RPC and LCD/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
+      /rpc-lb\.neutron\.org and neutron-1\.neutron\.org/
+    );
+    expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
       /ezstaking\.dev, itastakers\.com, and setten\.io/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(

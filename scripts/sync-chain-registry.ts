@@ -56,6 +56,9 @@ const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'tm.p2p.org',
   'silentvalidator.com',
   'cosmos-spaces.cloud',
+  'rpc-lb.neutron.org',
+  'rest-lb.neutron.org',
+  'neutron-1.neutron.org',
 ] as const;
 
 // Default chains to include in the bundle (most popular by TVL/usage)
