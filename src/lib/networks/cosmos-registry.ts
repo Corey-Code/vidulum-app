@@ -16,6 +16,9 @@
  * Leftover official Neutron RPC/LCD hops refreshed 2026-09-20 after
  * rpc-lb.neutron.org / rest-lb.neutron.org started serving HTML and
  * rest-*.neutron-1.neutron.org LCD hosts failed TLS.
+ * Leftover Evmos RPC/LCD hops refreshed 2026-09-20 after Lavender.Five
+ * started 503ing the killed chain, plus leftover goldenratiostaking.net
+ * / owallet.io (502) and w3coins.io / stakeflow.io (DNS-dead) hops.
  */
 
 import { CosmosNetworkConfig } from './types';
@@ -182,12 +185,11 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     symbol: 'INJ',
     decimals: 6,
     coinType: 60,
+    // goldenratiostaking.net now 502s. stakeflow.io no longer resolves.
     rpc: [
       'https://injective-rpc.highstakes.ch',
-      'https://rpc.injective.goldenratiostaking.net',
       'https://injective-rpc.polkachu.com',
-      'https://rpc.lavenderfive.com:443/injective',
-      'https://rpc-injective-01.stakeflow.io'
+      'https://rpc.lavenderfive.com:443/injective'
     ],
     rest: [
       'https://injective-api.highstakes.ch',
@@ -325,15 +327,13 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
       'https://rpc-akash.ecostake.com:443',
       'https://akash-rpc.polkachu.com',
       'https://akash-rpc.kleomedes.network',
-      'https://akash-mainnet-rpc.cosmonautstakes.com:443',
-      'https://akash-rpc.w3coins.io'
+      'https://akash-mainnet-rpc.cosmonautstakes.com:443'
     ],
     rest: [
       'https://rest-akash.ecostake.com',
       'https://akash-api.polkachu.com',
       'https://akash.c29r3.xyz:443/api',
-      'https://akash-api.kleomedes.network',
-      'https://api-akash-01.stakeflow.io'
+      'https://akash-api.kleomedes.network'
     ],
     bech32Prefix: 'akash',
     feeDenom: 'uakt',
@@ -490,14 +490,11 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     symbol: 'AEVMOS',
     decimals: 6,
     coinType: 60,
-    // Official Blockdaemon hops no longer resolve. PublicNode and Polkachu
-    // Evmos subdomains are gone. Lavender.Five remains the public hop.
-    rpc: [
-      'https://rpc.lavenderfive.com:443/evmos'
-    ],
-    rest: [
-      'https://rest.lavenderfive.com:443/evmos'
-    ],
+    // Evmos was marked killed in the Cosmos Chain Registry after validators
+    // halted (~2026-05-18). Leftover Lavender.Five RPC/LCD now 503. No
+    // public JSON hop remains. Mintscan still serves historical pages.
+    rpc: [],
+    rest: [],
     bech32Prefix: 'evmos',
     feeDenom: 'aevmos',
     gasPrice: '25000000000',
@@ -522,13 +519,11 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     coinType: 118,
     rpc: [
       'https://noble-rpc.polkachu.com',
-      'https://rpc.lavenderfive.com:443/noble',
-      'https://noble-rpc.owallet.io'
+      'https://rpc.lavenderfive.com:443/noble'
     ],
     rest: [
       'https://noble-api.polkachu.com',
-      'https://rest.lavenderfive.com:443/noble',
-      'https://noble-rest.owallet.io'
+      'https://rest.lavenderfive.com:443/noble'
     ],
     bech32Prefix: 'noble',
     feeDenom: 'uusdc',
@@ -587,12 +582,10 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
       'https://rpc.lavenderfive.com:443/terra2',
       'https://terra-rpc.polkachu.com',
       'https://terra-rpc.stakely.io:443/',
-      'https://terra-rpc.publicnode.com:443',
-      'https://rpc-terra-01.stakeflow.io'
+      'https://terra-rpc.publicnode.com:443'
     ],
     rest: [
       'https://terra-rest.publicnode.com',
-      'https://api-terra-01.stakeflow.io',
       'https://terra-phoenix-api.highstakes.ch',
       'https://terra2.tdrsys.com'
     ],

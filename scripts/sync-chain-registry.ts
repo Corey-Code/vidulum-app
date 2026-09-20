@@ -59,6 +59,12 @@ const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'rpc-lb.neutron.org',
   'rest-lb.neutron.org',
   'neutron-1.neutron.org',
+  'lavenderfive.com:443/evmos',
+  'lavenderfive.com/evmos',
+  'goldenratiostaking.net',
+  'owallet.io',
+  'w3coins.io',
+  'stakeflow.io',
 ] as const;
 
 // Default chains to include in the bundle (most popular by TVL/usage)
@@ -76,7 +82,6 @@ const DEFAULT_CHAINS = [
   'neutron',
   'archway',
   'axelar',
-  'evmos',
   'noble',
   'stride',
   'terra2',
