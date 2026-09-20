@@ -16,6 +16,8 @@
  * moonriver.unitedbloc.com stopped resolving.
  * Leftover 1rpc.io/eth hop refreshed 2026-09-20 after 1RPC
  * discontinued that Ethereum endpoint (HTTP 410).
+ * Leftover 1rpc.io/sepolia hop refreshed 2026-09-20 after 1RPC
+ * moved public hops to public.1rpc.io (old path 403s intermittently).
  */
 
 import { EvmNetworkConfig } from './types';
@@ -665,11 +667,13 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     chainId: 11155111,
     rpcUrls: [
       // sepolia.org discontinued its RPCs (rpc.sepolia.org 404,
-      // rpc2.sepolia.org times out). PublicNode, Tenderly, 1RPC, and
+      // rpc2.sepolia.org times out). Leftover 1rpc.io/sepolia is the
+      // old public path (intermittent 403 after 1RPC moved public hops
+      // to public.1rpc.io). PublicNode, Tenderly, public.1rpc.io, and
       // EthPandaOps remain public.
       'https://ethereum-sepolia-rpc.publicnode.com',
       'https://sepolia.gateway.tenderly.co',
-      'https://1rpc.io/sepolia',
+      'https://public.1rpc.io/sepolia',
       'https://rpc.sepolia.ethpandaops.io'
     ],
     nativeCurrency: {

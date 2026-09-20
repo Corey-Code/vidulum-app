@@ -10,8 +10,10 @@
  * Leftover Moonriver UnitedBloc then lingered after Moonbeam UnitedBloc
  * was denylisted: moonriver.unitedbloc.com no longer resolves. Leftover
  * 1rpc.io/eth then lingered after 1RPC discontinued that Ethereum hop
- * (HTTP 410; other 1RPC paths such as Sepolia still answer). Keep
- * those hosts out of advertised lists so the first hop can succeed.
+ * (HTTP 410). Leftover 1rpc.io/sepolia then lingered after 1RPC moved
+ * public hops to public.1rpc.io (old 1rpc.io/sepolia now 403s
+ * intermittently; public.1rpc.io/sepolia stays public). Keep those
+ * hosts out of advertised lists so the first hop can succeed.
  */
 
 export const DEPRECATED_EVM_ENDPOINT_HOSTS = [
@@ -41,6 +43,7 @@ export const DEPRECATED_EVM_ENDPOINT_HOSTS = [
   'rpc2.sepolia.org',
   'zkevm.polygonscan.com',
   '1rpc.io/eth',
+  'https://1rpc.io/sepolia',
 ] as const;
 
 export function evmEndpointHaystack(rpcUrls: readonly string[], explorerUrl?: string): string {

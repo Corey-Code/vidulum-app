@@ -111,7 +111,7 @@ const WebAppFrame: React.FC<{ children: React.ReactNode }> = ({ children }) => (
       <Text fontSize="xs" color="gray.400">
         Vidulum is a cross-chain wallet for Cosmos, Bitcoin-like, EVM, and Solana networks. Use
         Vidulum for IBC transfers, multi-chain swaps, and asset management across supported
-        networks. Leftover Ethereum 1RPC and Injective Polkachu hosts last checked in September 2026.
+        networks. Leftover Sepolia 1RPC hosts last checked in September 2026.
       </Text>
     </Box>
   </Flex>

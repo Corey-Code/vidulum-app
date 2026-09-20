@@ -59,10 +59,10 @@ describe('Supported network catalog', () => {
       /current public RPCs \(PublicNode, DRPC/
     );
     expect(getSupportedNetworkFamilySummary('evm')).toMatch(
-      /1rpc\.io\/eth/
+      /1rpc\.io\/sepolia/
     );
     expect(getSupportedNetworkFamilySummary('evm')).toMatch(
-      /moonriver\.unitedbloc\.com, Sepolia\.org RPCs, zkevm\.polygonscan\.com/
+      /1rpc\.io\/eth, moonriver\.unitedbloc\.com, Sepolia\.org RPCs, zkevm\.polygonscan\.com/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
       /current public RPC and LCD/
