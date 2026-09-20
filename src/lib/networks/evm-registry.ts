@@ -12,6 +12,8 @@
  * hops refreshed 2026-09-20.
  * Leftover Sepolia.org RPCs and DNS-dead zkevm.polygonscan.com explorer
  * refreshed 2026-09-20 after sepolia.org discontinued and zkEVM sunset.
+ * Leftover Moonriver UnitedBloc hop refreshed 2026-09-20 after
+ * moonriver.unitedbloc.com stopped resolving.
  */
 
 import { EvmNetworkConfig } from './types';
@@ -407,10 +409,10 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     coinType: 60,
     chainId: 1285,
     rpcUrls: [
-      // Official, Dwellir, and BlastAPI hops are DNS-dead or discontinued.
+      // Official, Dwellir, BlastAPI, and leftover UnitedBloc hops are
+      // DNS-dead or discontinued. OnFinality and DRPC remain public.
       'https://moonriver.api.onfinality.io/public',
-      'https://moonriver.drpc.org',
-      'https://moonriver.unitedbloc.com'
+      'https://moonriver.drpc.org'
     ],
     nativeCurrency: {
       name: 'Moonriver',

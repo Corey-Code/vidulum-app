@@ -41,6 +41,7 @@ const DEPRECATED_EVM_ENDPOINT_HOSTS = [
   'rpc.api.moonbeam.network',
   'moonbeam-rpc.dwellir.com',
   'moonbeam.unitedbloc.com',
+  'moonriver.unitedbloc.com',
   'rpc.api.moonriver.moonbeam.network',
   'moonriver-rpc.dwellir.com',
   'blast.din.dev',

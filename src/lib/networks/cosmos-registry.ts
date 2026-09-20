@@ -19,6 +19,10 @@
  * Leftover Evmos RPC/LCD hops refreshed 2026-09-20 after Lavender.Five
  * started 503ing the killed chain, plus leftover goldenratiostaking.net
  * / owallet.io (502) and w3coins.io / stakeflow.io (DNS-dead) hops.
+ * Leftover Kujira / Stargaze / dYdX hops refreshed 2026-09-20 after
+ * Lavender.Five started 503ing Kujira and Stargaze, Stargaze was marked
+ * killed (Kleomedes empty 200; official/Polkachu DNS-dead), and Autostake
+ * public hops 404ed.
  */
 
 import { CosmosNetworkConfig } from './types';
@@ -152,16 +156,18 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     symbol: 'ADYDX',
     decimals: 6,
     coinType: 118,
+    // dydx-mainnet-rpc.autostake.com now 404s. PublicNode remains public.
     rpc: [
       'https://dydx-rpc.kingnodes.com:443',
       'https://dydx-dao-rpc.polkachu.com',
       'https://rpc.lavenderfive.com:443/dydx',
-      'https://dydx-mainnet-rpc.autostake.com:443'
+      'https://dydx-rpc.publicnode.com:443'
     ],
     rest: [
       'https://dydx-dao-api.polkachu.com',
       'https://dydx-rest.kingnodes.com:443',
-      'https://rest.lavenderfive.com:443/dydx'
+      'https://rest.lavenderfive.com:443/dydx',
+      'https://dydx-rest.publicnode.com'
     ],
     bech32Prefix: 'dydx',
     feeDenom: 'adydx',
@@ -254,14 +260,12 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     symbol: 'STARS',
     decimals: 6,
     coinType: 118,
-    rpc: [
-      'https://stargaze-rpc.kleomedes.network',
-      'https://rpc.lavenderfive.com:443/stargaze'
-    ],
-    rest: [
-      'https://stargaze-api.kleomedes.network',
-      'https://rest.lavenderfive.com:443/stargaze'
-    ],
+    // Stargaze was marked killed in the Cosmos Chain Registry. Leftover
+    // Lavender.Five RPC/LCD now 503. Kleomedes returns empty 200s.
+    // Official stargaze-apis.com and Polkachu no longer resolve. No
+    // public JSON hop remains. Mintscan still serves historical pages.
+    rpc: [],
+    rest: [],
     bech32Prefix: 'stars',
     feeDenom: 'ustars',
     gasPrice: '1.1',
@@ -358,13 +362,11 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     decimals: 6,
     coinType: 118,
     // Official setten.io hops fail TLS (hostname mismatch). ibs.team and
-    // wildsage.io no longer resolve. Lavender.Five remains the public hop.
-    rpc: [
-      'https://rpc.lavenderfive.com:443/kujira'
-    ],
-    rest: [
-      'https://rest.lavenderfive.com:443/kujira'
-    ],
+    // wildsage.io no longer resolve. Leftover Lavender.Five now 503s.
+    // Kleomedes 525s, Polkachu is DNS-dead, Autostake 404s, PublicNode
+    // 404s. No public JSON hop remains. ATOMScan still serves pages.
+    rpc: [],
+    rest: [],
     bech32Prefix: 'kujira',
     feeDenom: 'ukuji',
     gasPrice: '0.0051',
@@ -553,8 +555,7 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     ],
     rest: [
       'https://stride-api.polkachu.com/',
-      'https://rest.lavenderfive.com:443/stride',
-      'https://stride.api.kjnodes.com'
+      'https://rest.lavenderfive.com:443/stride'
     ],
     bech32Prefix: 'stride',
     feeDenom: 'ustrd',

@@ -8,7 +8,9 @@
  * hops then lingered (HTML 302 / TLS-dead LCD). Leftover Evmos hops then
  * lingered after the chain was killed (Lavender.Five 503), plus leftover
  * goldenratiostaking.net / owallet.io (502) and w3coins.io / stakeflow.io
- * (DNS-dead) hops. This keeps those lists honest.
+ * (DNS-dead) hops. Leftover Kujira and Stargaze hops then lingered
+ * (Lavender.Five 503; Stargaze killed / Kleomedes empty 200; Autostake
+ * 404). This keeps those lists honest.
  */
 
 import {
@@ -155,10 +157,10 @@ describe('Cosmos endpoint freshness', () => {
 
   it('replaces leftover Stargaze, Juno, and Kujira RPC/LCD first hops', () => {
     const stargaze = getChainById('stargaze-1');
-    expect(stargaze?.rpc[0]).toBe('https://stargaze-rpc.kleomedes.network');
-    expect(stargaze?.rest[0]).toBe('https://stargaze-api.kleomedes.network');
+    expect(stargaze?.rpc).toEqual([]);
+    expect(stargaze?.rest).toEqual([]);
     expect(stargaze?.rpc.concat(stargaze?.rest ?? []).join(' ')).not.toMatch(
-      /ezstaking\.dev|stargaze-apis\.com|stargaze\.c29r3\.xyz/
+      /ezstaking\.dev|stargaze-apis\.com|stargaze\.c29r3\.xyz|lavenderfive|kleomedes/
     );
 
     const juno = getChainById('juno-1');
@@ -166,10 +168,10 @@ describe('Cosmos endpoint freshness', () => {
     expect(juno?.rpc.join(' ')).not.toContain('itastakers.com');
 
     const kujira = getChainById('kaiyo-1');
-    expect(kujira?.rpc[0]).toBe('https://rpc.lavenderfive.com:443/kujira');
-    expect(kujira?.rest[0]).toBe('https://rest.lavenderfive.com:443/kujira');
+    expect(kujira?.rpc).toEqual([]);
+    expect(kujira?.rest).toEqual([]);
     expect(kujira?.rpc.concat(kujira?.rest ?? []).join(' ')).not.toMatch(
-      /setten\.io|ibs\.team|wildsage\.io/
+      /setten\.io|ibs\.team|wildsage\.io|lavenderfive/
     );
   });
 
@@ -255,6 +257,43 @@ describe('Cosmos endpoint freshness', () => {
 
     const terra = getChainById('phoenix-1');
     expect(terra?.rpc.concat(terra?.rest ?? []).join(' ')).not.toContain('stakeflow.io');
+  });
+
+  it('drops leftover Kujira and Stargaze RPC/LCD hops after public hops died', () => {
+    const kujira = getChainById('kaiyo-1');
+    expect(kujira?.enabled).toBe(false);
+    expect(kujira?.rpc).toEqual([]);
+    expect(kujira?.rest).toEqual([]);
+    expect(kujira?.rpc.concat(kujira?.rest ?? []).join(' ')).not.toMatch(
+      /lavenderfive\.com|kleomedes\.network|polkachu\.com|autostake\.com|theamsolutions\.info/
+    );
+    expect(kujira?.explorerUrl).toBe('https://atomscan.com/kujira');
+
+    const stargaze = getChainById('stargaze-1');
+    expect(stargaze?.enabled).toBe(false);
+    expect(stargaze?.rpc).toEqual([]);
+    expect(stargaze?.rest).toEqual([]);
+    expect(stargaze?.rpc.concat(stargaze?.rest ?? []).join(' ')).not.toMatch(
+      /lavenderfive\.com|kleomedes\.network|stargaze-apis\.com|polkachu\.com/
+    );
+    expect(stargaze?.explorerUrl).toBe('https://www.mintscan.io/stargaze/');
+  });
+
+  it('drops leftover Autostake dYdX hops that now 404', () => {
+    const dydx = getChainById('dydx-mainnet-1');
+    expect(dydx?.rpc.concat(dydx?.rest ?? []).join(' ')).not.toContain('autostake.com');
+    expect(dydx?.rpc).toEqual([
+      'https://dydx-rpc.kingnodes.com:443',
+      'https://dydx-dao-rpc.polkachu.com',
+      'https://rpc.lavenderfive.com:443/dydx',
+      'https://dydx-rpc.publicnode.com:443',
+    ]);
+    expect(dydx?.rest).toEqual([
+      'https://dydx-dao-api.polkachu.com',
+      'https://dydx-rest.kingnodes.com:443',
+      'https://rest.lavenderfive.com:443/dydx',
+      'https://dydx-rest.publicnode.com',
+    ]);
   });
 
   it('replaces leftover official Neutron RPC/LCD hops with current public hops', () => {
@@ -378,7 +417,15 @@ describe('Cosmos endpoint freshness', () => {
     expect(usesDeprecatedCosmosHost('https://noble-rpc.owallet.io')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://akash-rpc.w3coins.io')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://rpc-terra-01.stakeflow.io')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rpc.lavenderfive.com:443/kujira')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rest.lavenderfive.com:443/stargaze')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://dydx-mainnet-rpc.autostake.com:443')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://stargaze-rpc.kleomedes.network')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://kuji-rpc.kleomedes.network')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://kujira-rpc.polkachu.com')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://kujira-rpc.theamsolutions.info')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://rpc.lavenderfive.com:443/neutron')).toBe(false);
+    expect(usesDeprecatedCosmosHost('https://juno-rpc.kleomedes.network')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://www.mintscan.io/atomone')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://atomscan.com/juno')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://www.mintscan.io/celestia')).toBe(false);
@@ -402,6 +449,11 @@ describe('Cosmos endpoint freshness', () => {
         'https://noble-rpc.owallet.io',
         'https://akash-rpc.w3coins.io',
         'https://rpc-terra-01.stakeflow.io',
+        'https://rpc.lavenderfive.com:443/kujira',
+        'https://rpc.lavenderfive.com:443/stargaze',
+        'https://dydx-mainnet-rpc.autostake.com:443',
+        'https://stargaze-rpc.kleomedes.network',
+        'https://kujira-rpc.theamsolutions.info',
       ])
     ).toEqual([
       'https://rpc.lavenderfive.com:443/cosmoshub',

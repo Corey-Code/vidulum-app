@@ -148,7 +148,6 @@ class ChainRegistryClient {
       'cosmoshub',
       'osmosis',
       'juno',
-      'stargaze',
       'akash',
       'celestia',
       'dydx',

@@ -11,8 +11,10 @@
  * then lingered after the chain was marked killed: Lavender.Five Evmos
  * RPC/LCD now 503, and leftover goldenratiostaking.net / owallet.io
  * (502) plus w3coins.io / stakeflow.io (DNS-dead) hops still sat on
- * side-chain lists. Keep those hosts out of advertised lists so the
- * first hop can succeed.
+ * side-chain lists. Leftover Kujira and Stargaze hops then lingered:
+ * Lavender.Five now 503s both, Stargaze is killed (Kleomedes empty 200,
+ * official/Polkachu DNS-dead), and Autostake public hops 404. Keep
+ * those hosts out of advertised lists so the first hop can succeed.
  */
 
 export const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
@@ -55,6 +57,18 @@ export const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'owallet.io',
   'w3coins.io',
   'stakeflow.io',
+  'lavenderfive.com:443/kujira',
+  'lavenderfive.com/kujira',
+  'lavenderfive.com:443/stargaze',
+  'lavenderfive.com/stargaze',
+  'autostake.com',
+  'stargaze-rpc.kleomedes.network',
+  'stargaze-api.kleomedes.network',
+  'kuji-rpc.kleomedes.network',
+  'kuji-api.kleomedes.network',
+  'kujira-rpc.polkachu.com',
+  'kujira-api.polkachu.com',
+  'theamsolutions.info',
 ] as const;
 
 export function cosmosEndpointHaystack(
