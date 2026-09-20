@@ -4,8 +4,10 @@
  * EvmClient fails over across rpcUrls with JSON-RPC. After a period of low
  * activity, several bundled hosts were retired, key-gated, or DNS-dead.
  * Leftover Cloudflare Ethereum, Ankr public RPC, BlastAPI, and DNS-dead
- * Moonbeam/Moonriver/Blast hops were still first-hop failures. Keep those
- * hosts out of advertised lists so the first hop can succeed.
+ * Moonbeam/Moonriver/Blast hops were still first-hop failures. Leftover
+ * Sepolia.org RPCs (site discontinued: 404 / timeout) and the sunset
+ * Polygon zkEVM explorer (zkevm.polygonscan.com is DNS-dead) also lingered.
+ * Keep those hosts out of advertised lists so the first hop can succeed.
  */
 
 export const DEPRECATED_EVM_ENDPOINT_HOSTS = [
@@ -30,6 +32,9 @@ export const DEPRECATED_EVM_ENDPOINT_HOSTS = [
   'rpc.api.moonriver.moonbeam.network',
   'moonriver-rpc.dwellir.com',
   'blast.din.dev',
+  'rpc.sepolia.org',
+  'rpc2.sepolia.org',
+  'zkevm.polygonscan.com',
 ] as const;
 
 export function evmEndpointHaystack(rpcUrls: readonly string[], explorerUrl?: string): string {
@@ -64,7 +69,8 @@ export interface EvmExplorerCandidate {
 }
 
 /**
- * Pick a live public explorer, skipping retired hosts such as ftmscan.com.
+ * Pick a live public explorer, skipping retired hosts such as ftmscan.com
+ * and DNS-dead zkevm.polygonscan.com after the July 2026 zkEVM sunset.
  */
 export function selectPublicEvmExplorer(
   explorers: readonly EvmExplorerCandidate[] = []

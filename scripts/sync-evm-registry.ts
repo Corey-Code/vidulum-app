@@ -44,6 +44,9 @@ const DEPRECATED_EVM_ENDPOINT_HOSTS = [
   'rpc.api.moonriver.moonbeam.network',
   'moonriver-rpc.dwellir.com',
   'blast.din.dev',
+  'rpc.sepolia.org',
+  'rpc2.sepolia.org',
+  'zkevm.polygonscan.com',
 ] as const;
 
 const CHAINS_JSON_URL = 'https://chainid.network/chains.json';

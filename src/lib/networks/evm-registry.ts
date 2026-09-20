@@ -10,6 +10,8 @@
  * RPC lists refreshed 2026-09-18 to drop retired public hosts.
  * Leftover Cloudflare, Ankr, BlastAPI, and DNS-dead Moonbeam/Moonriver/Blast
  * hops refreshed 2026-09-20.
+ * Leftover Sepolia.org RPCs and DNS-dead zkevm.polygonscan.com explorer
+ * refreshed 2026-09-20 after sepolia.org discontinued and zkEVM sunset.
  */
 
 import { EvmNetworkConfig } from './types';
@@ -352,6 +354,8 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     coinType: 60,
     chainId: 1101,
     rpcUrls: [
+      // Polygon zkEVM Mainnet Beta sequencer sunset 2026-07-03. Public
+      // RPCs still answer the last block for historical reads.
       'https://zkevm-rpc.com',
       'https://polygon-zkevm.drpc.org'
     ],
@@ -360,9 +364,8 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
       symbol: 'ETH',
       decimals: 18
     },
-    explorerUrl: 'https://zkevm.polygonscan.com',
-    explorerAccountPath: '/address/{address}',
-    explorerTxPath: '/tx/{txHash}',
+    // zkevm.polygonscan.com no longer resolves after the July 2026 sunset.
+    // No public address/tx explorer remains.
     infoUrl: 'https://polygon.technology/polygon-zkevm',
     isTestnet: false
   },
@@ -656,11 +659,13 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     coinType: 1,
     chainId: 11155111,
     rpcUrls: [
-      'https://rpc.sepolia.org',
-      'https://rpc2.sepolia.org',
-      'https://rpc.sepolia.ethpandaops.io',
+      // sepolia.org discontinued its RPCs (rpc.sepolia.org 404,
+      // rpc2.sepolia.org times out). PublicNode, Tenderly, 1RPC, and
+      // EthPandaOps remain public.
+      'https://ethereum-sepolia-rpc.publicnode.com',
       'https://sepolia.gateway.tenderly.co',
-      'https://ethereum-sepolia-rpc.publicnode.com'
+      'https://1rpc.io/sepolia',
+      'https://rpc.sepolia.ethpandaops.io'
     ],
     nativeCurrency: {
       name: 'Sepolia Ether',

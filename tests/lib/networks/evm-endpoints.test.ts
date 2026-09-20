@@ -3,7 +3,9 @@
  *
  * After the lull, advertised Ethereum still led with MyCrypto, then with
  * Cloudflare's public gateway. Leftover Ankr, BlastAPI, and DNS-dead
- * Moonbeam/Moonriver/Blast hops also lingered. This keeps EVM RPC lists honest.
+ * Moonbeam/Moonriver/Blast hops also lingered. Leftover Sepolia.org RPCs
+ * (404 / timeout) and the sunset zkEVM explorer still sat in side-chain
+ * lists. This keeps EVM RPC and explorer lists honest.
  */
 
 import {
@@ -119,6 +121,29 @@ describe('EVM endpoint freshness', () => {
     ]);
   });
 
+  it('replaces leftover discontinued Sepolia.org RPCs with current public hops', () => {
+    const sepolia = getEvmChainByInternalId('sep-testnet');
+    expect(sepolia?.rpcUrls).toEqual([
+      'https://ethereum-sepolia-rpc.publicnode.com',
+      'https://sepolia.gateway.tenderly.co',
+      'https://1rpc.io/sepolia',
+      'https://rpc.sepolia.ethpandaops.io',
+    ]);
+    expect(sepolia?.rpcUrls.join(' ')).not.toMatch(/rpc\.sepolia\.org|rpc2\.sepolia\.org/);
+    expect(sepolia?.explorerUrl).toBe('https://sepolia.etherscan.io');
+  });
+
+  it('omits the DNS-dead Polygon zkEVM explorer after the July 2026 sunset', () => {
+    const zkevm = getEvmChainByInternalId('zkevm-mainnet');
+    expect(zkevm?.explorerUrl).toBeUndefined();
+    expect(zkevm?.rpcUrls).toEqual([
+      'https://zkevm-rpc.com',
+      'https://polygon-zkevm.drpc.org',
+    ]);
+    expect(getExplorerTxUrl('zkevm-mainnet', 'abcd')).toBeNull();
+    expect(endpointHaystack(zkevm!)).not.toContain('zkevm.polygonscan.com');
+  });
+
   it('points Fantom users at a live explorer instead of ftmscan.com', () => {
     const fantom = getEvmChainByInternalId('ftm-mainnet');
     expect(fantom?.explorerUrl).toBe('https://explorer.fantom.network');
@@ -143,7 +168,11 @@ describe('EVM endpoint freshness', () => {
     expect(usesDeprecatedEvmHost('https://cloudflare-eth.com')).toBe(true);
     expect(usesDeprecatedEvmHost('https://rpc.ankr.com/gnosis')).toBe(true);
     expect(usesDeprecatedEvmHost('https://moonbeam.public.blastapi.io')).toBe(true);
+    expect(usesDeprecatedEvmHost('https://rpc.sepolia.org')).toBe(true);
+    expect(usesDeprecatedEvmHost('https://rpc2.sepolia.org')).toBe(true);
+    expect(usesDeprecatedEvmHost('https://zkevm.polygonscan.com')).toBe(true);
     expect(usesDeprecatedEvmHost('https://ethereum-rpc.publicnode.com')).toBe(false);
+    expect(usesDeprecatedEvmHost('https://rpc.sepolia.ethpandaops.io')).toBe(false);
 
     expect(
       filterPublicEvmRpcUrls([
@@ -154,6 +183,7 @@ describe('EVM endpoint freshness', () => {
         'https://rpc-mainnet.maticvigil.com',
         'https://cloudflare-eth.com',
         'https://rpc.ankr.com/eth',
+        'https://rpc.sepolia.org',
         'https://eth.drpc.org',
       ])
     ).toEqual(['https://ethereum-rpc.publicnode.com', 'https://eth.drpc.org']);
@@ -165,6 +195,7 @@ describe('EVM endpoint freshness', () => {
       ])?.url
     ).toBe('https://explorer.fantom.network');
     expect(selectPublicEvmExplorer([{ url: 'https://ftmscan.com' }])).toBeUndefined();
+    expect(selectPublicEvmExplorer([{ url: 'https://zkevm.polygonscan.com' }])).toBeUndefined();
   });
 
   it('keeps the sync-script denylist aligned with evm-endpoints', () => {
