@@ -2,8 +2,11 @@
  * Cosmos public RPC/LCD contract
  *
  * The wallet fails over across rpc + rest. After a period of low activity,
- * several bundled hosts were retired, DNS-dead, or key-gated. Keep those
- * hosts out of advertised lists so the first hop can succeed.
+ * several bundled hosts were retired, DNS-dead, or key-gated. Leftover
+ * side-chain hops still pointed at ezstaking.dev (Cloudflare 521),
+ * itastakers.com (DNS-dead), setten.io (TLS hostname mismatch), and other
+ * retired RPC/LCD hosts. Keep those hosts out of advertised lists so the
+ * first hop can succeed.
  */
 
 export const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
@@ -20,8 +23,23 @@ export const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'community.nuxian-node.ch',
   'explorer.allinbits.com',
   'ezstaking.app',
+  'ezstaking.dev',
   'finder.kujira.app',
   'explorers.guru',
+  'stargaze-apis.com',
+  'stargaze.c29r3.xyz',
+  'itastakers.com',
+  'setten.io',
+  'ibs.team',
+  'wildsage.io',
+  'newmetric.xyz',
+  'bd.evmos.org',
+  'utsa.tech',
+  'allthatnode.com',
+  'imperator.co',
+  'tm.p2p.org',
+  'silentvalidator.com',
+  'cosmos-spaces.cloud',
 ] as const;
 
 export function cosmosEndpointHaystack(

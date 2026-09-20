@@ -2,9 +2,9 @@
  * Cosmos endpoint freshness tests
  *
  * After the lull, advertised Cosmos Hub still led with Lava, QuickApi, and
- * DNS-dead Whispernode/Onivalidator hops. BeeZee still pointed explorers at
- * ping.pub (404). EVM/UTXO/SVM lists were already cleaned; this keeps Cosmos
- * RPC/LCD lists honest.
+ * DNS-dead Whispernode/Onivalidator hops. Leftover side-chain RPC/LCD lists
+ * still pointed at ezstaking.dev (521), itastakers (DNS-dead), setten.io
+ * (TLS hostname mismatch), and other retired hops. This keeps those lists honest.
  */
 
 import {
@@ -149,6 +149,74 @@ describe('Cosmos endpoint freshness', () => {
     expect(archway?.explorerUrl).not.toContain('explorers.guru');
   });
 
+  it('replaces leftover Stargaze, Juno, and Kujira RPC/LCD first hops', () => {
+    const stargaze = getChainById('stargaze-1');
+    expect(stargaze?.rpc[0]).toBe('https://stargaze-rpc.kleomedes.network');
+    expect(stargaze?.rest[0]).toBe('https://stargaze-api.kleomedes.network');
+    expect(stargaze?.rpc.concat(stargaze?.rest ?? []).join(' ')).not.toMatch(
+      /ezstaking\.dev|stargaze-apis\.com|stargaze\.c29r3\.xyz/
+    );
+
+    const juno = getChainById('juno-1');
+    expect(juno?.rpc[0]).toBe('https://juno.rpc.m.stavr.tech');
+    expect(juno?.rpc.join(' ')).not.toContain('itastakers.com');
+
+    const kujira = getChainById('kaiyo-1');
+    expect(kujira?.rpc[0]).toBe('https://rpc.lavenderfive.com:443/kujira');
+    expect(kujira?.rest[0]).toBe('https://rest.lavenderfive.com:443/kujira');
+    expect(kujira?.rpc.concat(kujira?.rest ?? []).join(' ')).not.toMatch(
+      /setten\.io|ibs\.team|wildsage\.io/
+    );
+  });
+
+  it('replaces leftover Celestia, Evmos, Archway, Axelar, Neutron, and Stride hops', () => {
+    const celestia = getChainById('celestia');
+    expect(celestia?.rpc.concat(celestia?.rest ?? []).join(' ')).not.toMatch(
+      /newmetric\.xyz|api\.lunaroasis\.net/
+    );
+    expect(celestia?.rpc).toEqual(
+      expect.arrayContaining([
+        'https://public-celestia-rpc.numia.xyz',
+        'https://celestia-rpc.publicnode.com:443',
+      ])
+    );
+    expect(celestia?.rest).toEqual(
+      expect.arrayContaining([
+        'https://api.celestia.nodestake.org',
+        'https://celestia-rest.publicnode.com',
+      ])
+    );
+
+    const evmos = getChainById('evmos_9001-2');
+    expect(evmos?.rpc.concat(evmos?.rest ?? []).join(' ')).not.toContain('bd.evmos.org');
+    expect(evmos?.rpc[0]).toBe('https://rpc.lavenderfive.com:443/evmos');
+
+    const archway = getChainById('archway-1');
+    expect(archway?.rpc[0]).toBe('https://rpc.mainnet.archway.io');
+    expect(archway?.rpc.concat(archway?.rest ?? []).join(' ')).not.toMatch(
+      /utsa\.tech|allthatnode\.com/
+    );
+
+    const axelar = getChainById('axelar-dojo-1');
+    expect(axelar?.rpc[0]).toBe('https://axelar-rpc.pops.one:443');
+    expect(axelar?.rpc.concat(axelar?.rest ?? []).join(' ')).not.toContain('imperator.co');
+
+    const neutron = getChainById('neutron-1');
+    expect(neutron?.rpc.concat(neutron?.rest ?? []).join(' ')).not.toContain('tm.p2p.org');
+    expect(neutron?.rpc).toEqual(
+      expect.arrayContaining([
+        'https://rpc-lb.neutron.org',
+        'https://neutron-rpc.polkachu.com:443',
+      ])
+    );
+
+    const stride = getChainById('stride-1');
+    expect(stride?.rpc.concat(stride?.rest ?? []).join(' ')).not.toMatch(
+      /silentvalidator\.com|cosmos-spaces\.cloud/
+    );
+    expect(stride?.rpc[0]).toBe('https://stride-rpc.polkachu.com/');
+  });
+
   it('points Kujira users at ATOMScan instead of finder.kujira.app', () => {
     const kujira = getChainById('kaiyo-1');
     expect(kujira?.explorerUrl).toBe('https://atomscan.com/kujira');
@@ -237,6 +305,12 @@ describe('Cosmos endpoint freshness', () => {
       true
     );
     expect(usesDeprecatedCosmosHost('https://archway.explorers.guru/')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rpc-stargaze.ezstaking.dev')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rpc-juno.itastakers.com')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rpc.kaiyo.kujira.setten.io')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://celestia-rpc.mesa.newmetric.xyz')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://tendermint.bd.evmos.org:26657')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rpc.novel.remedy.tm.p2p.org')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://www.mintscan.io/atomone')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://atomscan.com/juno')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://www.mintscan.io/celestia')).toBe(false);
@@ -250,6 +324,9 @@ describe('Cosmos endpoint freshness', () => {
         'https://rpc.evmos.testnet.run',
         'https://cosmos-rpc.polkachu.com',
         'https://127.0.0.1:26657',
+        'https://rpc-stargaze.ezstaking.dev',
+        'https://rpc-juno.itastakers.com',
+        'https://rpc.kaiyo.kujira.setten.io',
       ])
     ).toEqual([
       'https://rpc.lavenderfive.com:443/cosmoshub',
