@@ -4,7 +4,7 @@
  * The live registry can include additional auto-synced chains. This list is the
  * curated set shown in Settings and kept in sync with README.md.
  *
- * Last reviewed: 2026-09-20 (leftover Neutron RPC / LCD refresh).
+ * Last reviewed: 2026-09-20 (leftover Evmos RPC / LCD refresh).
  */
 
 export { DEPRECATED_SVM_ENDPOINT_HOSTS } from './svm-endpoints';
@@ -66,7 +66,7 @@ export function getSupportedNetworkFamilyLabel(family: SupportedNetworkFamily): 
 export function getSupportedNetworkFamilySummary(family: SupportedNetworkFamily): string {
   switch (family) {
     case 'cosmos':
-      return 'Staking, IBC transfers, and Cosmos assets load through current public RPC and LCD hosts. Retired leftover hosts such as rpc-lb.neutron.org and neutron-1.neutron.org LCD hops were removed. Earlier leftover ezstaking.dev, itastakers.com, and setten.io hops stay denylisted. Explorer links use current hosts (Mintscan, ATOMScan, BeeZee Explorer); retired leftover explorers such as ezstaking.app, finder.kujira.app, and explorers.guru were removed.';
+      return 'Staking, IBC transfers, and Cosmos assets load through current public RPC and LCD hosts. Retired leftover Evmos hops (Lavender.Five 503 after the chain was killed) were removed, along with leftover goldenratiostaking.net, owallet.io, w3coins.io, and stakeflow.io hops. Earlier leftover official Neutron, ezstaking.dev, itastakers.com, and setten.io hops stay denylisted. Explorer links use current hosts (Mintscan, ATOMScan, BeeZee Explorer); retired leftover explorers such as ezstaking.app, finder.kujira.app, and explorers.guru were removed.';
     case 'utxo':
       return 'Bitcoin and Litecoin can load balances today. Other Bitcoin-like networks still show your address. Explorer links use current hosts (CipherScan, Ravencoin Explorer, OKLink, Flux Blockbook); retired sites such as dogechain.info, explorer.runonflux.io, and explorer.nosocoin.com were removed.';
     case 'evm':

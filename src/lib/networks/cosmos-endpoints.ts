@@ -7,8 +7,12 @@
  * itastakers.com (DNS-dead), setten.io (TLS hostname mismatch), and other
  * retired RPC/LCD hosts. Leftover official Neutron hops then lingered:
  * rpc-lb.neutron.org / rest-lb.neutron.org now serve HTML (302), and
- * rest-*.neutron-1.neutron.org LCD hosts fail TLS. Keep those hosts out
- * of advertised lists so the first hop can succeed.
+ * rest-*.neutron-1.neutron.org LCD hosts fail TLS. Leftover Evmos hops
+ * then lingered after the chain was marked killed: Lavender.Five Evmos
+ * RPC/LCD now 503, and leftover goldenratiostaking.net / owallet.io
+ * (502) plus w3coins.io / stakeflow.io (DNS-dead) hops still sat on
+ * side-chain lists. Keep those hosts out of advertised lists so the
+ * first hop can succeed.
  */
 
 export const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
@@ -45,6 +49,12 @@ export const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'rpc-lb.neutron.org',
   'rest-lb.neutron.org',
   'neutron-1.neutron.org',
+  'lavenderfive.com:443/evmos',
+  'lavenderfive.com/evmos',
+  'goldenratiostaking.net',
+  'owallet.io',
+  'w3coins.io',
+  'stakeflow.io',
 ] as const;
 
 export function cosmosEndpointHaystack(

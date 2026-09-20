@@ -38,8 +38,13 @@ describe('SupportedNetworksPanel', () => {
 
     expect(screen.getByText(/BeeZee, Osmosis, AtomOne, Cosmos Hub/)).toBeInTheDocument();
     expect(screen.getByText(/current public RPC and LCD/)).toBeInTheDocument();
-    expect(screen.getByText(/rpc-lb\.neutron\.org and neutron-1\.neutron\.org/)).toBeInTheDocument();
-    expect(screen.getByText(/ezstaking\.dev, itastakers\.com, and setten\.io/)).toBeInTheDocument();
+    expect(screen.getByText(/leftover Evmos hops/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/goldenratiostaking\.net, owallet\.io, w3coins\.io, and stakeflow\.io/)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/official Neutron, ezstaking\.dev, itastakers\.com, and setten\.io/)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Mintscan, ATOMScan, BeeZee Explorer/)).toBeInTheDocument();
     expect(screen.getByText(/ezstaking\.app, finder\.kujira\.app, and explorers\.guru/)).toBeInTheDocument();
     expect(screen.getByText(/Bitcoin, Litecoin, Dogecoin, Zcash/)).toBeInTheDocument();

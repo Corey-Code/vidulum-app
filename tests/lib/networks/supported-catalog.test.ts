@@ -68,10 +68,13 @@ describe('Supported network catalog', () => {
       /current public RPC and LCD/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
-      /rpc-lb\.neutron\.org and neutron-1\.neutron\.org/
+      /leftover Evmos hops \(Lavender\.Five 503 after the chain was killed\)/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
-      /ezstaking\.dev, itastakers\.com, and setten\.io/
+      /goldenratiostaking\.net, owallet\.io, w3coins\.io, and stakeflow\.io/
+    );
+    expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
+      /official Neutron, ezstaking\.dev, itastakers\.com, and setten\.io/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
       /Mintscan, ATOMScan, BeeZee Explorer/

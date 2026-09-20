@@ -158,7 +158,6 @@ class ChainRegistryClient {
       'neutron',
       'archway',
       'axelar',
-      'evmos',
       'noble',
       'stride',
       'terra2',

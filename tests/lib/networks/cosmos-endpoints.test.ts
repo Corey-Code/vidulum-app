@@ -5,7 +5,10 @@
  * DNS-dead Whispernode/Onivalidator hops. Leftover side-chain RPC/LCD lists
  * still pointed at ezstaking.dev (521), itastakers (DNS-dead), setten.io
  * (TLS hostname mismatch), and other retired hops. Leftover official Neutron
- * hops then lingered (HTML 302 / TLS-dead LCD). This keeps those lists honest.
+ * hops then lingered (HTML 302 / TLS-dead LCD). Leftover Evmos hops then
+ * lingered after the chain was killed (Lavender.Five 503), plus leftover
+ * goldenratiostaking.net / owallet.io (502) and w3coins.io / stakeflow.io
+ * (DNS-dead) hops. This keeps those lists honest.
  */
 
 import {
@@ -189,8 +192,11 @@ describe('Cosmos endpoint freshness', () => {
     );
 
     const evmos = getChainById('evmos_9001-2');
-    expect(evmos?.rpc.concat(evmos?.rest ?? []).join(' ')).not.toContain('bd.evmos.org');
-    expect(evmos?.rpc[0]).toBe('https://rpc.lavenderfive.com:443/evmos');
+    expect(evmos?.rpc.concat(evmos?.rest ?? []).join(' ')).not.toMatch(
+      /bd\.evmos\.org|lavenderfive\.com/
+    );
+    expect(evmos?.rpc).toEqual([]);
+    expect(evmos?.rest).toEqual([]);
 
     const archway = getChainById('archway-1');
     expect(archway?.rpc[0]).toBe('https://rpc.mainnet.archway.io');
@@ -213,6 +219,42 @@ describe('Cosmos endpoint freshness', () => {
       /silentvalidator\.com|cosmos-spaces\.cloud/
     );
     expect(stride?.rpc[0]).toBe('https://stride-rpc.polkachu.com/');
+  });
+
+  it('drops leftover Evmos RPC/LCD hops after the chain was killed', () => {
+    const evmos = getChainById('evmos_9001-2');
+    expect(evmos?.enabled).toBe(false);
+    expect(evmos?.rpc).toEqual([]);
+    expect(evmos?.rest).toEqual([]);
+    expect(evmos?.rpc.concat(evmos?.rest ?? []).join(' ')).not.toMatch(
+      /lavenderfive\.com|bd\.evmos\.org|publicnode\.com|polkachu\.com/
+    );
+    expect(evmos?.explorerUrl).toBe('https://www.mintscan.io/evmos');
+  });
+
+  it('drops leftover Injective, Noble, Akash, and Terra hops that 502 or no longer resolve', () => {
+    const injective = getChainById('injective-1');
+    expect(injective?.rpc.concat(injective?.rest ?? []).join(' ')).not.toMatch(
+      /goldenratiostaking\.net|stakeflow\.io/
+    );
+    expect(injective?.rpc[0]).toBe('https://injective-rpc.highstakes.ch');
+
+    const noble = getChainById('noble-1');
+    expect(noble?.rpc.concat(noble?.rest ?? []).join(' ')).not.toContain('owallet.io');
+    expect(noble?.rpc).toEqual([
+      'https://noble-rpc.polkachu.com',
+      'https://rpc.lavenderfive.com:443/noble',
+    ]);
+    expect(noble?.rest).toEqual([
+      'https://noble-api.polkachu.com',
+      'https://rest.lavenderfive.com:443/noble',
+    ]);
+
+    const akash = getChainById('akashnet-2');
+    expect(akash?.rpc.concat(akash?.rest ?? []).join(' ')).not.toMatch(/w3coins\.io|stakeflow\.io/);
+
+    const terra = getChainById('phoenix-1');
+    expect(terra?.rpc.concat(terra?.rest ?? []).join(' ')).not.toContain('stakeflow.io');
   });
 
   it('replaces leftover official Neutron RPC/LCD hops with current public hops', () => {
@@ -330,6 +372,12 @@ describe('Cosmos endpoint freshness', () => {
     expect(usesDeprecatedCosmosHost('https://rest-lb.neutron.org')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://rest-voidara.neutron-1.neutron.org')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://rest-pulsarix.neutron-1.neutron.org')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rpc.lavenderfive.com:443/evmos')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rest.lavenderfive.com:443/evmos')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rpc.injective.goldenratiostaking.net')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://noble-rpc.owallet.io')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://akash-rpc.w3coins.io')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://rpc-terra-01.stakeflow.io')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://rpc.lavenderfive.com:443/neutron')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://www.mintscan.io/atomone')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://atomscan.com/juno')).toBe(false);
@@ -349,6 +397,11 @@ describe('Cosmos endpoint freshness', () => {
         'https://rpc.kaiyo.kujira.setten.io',
         'https://rpc-lb.neutron.org',
         'https://rest-voidara.neutron-1.neutron.org',
+        'https://rpc.lavenderfive.com:443/evmos',
+        'https://rpc.injective.goldenratiostaking.net',
+        'https://noble-rpc.owallet.io',
+        'https://akash-rpc.w3coins.io',
+        'https://rpc-terra-01.stakeflow.io',
       ])
     ).toEqual([
       'https://rpc.lavenderfive.com:443/cosmoshub',
