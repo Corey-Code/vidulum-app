@@ -9,7 +9,8 @@
  * Generated: 2026-02-03T14:31:34.995Z
  * RPC/LCD lists refreshed 2026-09-19 to drop retired public hosts.
  * AtomOne explorer refreshed 2026-09-19 after explorer.allinbits.com timed out.
- * Leftover Juno, Celestia, Archway, and Kujira explorers refreshed 2026-09-20.
+ * Leftover Juno, Celestia, Archway, and Kujira explorers refreshed 2026-09-20
+ * (Mintscan for Celestia/Archway; ATOMScan after Mintscan dropped Juno/Kujira).
  */
 
 import { CosmosNetworkConfig } from './types';
@@ -301,8 +302,9 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     ],
     logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/juno/images/juno.png',
     // ezstaking.app/juno homepage is live, but /account, /accounts, and
-    // /address deep links 404. Mintscan serves those paths.
-    explorerUrl: 'https://www.mintscan.io/juno',
+    // /address deep links 404. Mintscan dropped Juno (client 404). ATOMScan
+    // still serves address and transaction pages.
+    explorerUrl: 'https://atomscan.com/juno',
     explorerAccountPath: '/accounts/{address}',
     explorerTxPath: '/transactions/{txHash}'
   },
@@ -372,8 +374,9 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
       'no-legacy-stdTx'
     ],
     logoUrl: 'https://raw.githubusercontent.com/cosmos/chain-registry/master/kujira/images/kujira-chain-logo.png',
-    // finder.kujira.app now returns Cloudflare 403 on homepage and tx paths.
-    explorerUrl: 'https://www.mintscan.io/kujira',
+    // finder.kujira.app now returns Cloudflare 403. Mintscan dropped Kujira
+    // (client 404). ATOMScan still serves address and transaction pages.
+    explorerUrl: 'https://atomscan.com/kujira',
     explorerAccountPath: '/accounts/{address}',
     explorerTxPath: '/transactions/{txHash}'
   },

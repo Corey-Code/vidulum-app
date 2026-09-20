@@ -167,9 +167,9 @@ export const NEW_CHAIN_MAINNET: CosmosNetworkConfig = {
   explorerTxPath: '/tx/{txHash}',
 };
 
-// Prefer Mintscan or a live official explorer. Do not add retired leftover
-// hosts such as ezstaking.app (account 404), finder.kujira.app (403), or
-// explorers.guru (404 / DNS-dead).
+// Prefer Mintscan, ATOMScan, or a live official explorer. Do not add retired
+// leftover hosts such as ezstaking.app (account 404), finder.kujira.app (403),
+// or explorers.guru (404 / DNS-dead). Mintscan dropped Juno and Kujira.
 
 // Register in the networks array
 export const COSMOS_NETWORKS: CosmosNetworkConfig[] = [

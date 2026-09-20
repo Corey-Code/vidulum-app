@@ -66,7 +66,7 @@ export function getSupportedNetworkFamilyLabel(family: SupportedNetworkFamily): 
 export function getSupportedNetworkFamilySummary(family: SupportedNetworkFamily): string {
   switch (family) {
     case 'cosmos':
-      return 'Staking, IBC transfers, and Cosmos assets load through current public RPC and LCD hosts. Explorer links use current hosts (Mintscan, BeeZee Explorer); retired leftover explorers such as ezstaking.app, finder.kujira.app, and explorers.guru were removed.';
+      return 'Staking, IBC transfers, and Cosmos assets load through current public RPC and LCD hosts. Explorer links use current hosts (Mintscan, ATOMScan, BeeZee Explorer); retired leftover explorers such as ezstaking.app, finder.kujira.app, and explorers.guru were removed.';
     case 'utxo':
       return 'Bitcoin and Litecoin can load balances today. Other Bitcoin-like networks still show your address. Explorer links use current hosts (CipherScan, Ravencoin Explorer, OKLink, Flux Blockbook); retired sites such as dogechain.info, explorer.runonflux.io, and explorer.nosocoin.com were removed.';
     case 'evm':

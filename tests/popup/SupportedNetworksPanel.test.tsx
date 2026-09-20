@@ -38,7 +38,7 @@ describe('SupportedNetworksPanel', () => {
 
     expect(screen.getByText(/BeeZee, Osmosis, AtomOne, Cosmos Hub/)).toBeInTheDocument();
     expect(screen.getByText(/current public RPC and LCD/)).toBeInTheDocument();
-    expect(screen.getByText(/Mintscan, BeeZee Explorer/)).toBeInTheDocument();
+    expect(screen.getByText(/Mintscan, ATOMScan, BeeZee Explorer/)).toBeInTheDocument();
     expect(screen.getByText(/ezstaking\.app, finder\.kujira\.app, and explorers\.guru/)).toBeInTheDocument();
     expect(screen.getByText(/Bitcoin, Litecoin, Dogecoin, Zcash/)).toBeInTheDocument();
     expect(
