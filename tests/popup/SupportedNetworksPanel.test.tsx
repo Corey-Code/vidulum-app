@@ -52,6 +52,7 @@ describe('SupportedNetworksPanel', () => {
     expect(screen.getByText(/Ethereum, OP Mainnet, BNB Chain, Polygon, Base, Arbitrum One/)).toBeInTheDocument();
     expect(screen.getByText(/Ethereum and compatible networks load balances through current public RPCs/)).toBeInTheDocument();
     expect(screen.getByText(/PublicNode, DRPC, and official chain endpoints/)).toBeInTheDocument();
+    expect(screen.getByText(/Sepolia\.org RPCs and zkevm\.polygonscan\.com/)).toBeInTheDocument();
     expect(screen.getByText(/Cloudflare Ethereum, Ankr public RPC, and BlastAPI/)).toBeInTheDocument();
     expect(screen.getByText(/^Solana$/)).toBeInTheDocument();
     expect(screen.getByText(/official Solana and PublicNode/)).toBeInTheDocument();

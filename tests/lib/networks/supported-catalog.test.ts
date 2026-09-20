@@ -59,6 +59,9 @@ describe('Supported network catalog', () => {
       /current public RPCs \(PublicNode, DRPC/
     );
     expect(getSupportedNetworkFamilySummary('evm')).toMatch(
+      /Sepolia\.org RPCs and zkevm\.polygonscan\.com/
+    );
+    expect(getSupportedNetworkFamilySummary('evm')).toMatch(
       /Cloudflare Ethereum, Ankr public RPC, and BlastAPI/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
