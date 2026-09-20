@@ -38,8 +38,8 @@ describe('SupportedNetworksPanel', () => {
 
     expect(screen.getByText(/BeeZee, Osmosis, AtomOne, Cosmos Hub/)).toBeInTheDocument();
     expect(screen.getByText(/current public RPC and LCD/)).toBeInTheDocument();
-    expect(screen.getByText(/leftover Kujira and Stargaze hops/)).toBeInTheDocument();
-    expect(screen.getByText(/Autostake 404 hops/)).toBeInTheDocument();
+    expect(screen.getByText(/leftover Injective Polkachu hops/)).toBeInTheDocument();
+    expect(screen.getByText(/Kujira and Stargaze hops/)).toBeInTheDocument();
     expect(
       screen.getByText(/Evmos, official Neutron, ezstaking\.dev, itastakers\.com, and setten\.io/)
     ).toBeInTheDocument();
@@ -56,8 +56,8 @@ describe('SupportedNetworksPanel', () => {
     expect(screen.getByText(/Ethereum, OP Mainnet, BNB Chain, Polygon, Base, Arbitrum One/)).toBeInTheDocument();
     expect(screen.getByText(/Ethereum and compatible networks load balances through current public RPCs/)).toBeInTheDocument();
     expect(screen.getByText(/PublicNode, DRPC, and official chain endpoints/)).toBeInTheDocument();
-    expect(screen.getByText(/moonriver\.unitedbloc\.com/)).toBeInTheDocument();
-    expect(screen.getByText(/Sepolia\.org RPCs, zkevm\.polygonscan\.com, Cloudflare Ethereum/)).toBeInTheDocument();
+    expect(screen.getByText(/1rpc\.io\/eth/)).toBeInTheDocument();
+    expect(screen.getByText(/moonriver\.unitedbloc\.com, Sepolia\.org RPCs, zkevm\.polygonscan\.com/)).toBeInTheDocument();
     expect(screen.getByText(/^Solana$/)).toBeInTheDocument();
     expect(screen.getByText(/official Solana and PublicNode/)).toBeInTheDocument();
     expect(screen.getByText(/Ankr public RPC and Solana dRPC/)).toBeInTheDocument();

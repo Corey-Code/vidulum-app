@@ -8,7 +8,9 @@
  * Sepolia.org RPCs (site discontinued: 404 / timeout) and the sunset
  * Polygon zkEVM explorer (zkevm.polygonscan.com is DNS-dead) also lingered.
  * Leftover Moonriver UnitedBloc then lingered after Moonbeam UnitedBloc
- * was denylisted: moonriver.unitedbloc.com no longer resolves. Keep
+ * was denylisted: moonriver.unitedbloc.com no longer resolves. Leftover
+ * 1rpc.io/eth then lingered after 1RPC discontinued that Ethereum hop
+ * (HTTP 410; other 1RPC paths such as Sepolia still answer). Keep
  * those hosts out of advertised lists so the first hop can succeed.
  */
 
@@ -38,6 +40,7 @@ export const DEPRECATED_EVM_ENDPOINT_HOSTS = [
   'rpc.sepolia.org',
   'rpc2.sepolia.org',
   'zkevm.polygonscan.com',
+  '1rpc.io/eth',
 ] as const;
 
 export function evmEndpointHaystack(rpcUrls: readonly string[], explorerUrl?: string): string {

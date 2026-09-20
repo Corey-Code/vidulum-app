@@ -48,6 +48,7 @@ const DEPRECATED_EVM_ENDPOINT_HOSTS = [
   'rpc.sepolia.org',
   'rpc2.sepolia.org',
   'zkevm.polygonscan.com',
+  '1rpc.io/eth',
 ] as const;
 
 const CHAINS_JSON_URL = 'https://chainid.network/chains.json';

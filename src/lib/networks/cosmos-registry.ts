@@ -23,6 +23,9 @@
  * Lavender.Five started 503ing Kujira and Stargaze, Stargaze was marked
  * killed (Kleomedes empty 200; official/Polkachu DNS-dead), and Autostake
  * public hops 404ed.
+ * Leftover Injective Polkachu hops refreshed 2026-09-20 after
+ * injective-rpc.polkachu.com and injective-api.polkachu.com started
+ * timing out. Highstakes, Lavender.Five, and PublicNode remain public.
  */
 
 import { CosmosNetworkConfig } from './types';
@@ -192,14 +195,14 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     decimals: 6,
     coinType: 60,
     // goldenratiostaking.net now 502s. stakeflow.io no longer resolves.
+    // Leftover Polkachu RPC/LCD now time out. PublicNode remains public.
     rpc: [
       'https://injective-rpc.highstakes.ch',
-      'https://injective-rpc.polkachu.com',
-      'https://rpc.lavenderfive.com:443/injective'
+      'https://rpc.lavenderfive.com:443/injective',
+      'https://injective-rpc.publicnode.com:443'
     ],
     rest: [
       'https://injective-api.highstakes.ch',
-      'https://injective-api.polkachu.com',
       'https://rest.lavenderfive.com:443/injective',
       'https://injective-rest.publicnode.com',
       'https://public.stakewolle.com/cosmos/injective/rest'
