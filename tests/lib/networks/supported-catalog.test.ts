@@ -56,7 +56,10 @@ describe('Supported network catalog', () => {
       /dogechain\.info, explorer\.runonflux\.io, and explorer\.nosocoin\.com/
     );
     expect(getSupportedNetworkFamilySummary('evm')).toMatch(
-      /current public RPCs/
+      /current public RPCs \(PublicNode, DRPC/
+    );
+    expect(getSupportedNetworkFamilySummary('evm')).toMatch(
+      /Cloudflare Ethereum, Ankr public RPC, and BlastAPI/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
       /current public RPC and LCD/

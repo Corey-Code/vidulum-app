@@ -85,8 +85,8 @@ The runtime client:
 - Fetches chain data from chainid.network
 - Caches results in `browser.storage.local` for 24 hours
 - Filters out deprecated chains, invalid RPC endpoints, and retired public hosts
-  (MyCrypto, MaticVigil, old Polygon/Fantom gateways). See
-  `src/lib/networks/evm-endpoints.ts`.
+  (MyCrypto, MaticVigil, Cloudflare Ethereum, Ankr public RPC, BlastAPI, and old
+  Polygon/Fantom/Moonbeam gateways). See `src/lib/networks/evm-endpoints.ts`.
 
 ## Method 3: Manual Configuration (Legacy)
 
@@ -110,7 +110,7 @@ export const NEWCHAIN_MAINNET: EvmNetworkConfig = {
     // Multiple URLs for failover (in order of preference)
     'https://rpc.newchain.io',
     'https://rpc2.newchain.io',
-    'https://rpc.ankr.com/newchain',
+    'https://newchain-rpc.publicnode.com',
   ],
   nativeCurrency: {
     name: 'New Token',
@@ -214,7 +214,8 @@ npx ts-node --esm scripts/sync-evm-registry.ts --chains 1,56,137,8453
 
 The sync script and runtime client both drop retired public hosts listed in
 `src/lib/networks/evm-endpoints.ts` so a later registry pull does not
-reintroduce MyCrypto, MaticVigil, or the old Polygon/Fantom gateways.
+reintroduce MyCrypto, MaticVigil, Cloudflare Ethereum, Ankr public RPC,
+BlastAPI, or the old Polygon/Fantom/Moonbeam gateways.
 
 ### Pre-bundled Chains
 

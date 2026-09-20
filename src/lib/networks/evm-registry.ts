@@ -8,6 +8,8 @@
  *
  * Generated: 2026-01-29T16:53:55.293Z
  * RPC lists refreshed 2026-09-18 to drop retired public hosts.
+ * Leftover Cloudflare, Ankr, BlastAPI, and DNS-dead Moonbeam/Moonriver/Blast
+ * hops refreshed 2026-09-20.
  */
 
 import { EvmNetworkConfig } from './types';
@@ -36,7 +38,7 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     coinType: 60,
     chainId: 1,
     rpcUrls: [
-      'https://cloudflare-eth.com',
+      // cloudflare-eth.com now returns JSON-RPC -32046 "Cannot fulfill request".
       'https://ethereum-rpc.publicnode.com',
       'https://eth.drpc.org',
       'https://1rpc.io/eth',
@@ -225,7 +227,8 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     rpcUrls: [
       'https://rpc.gnosischain.com',
       'https://rpc.gnosis.gateway.fm',
-      'https://rpc.ankr.com/gnosis'
+      'https://gnosis-rpc.publicnode.com',
+      'https://gnosis.drpc.org'
     ],
     nativeCurrency: {
       name: 'xDAI',
@@ -374,11 +377,10 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     coinType: 60,
     chainId: 1284,
     rpcUrls: [
-      'https://rpc.api.moonbeam.network',
-      'https://moonbeam.public.blastapi.io',
-      'https://moonbeam-rpc.dwellir.com',
+      // Official, Dwellir, UnitedBloc, and BlastAPI hops are DNS-dead or
+      // return "Blast API is no longer available".
       'https://moonbeam.api.onfinality.io/public',
-      'https://moonbeam.unitedbloc.com'
+      'https://moonbeam.drpc.org'
     ],
     nativeCurrency: {
       name: 'Glimmer',
@@ -402,10 +404,9 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     coinType: 60,
     chainId: 1285,
     rpcUrls: [
-      'https://rpc.api.moonriver.moonbeam.network',
-      'https://moonriver.public.blastapi.io',
-      'https://moonriver-rpc.dwellir.com',
+      // Official, Dwellir, and BlastAPI hops are DNS-dead or discontinued.
       'https://moonriver.api.onfinality.io/public',
+      'https://moonriver.drpc.org',
       'https://moonriver.unitedbloc.com'
     ],
     nativeCurrency: {
@@ -555,10 +556,8 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     chainId: 81457,
     rpcUrls: [
       'https://rpc.blast.io',
-      'https://rpc.ankr.com/blast',
-      'https://blast.din.dev/rpc',
-      'https://blastl2-mainnet.public.blastapi.io',
-      'https://blast.blockpi.network/v1/rpc/public'
+      'https://blast.drpc.org',
+      'https://blast-rpc.publicnode.com'
     ],
     nativeCurrency: {
       name: 'Ether',
@@ -583,8 +582,8 @@ export const EVM_REGISTRY_CHAINS: EvmRegistryConfig[] = [
     chainId: 534352,
     rpcUrls: [
       'https://rpc.scroll.io',
-      'https://rpc.ankr.com/scroll',
-      'https://scroll-rpc.publicnode.com'
+      'https://scroll-rpc.publicnode.com',
+      'https://scroll.drpc.org'
     ],
     nativeCurrency: {
       name: 'Ether',

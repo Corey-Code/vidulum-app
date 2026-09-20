@@ -35,6 +35,15 @@ const DEPRECATED_EVM_ENDPOINT_HOSTS = [
   'rpc.ftm.tools',
   'fantom-rpc.publicnode.com',
   'ftmscan.com',
+  'cloudflare-eth.com',
+  'rpc.ankr.com',
+  'public.blastapi.io',
+  'rpc.api.moonbeam.network',
+  'moonbeam-rpc.dwellir.com',
+  'moonbeam.unitedbloc.com',
+  'rpc.api.moonriver.moonbeam.network',
+  'moonriver-rpc.dwellir.com',
+  'blast.din.dev',
 ] as const;
 
 const CHAINS_JSON_URL = 'https://chainid.network/chains.json';

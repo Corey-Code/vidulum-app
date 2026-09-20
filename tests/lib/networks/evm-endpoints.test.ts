@@ -1,9 +1,9 @@
 /**
  * EVM endpoint freshness tests
  *
- * After the lull, advertised Ethereum still led with MyCrypto's retired API
- * and Polygon's first four hosts were dead or key-gated. Bitcoin-like and
- * Solana lists were already cleaned; this keeps EVM RPC lists honest.
+ * After the lull, advertised Ethereum still led with MyCrypto, then with
+ * Cloudflare's public gateway. Leftover Ankr, BlastAPI, and DNS-dead
+ * Moonbeam/Moonriver/Blast hops also lingered. This keeps EVM RPC lists honest.
  */
 
 import {
@@ -71,14 +71,51 @@ describe('EVM endpoint freshness', () => {
     ]);
   });
 
-  it('replaces Ethereum\'s retired MyCrypto and Blocknative hosts', () => {
+  it('replaces Ethereum\'s leftover Cloudflare hop with current public RPCs', () => {
     const ethereum = getEvmChainByInternalId('eth-mainnet');
     expect(ethereum?.rpcUrls).toEqual([
-      'https://cloudflare-eth.com',
       'https://ethereum-rpc.publicnode.com',
       'https://eth.drpc.org',
       'https://1rpc.io/eth',
       'https://mainnet.gateway.tenderly.co',
+    ]);
+    expect(ethereum?.rpcUrls.join(' ')).not.toContain('cloudflare-eth.com');
+  });
+
+  it('replaces leftover Ankr and BlastAPI hops on bundled side chains', () => {
+    const gnosis = getEvmChainByInternalId('gno-mainnet');
+    expect(gnosis?.rpcUrls).toEqual([
+      'https://rpc.gnosischain.com',
+      'https://rpc.gnosis.gateway.fm',
+      'https://gnosis-rpc.publicnode.com',
+      'https://gnosis.drpc.org',
+    ]);
+
+    const moonbeam = getEvmChainByInternalId('mbeam-mainnet');
+    expect(moonbeam?.rpcUrls).toEqual([
+      'https://moonbeam.api.onfinality.io/public',
+      'https://moonbeam.drpc.org',
+    ]);
+
+    const moonriver = getEvmChainByInternalId('mriver-mainnet');
+    expect(moonriver?.rpcUrls).toEqual([
+      'https://moonriver.api.onfinality.io/public',
+      'https://moonriver.drpc.org',
+      'https://moonriver.unitedbloc.com',
+    ]);
+
+    const blast = getEvmChainByInternalId('blastmainnet-mainnet');
+    expect(blast?.rpcUrls).toEqual([
+      'https://rpc.blast.io',
+      'https://blast.drpc.org',
+      'https://blast-rpc.publicnode.com',
+    ]);
+
+    const scroll = getEvmChainByInternalId('scr-mainnet');
+    expect(scroll?.rpcUrls).toEqual([
+      'https://rpc.scroll.io',
+      'https://scroll-rpc.publicnode.com',
+      'https://scroll.drpc.org',
     ]);
   });
 
@@ -103,6 +140,9 @@ describe('EVM endpoint freshness', () => {
   it('classifies retired hosts and strips them from public RPC lists', () => {
     expect(usesDeprecatedEvmHost('https://api.mycryptoapi.com/eth')).toBe(true);
     expect(usesDeprecatedEvmHost('https://rpc-mainnet.maticvigil.com')).toBe(true);
+    expect(usesDeprecatedEvmHost('https://cloudflare-eth.com')).toBe(true);
+    expect(usesDeprecatedEvmHost('https://rpc.ankr.com/gnosis')).toBe(true);
+    expect(usesDeprecatedEvmHost('https://moonbeam.public.blastapi.io')).toBe(true);
     expect(usesDeprecatedEvmHost('https://ethereum-rpc.publicnode.com')).toBe(false);
 
     expect(
@@ -112,6 +152,8 @@ describe('EVM endpoint freshness', () => {
         'https://ethereum-rpc.publicnode.com',
         'https://eth.example.com/${KEY}',
         'https://rpc-mainnet.maticvigil.com',
+        'https://cloudflare-eth.com',
+        'https://rpc.ankr.com/eth',
         'https://eth.drpc.org',
       ])
     ).toEqual(['https://ethereum-rpc.publicnode.com', 'https://eth.drpc.org']);

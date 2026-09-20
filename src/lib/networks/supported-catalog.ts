@@ -4,7 +4,7 @@
  * The live registry can include additional auto-synced chains. This list is the
  * curated set shown in Settings and kept in sync with README.md.
  *
- * Last reviewed: 2026-09-20 (leftover Cosmos explorer refresh).
+ * Last reviewed: 2026-09-20 (leftover EVM public RPC refresh).
  */
 
 export { DEPRECATED_SVM_ENDPOINT_HOSTS } from './svm-endpoints';
@@ -70,7 +70,7 @@ export function getSupportedNetworkFamilySummary(family: SupportedNetworkFamily)
     case 'utxo':
       return 'Bitcoin and Litecoin can load balances today. Other Bitcoin-like networks still show your address. Explorer links use current hosts (CipherScan, Ravencoin Explorer, OKLink, Flux Blockbook); retired sites such as dogechain.info, explorer.runonflux.io, and explorer.nosocoin.com were removed.';
     case 'evm':
-      return 'Ethereum and compatible networks load balances through current public RPCs. Retired hosts such as MyCrypto and MaticVigil were removed.';
+      return 'Ethereum and compatible networks load balances through current public RPCs (PublicNode, DRPC, and official chain endpoints). Retired leftover hosts such as Cloudflare Ethereum, Ankr public RPC, and BlastAPI were removed.';
     case 'svm':
       return 'Solana mainnet balances load through current public RPCs (official Solana and PublicNode). Retired or key-gated hosts such as Ankr public RPC and Solana dRPC were removed.';
     default: {

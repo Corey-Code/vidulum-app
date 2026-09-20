@@ -3,7 +3,9 @@
  *
  * EvmClient fails over across rpcUrls with JSON-RPC. After a period of low
  * activity, several bundled hosts were retired, key-gated, or DNS-dead.
- * Keep those hosts out of advertised lists so the first hop can succeed.
+ * Leftover Cloudflare Ethereum, Ankr public RPC, BlastAPI, and DNS-dead
+ * Moonbeam/Moonriver/Blast hops were still first-hop failures. Keep those
+ * hosts out of advertised lists so the first hop can succeed.
  */
 
 export const DEPRECATED_EVM_ENDPOINT_HOSTS = [
@@ -19,6 +21,15 @@ export const DEPRECATED_EVM_ENDPOINT_HOSTS = [
   'rpc.ftm.tools',
   'fantom-rpc.publicnode.com',
   'ftmscan.com',
+  'cloudflare-eth.com',
+  'rpc.ankr.com',
+  'public.blastapi.io',
+  'rpc.api.moonbeam.network',
+  'moonbeam-rpc.dwellir.com',
+  'moonbeam.unitedbloc.com',
+  'rpc.api.moonriver.moonbeam.network',
+  'moonriver-rpc.dwellir.com',
+  'blast.din.dev',
 ] as const;
 
 export function evmEndpointHaystack(rpcUrls: readonly string[], explorerUrl?: string): string {
