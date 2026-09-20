@@ -44,8 +44,10 @@ describe('SupportedNetworksPanel', () => {
     expect(
       screen.getByText(/Bitcoin and Litecoin can load balances today/)
     ).toBeInTheDocument();
-    expect(screen.getByText(/CipherScan, Ravencoin Explorer/)).toBeInTheDocument();
-    expect(screen.getByText(/ravencoin.network and explorer.ritocoin.org/)).toBeInTheDocument();
+    expect(screen.getByText(/CipherScan, Ravencoin Explorer, OKLink, Flux Blockbook/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/dogechain\.info, explorer\.runonflux\.io, and explorer\.nosocoin\.com/)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Ethereum, OP Mainnet, BNB Chain, Polygon, Base, Arbitrum One/)).toBeInTheDocument();
     expect(screen.getByText(/Ethereum and compatible networks load balances through current public RPCs/)).toBeInTheDocument();
     expect(screen.getByText(/^Solana$/)).toBeInTheDocument();

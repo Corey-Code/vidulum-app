@@ -199,7 +199,7 @@ Common prefixes:
 
 The wallet expects an Esplora (Blockstream/Mempool) API. Insight, BlockCypher, and CipherScan JSON are not drop-in replacements. Leave `apiUrls` empty when no Esplora host exists — do not add retired hosts such as zcha.in.
 
-For `explorerUrl`, only use a live public site with `/address/{address}` and `/tx/{txHash}` paths. Do not add retired explorer hosts such as `ravencoin.network` (401) or `explorer.ritocoin.org` (TLS handshake fails). Omit `explorerUrl` when no public explorer remains.
+For `explorerUrl`, only use a live public site with `/address/{address}` and `/tx/{txHash}` paths. Do not add retired explorer hosts such as `dogechain.info` (Cloudflare 403), `explorer.runonflux.io` (address/tx 404), or `explorer.nosocoin.com` (archive page without deep links). Omit `explorerUrl` when no public explorer remains.
 
 Required endpoints:
 

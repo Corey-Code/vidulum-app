@@ -40,7 +40,7 @@ Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/
 | BitcoinZ  | bitcoinz-mainnet  | BTCZ   | t1... (Transparent) | Enabled |
 | NOSO      | noso-mainnet      | NOSO   | X... (P2PKH)        | Enabled |
 
-Bitcoin and Litecoin load balances through Esplora APIs (Blockstream, Mempool.space, Litecoin Space). Other Bitcoin-like networks still show addresses. Explorer links use current hosts (CipherScan, Ravencoin Explorer, Flux, BitcoinZ, NOSO). Retired sites such as zcha.in, ravencoin.network, and explorer.ritocoin.org were removed. Ritocoin no longer has a public explorer after the lull.
+Bitcoin and Litecoin load balances through Esplora APIs (Blockstream, Mempool.space, Litecoin Space). Other Bitcoin-like networks still show addresses. Explorer links use current hosts (CipherScan, Ravencoin Explorer, OKLink, Flux Blockbook, BitcoinZ). Retired sites such as dogechain.info, explorer.runonflux.io, and explorer.nosocoin.com were removed. Ritocoin and NOSO no longer have public address explorers after the lull.
 
 ### EVM Chains
 

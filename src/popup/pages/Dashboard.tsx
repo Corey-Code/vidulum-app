@@ -1824,7 +1824,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                             : selectedChainId === 'litecoin-mainnet'
                               ? 'https://litecoinspace.org'
                               : selectedChainId === 'dogecoin-mainnet'
-                                ? 'https://dogechain.info'
+                                ? 'https://www.oklink.com/dogecoin'
                                 : 'https://mempool.space'
                       }
                       target="_blank"
