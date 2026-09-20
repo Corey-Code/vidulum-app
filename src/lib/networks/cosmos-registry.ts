@@ -11,6 +11,8 @@
  * AtomOne explorer refreshed 2026-09-19 after explorer.allinbits.com timed out.
  * Leftover Juno, Celestia, Archway, and Kujira explorers refreshed 2026-09-20
  * (Mintscan for Celestia/Archway; ATOMScan after Mintscan dropped Juno/Kujira).
+ * Leftover side-chain RPC/LCD hops refreshed 2026-09-20 after ezstaking.dev
+ * (521), itastakers.com (DNS-dead), and setten.io (TLS mismatch).
  */
 
 import { CosmosNetworkConfig } from './types';
@@ -109,16 +111,17 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     coinType: 118,
     rpc: [
       'https://public-celestia-rpc.numia.xyz',
-      'https://celestia-rpc.mesa.newmetric.xyz',
       'https://rpc.lunaroasis.net',
       'https://rpc.celestia.nodestake.org',
-      'https://rpc.lavenderfive.com:443/celestia'
+      'https://rpc.lavenderfive.com:443/celestia',
+      'https://celestia-rpc.publicnode.com:443'
     ],
     rest: [
-      'https://public-celestia-lcd.numia.xyz',
-      'https://celestia-rest.mesa.newmetric.xyz',
-      'https://api.lunaroasis.net',
-      'https://api.celestia.nodestake.org'
+      'https://api.celestia.nodestake.org',
+      'https://rest.lavenderfive.com:443/celestia',
+      'https://celestia-rest.publicnode.com',
+      'https://celestia.rest.stakin-nodes.com',
+      'https://celestia.api.kjnodes.com'
     ],
     bech32Prefix: 'celestia',
     feeDenom: 'utia',
@@ -247,14 +250,12 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     decimals: 6,
     coinType: 118,
     rpc: [
-      'https://rpc.stargaze-apis.com/',
-      'https://rpc-stargaze.ezstaking.dev',
-      'https://stargaze-rpc.polkachu.com'
+      'https://stargaze-rpc.kleomedes.network',
+      'https://rpc.lavenderfive.com:443/stargaze'
     ],
     rest: [
-      'https://rest.stargaze-apis.com/',
-      'https://api-stargaze.ezstaking.dev',
-      'https://stargaze.c29r3.xyz:443/api/'
+      'https://stargaze-api.kleomedes.network',
+      'https://rest.lavenderfive.com:443/stargaze'
     ],
     bech32Prefix: 'stars',
     feeDenom: 'ustars',
@@ -279,18 +280,18 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     decimals: 6,
     coinType: 118,
     rpc: [
-      'https://rpc-juno.itastakers.com',
       'https://juno.rpc.m.stavr.tech',
       'https://juno-rpc.polkachu.com',
-      'https://rpc.lavenderfive.com:443/juno',
-      'https://juno-rpc.kleomedes.network'
+      'https://juno-rpc.kleomedes.network',
+      'https://juno-rpc.stakeandrelax.net',
+      'https://juno-rpc.publicnode.com:443'
     ],
     rest: [
-      'https://rest.lavenderfive.com:443/juno',
       'https://juno.api.m.stavr.tech',
       'https://juno-api.polkachu.com',
       'https://juno-api.kleomedes.network',
-      'https://juno-api.stakeandrelax.net'
+      'https://juno-api.stakeandrelax.net',
+      'https://juno-rest.publicnode.com'
     ],
     bech32Prefix: 'juno',
     feeDenom: 'ujuno',
@@ -353,17 +354,13 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     symbol: 'KUJI',
     decimals: 6,
     coinType: 118,
+    // Official setten.io hops fail TLS (hostname mismatch). ibs.team and
+    // wildsage.io no longer resolve. Lavender.Five remains the public hop.
     rpc: [
-      'https://rpc.kaiyo.kujira.setten.io',
-      'https://kujira-rpc.polkachu.com',
-      'https://rpc.lavenderfive.com:443/kujira',
-      'https://kujira.ibs.team:443/rpc'
+      'https://rpc.lavenderfive.com:443/kujira'
     ],
     rest: [
-      'https://lcd.kaiyo.kujira.setten.io',
-      'https://rest.lavenderfive.com:443/kujira',
-      'https://kujira-api.polkachu.com/',
-      'https://kujira-lcd.wildsage.io/'
+      'https://rest.lavenderfive.com:443/kujira'
     ],
     bech32Prefix: 'kujira',
     feeDenom: 'ukuji',
@@ -391,15 +388,12 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     coinType: 118,
     rpc: [
       'https://rpc-lb.neutron.org',
-      'https://rpc-solara.neutron-1.neutron.org',
-      'https://rpc-vertexa.neutron-1.neutron.org',
-      'https://rpc.novel.remedy.tm.p2p.org',
-      'https://rpc.lavenderfive.com:443/neutron'
+      'https://rpc.lavenderfive.com:443/neutron',
+      'https://neutron-rpc.polkachu.com:443'
     ],
     rest: [
       'https://rest-lb.neutron.org',
-      'https://rest-solara.neutron-1.neutron.org',
-      'https://rest-vertexa.neutron-1.neutron.org',
+      'https://rest.lavenderfive.com:443/neutron',
       'https://rest-voidara.neutron-1.neutron.org',
       'https://rest-pulsarix.neutron-1.neutron.org'
     ],
@@ -427,17 +421,12 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     coinType: 118,
     rpc: [
       'https://rpc.mainnet.archway.io',
-      'https://archway-mainnet-archive.allthatnode.com:26657',
-      'https://m-archway.rpc.utsa.tech',
       'https://rpc-1.archway.nodes.guru',
-      'https://archway.rpc.silknodes.io/'
+      'https://rpc.lavenderfive.com:443/archway'
     ],
     rest: [
       'https://api.mainnet.archway.io',
-      'https://archway-api.w3coins.io',
-      'https://m-archway.api.utsa.tech',
-      'https://api-1.archway.nodes.guru',
-      'https://archway.api.silknodes.io/'
+      'https://api-1.archway.nodes.guru'
     ],
     bech32Prefix: 'archway',
     feeDenom: 'aarch',
@@ -463,16 +452,16 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     decimals: 6,
     coinType: 118,
     rpc: [
-      'https://rpc-axelar.imperator.co:443',
-      'https://rpc-axelar.cosmos-spaces.cloud',
       'https://axelar-rpc.pops.one:443',
-      'https://axelar-rpc.qubelabs.io:443'
+      'https://axelar-rpc.qubelabs.io:443',
+      'https://rpc.lavenderfive.com:443/axelar',
+      'https://axelar-rpc.polkachu.com',
+      'https://axelar-rpc.publicnode.com:443'
     ],
     rest: [
-      'https://lcd-axelar.imperator.co:443',
-      'https://api-axelar.cosmos-spaces.cloud',
       'https://axelar-lcd.qubelabs.io:443',
-      'https://api-1.axelar.nodes.guru:443'
+      'https://axelar-api.polkachu.com',
+      'https://axelar-rest.publicnode.com'
     ],
     bech32Prefix: 'axelar',
     feeDenom: 'uaxl',
@@ -496,16 +485,13 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     symbol: 'AEVMOS',
     decimals: 6,
     coinType: 60,
+    // Official Blockdaemon hops no longer resolve. PublicNode and Polkachu
+    // Evmos subdomains are gone. Lavender.Five remains the public hop.
     rpc: [
-      'https://rpc.lavenderfive.com:443/evmos',
-      'https://tendermint.bd.evmos.org:26657',
-      'https://evmos-rpc.polkachu.com'
+      'https://rpc.lavenderfive.com:443/evmos'
     ],
     rest: [
-      'https://rest.bd.evmos.org:1317',
-      'https://rest.lavenderfive.com:443/evmos',
-      'https://evmos-api.polkachu.com',
-      'https://api.evmos.silentvalidator.com/'
+      'https://rest.lavenderfive.com:443/evmos'
     ],
     bech32Prefix: 'evmos',
     feeDenom: 'aevmos',
@@ -563,15 +549,11 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     coinType: 118,
     rpc: [
       'https://stride-rpc.polkachu.com/',
-      'https://rpc.lavenderfive.com:443/stride',
-      'https://rpc.stride.silentvalidator.com/',
-      'https://rpc-stride.cosmos-spaces.cloud'
+      'https://rpc.lavenderfive.com:443/stride'
     ],
     rest: [
       'https://stride-api.polkachu.com/',
-      'https://api-stride.cosmos-spaces.cloud',
       'https://rest.lavenderfive.com:443/stride',
-      'https://api.stride.silentvalidator.com/',
       'https://stride.api.kjnodes.com'
     ],
     bech32Prefix: 'stride',

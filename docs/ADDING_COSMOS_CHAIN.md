@@ -137,7 +137,8 @@ The dynamic client:
 - Caches results in `browser.storage.local` for 24 hours
 - Works for any chain in the registry
 - Filters out retired public hosts (QuickApi, Lava public RPC, Whispernode,
-  Notional cosmosia, and others). See `src/lib/networks/cosmos-endpoints.ts`.
+  Notional cosmosia, leftover ezstaking.dev / itastakers / setten.io hops,
+  and others). See `src/lib/networks/cosmos-endpoints.ts`.
 
 ## Method 3: Manual Configuration (Legacy)
 
@@ -246,8 +247,9 @@ The wallet automatically handles endpoint failover:
 The sync script and runtime client both drop retired public hosts listed in
 `src/lib/networks/cosmos-endpoints.ts` so a later registry pull does not
 reintroduce QuickApi, Lava public RPC, Whispernode, Notional cosmosia,
-`ezstaking.app` (account 404), `finder.kujira.app` (403), or
-`explorers.guru` (404 / DNS-dead).
+`ezstaking.dev` (Cloudflare 521), `itastakers.com` (DNS-dead),
+`setten.io` (TLS hostname mismatch), `ezstaking.app` (account 404),
+`finder.kujira.app` (403), or `explorers.guru` (404 / DNS-dead).
 
 ## Sync Script Reference
 

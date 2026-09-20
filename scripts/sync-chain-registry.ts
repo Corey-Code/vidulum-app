@@ -39,8 +39,23 @@ const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'community.nuxian-node.ch',
   'explorer.allinbits.com',
   'ezstaking.app',
+  'ezstaking.dev',
   'finder.kujira.app',
   'explorers.guru',
+  'stargaze-apis.com',
+  'stargaze.c29r3.xyz',
+  'itastakers.com',
+  'setten.io',
+  'ibs.team',
+  'wildsage.io',
+  'newmetric.xyz',
+  'bd.evmos.org',
+  'utsa.tech',
+  'allthatnode.com',
+  'imperator.co',
+  'tm.p2p.org',
+  'silentvalidator.com',
+  'cosmos-spaces.cloud',
 ] as const;
 
 // Default chains to include in the bundle (most popular by TVL/usage)

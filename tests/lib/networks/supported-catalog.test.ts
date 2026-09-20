@@ -65,6 +65,9 @@ describe('Supported network catalog', () => {
       /current public RPC and LCD/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
+      /ezstaking\.dev, itastakers\.com, and setten\.io/
+    );
+    expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
       /Mintscan, ATOMScan, BeeZee Explorer/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
