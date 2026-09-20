@@ -7,8 +7,9 @@
  * (404 / timeout) and the sunset zkEVM explorer still sat in side-chain
  * lists. Leftover Moonriver UnitedBloc then lingered after Moonbeam
  * UnitedBloc was denylisted. Leftover 1rpc.io/eth then lingered after
- * 1RPC discontinued that Ethereum hop (HTTP 410). This keeps EVM RPC
- * and explorer lists honest.
+ * 1RPC discontinued that Ethereum hop (HTTP 410). Leftover
+ * 1rpc.io/sepolia then lingered after 1RPC moved public hops to
+ * public.1rpc.io. This keeps EVM RPC and explorer lists honest.
  */
 
 import {
@@ -129,10 +130,11 @@ describe('EVM endpoint freshness', () => {
     expect(sepolia?.rpcUrls).toEqual([
       'https://ethereum-sepolia-rpc.publicnode.com',
       'https://sepolia.gateway.tenderly.co',
-      'https://1rpc.io/sepolia',
+      'https://public.1rpc.io/sepolia',
       'https://rpc.sepolia.ethpandaops.io',
     ]);
     expect(sepolia?.rpcUrls.join(' ')).not.toMatch(/rpc\.sepolia\.org|rpc2\.sepolia\.org/);
+    expect(sepolia?.rpcUrls.join(' ')).not.toContain('https://1rpc.io/sepolia');
     expect(sepolia?.explorerUrl).toBe('https://sepolia.etherscan.io');
   });
 
@@ -176,7 +178,8 @@ describe('EVM endpoint freshness', () => {
     expect(usesDeprecatedEvmHost('https://zkevm.polygonscan.com')).toBe(true);
     expect(usesDeprecatedEvmHost('https://moonriver.unitedbloc.com')).toBe(true);
     expect(usesDeprecatedEvmHost('https://1rpc.io/eth')).toBe(true);
-    expect(usesDeprecatedEvmHost('https://1rpc.io/sepolia')).toBe(false);
+    expect(usesDeprecatedEvmHost('https://1rpc.io/sepolia')).toBe(true);
+    expect(usesDeprecatedEvmHost('https://public.1rpc.io/sepolia')).toBe(false);
     expect(usesDeprecatedEvmHost('https://ethereum-rpc.publicnode.com')).toBe(false);
     expect(usesDeprecatedEvmHost('https://rpc.sepolia.ethpandaops.io')).toBe(false);
 
@@ -191,9 +194,15 @@ describe('EVM endpoint freshness', () => {
         'https://rpc.ankr.com/eth',
         'https://rpc.sepolia.org',
         'https://1rpc.io/eth',
+        'https://1rpc.io/sepolia',
         'https://eth.drpc.org',
+        'https://public.1rpc.io/sepolia',
       ])
-    ).toEqual(['https://ethereum-rpc.publicnode.com', 'https://eth.drpc.org']);
+    ).toEqual([
+      'https://ethereum-rpc.publicnode.com',
+      'https://eth.drpc.org',
+      'https://public.1rpc.io/sepolia',
+    ]);
 
     expect(
       selectPublicEvmExplorer([

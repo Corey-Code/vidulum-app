@@ -87,7 +87,8 @@ The runtime client:
 - Filters out deprecated chains, invalid RPC endpoints, and retired public hosts
   (MyCrypto, MaticVigil, Cloudflare Ethereum, Ankr public RPC, BlastAPI, leftover
   Sepolia.org RPCs, DNS-dead zkevm.polygonscan.com, leftover
-  moonriver.unitedbloc.com, leftover discontinued 1rpc.io/eth, and old
+  moonriver.unitedbloc.com, leftover discontinued 1rpc.io/eth, leftover
+  1rpc.io/sepolia (old public path; use public.1rpc.io/sepolia), and old
   Polygon/Fantom/Moonbeam gateways). See `src/lib/networks/evm-endpoints.ts`.
 
 ## Method 3: Manual Configuration (Legacy)
@@ -220,7 +221,9 @@ reintroduce MyCrypto, MaticVigil, Cloudflare Ethereum, Ankr public RPC,
 BlastAPI, leftover Sepolia.org RPCs (`rpc.sepolia.org` 404, `rpc2.sepolia.org`
 timeout), DNS-dead `zkevm.polygonscan.com`, leftover
 `moonriver.unitedbloc.com` (DNS-dead), leftover discontinued
-`1rpc.io/eth` (HTTP 410), or the old Polygon/Fantom/Moonbeam
+`1rpc.io/eth` (HTTP 410), leftover `1rpc.io/sepolia` (old public
+path; intermittent 403 after 1RPC moved public hops to
+`public.1rpc.io`), or the old Polygon/Fantom/Moonbeam
 gateways.
 
 ### Pre-bundled Chains

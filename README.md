@@ -53,7 +53,7 @@ Bitcoin and Litecoin load balances through Esplora APIs (Blockstream, Mempool.sp
 | Base         | base-mainnet | ETH    | 8453     | Enabled |
 | Arbitrum One | arb1-mainnet | ETH    | 42161    | Enabled |
 
-Advertised EVM networks load balances through current public RPCs (PublicNode, DRPC, and official chain endpoints). Retired leftover hosts such as 1rpc.io/eth were removed. Earlier leftover moonriver.unitedbloc.com, Sepolia.org RPCs, zkevm.polygonscan.com, Cloudflare Ethereum, Ankr public RPC, and BlastAPI hops stay denylisted.
+Advertised EVM networks load balances through current public RPCs (PublicNode, DRPC, and official chain endpoints). Retired leftover hosts such as 1rpc.io/sepolia were removed. Earlier leftover 1rpc.io/eth, moonriver.unitedbloc.com, Sepolia.org RPCs, zkevm.polygonscan.com, Cloudflare Ethereum, Ankr public RPC, and BlastAPI hops stay denylisted.
 
 ### SVM Chains (Solana-like)
 
