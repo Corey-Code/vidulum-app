@@ -76,18 +76,22 @@ export const ZCASH_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 133, // BIP44 coin type for Zcash
   network: 'mainnet',
-  apiUrls: [
-    'https://api.zcha.in/v2',
-    'https://zcashblockexplorer.com/api',
-  ],
+  // Leftover api.zcha.in/v2 now 520s. Leftover zcashblockexplorer.com
+  // fails TLS (hostname mismatch). No public Esplora hop remains;
+  // CipherScan is live for explorers but uses a different JSON shape
+  // than BitcoinClient.
+  apiUrls: [],
   addressType: 'transparent', // t1... transparent addresses
   addressPrefix: {
     pubKeyHash: 0x1cb8, // t1 addresses (two bytes: 0x1c, 0xb8)
     scriptHash: 0x1cbd, // t3 addresses
   },
-  explorerUrl: 'https://explorer.zcha.in',
-  explorerAccountPath: '/accounts/{address}',
-  explorerTxPath: '/transactions/{txHash}',
+  // Leftover explorer.zcha.in now 520s (Cloudflare origin error).
+  // CipherScan still serves address/tx pages with the same path shape
+  // as other UTXO explorers.
+  explorerUrl: 'https://cipherscan.app',
+  explorerAccountPath: '/address/{address}',
+  explorerTxPath: '/tx/{txHash}',
 };
 
 // ============================================================================
