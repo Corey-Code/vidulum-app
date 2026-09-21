@@ -52,6 +52,10 @@ Advertised Flux explorer links use [Flux Blockbook](https://blockbook.runonflux.
 
 Supported Flux explorer hops were last reviewed in September 2026.
 
+Advertised Dogecoin explorer links use [OKLink](https://www.oklink.com/doge) after leftover `dogechain.info` started returning Cloudflare 403s. Leftover `dogechain.info/api/v1` 403s the same way. BlockCypher remains as a leftover public hop.
+
+Supported Dogecoin explorer hops were last reviewed in September 2026.
+
 ### EVM Chains
 
 | Network      | Network ID   | Symbol | Chain ID | Status  |

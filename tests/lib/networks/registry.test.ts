@@ -198,6 +198,18 @@ describe('Network Registry', () => {
           expect(url).not.toMatch(/explorer\.runonflux\.io|zelcash\.online/i);
         }
       });
+
+      it('should use leftover-free Dogecoin explorer hops', () => {
+        const dogecoin = networkRegistry.getBitcoin('dogecoin-mainnet')!;
+        expect(dogecoin).toBeDefined();
+        expect(dogecoin.explorerUrl).toBe('https://www.oklink.com/doge');
+        expect(dogecoin.explorerAccountPath).toBe('/address/{address}');
+        expect(dogecoin.explorerTxPath).toBe('/tx/{txHash}');
+        expect(dogecoin.apiUrls).toEqual(['https://api.blockcypher.com/v1/doge/main']);
+        for (const url of [dogecoin.explorerUrl, ...dogecoin.apiUrls]) {
+          expect(url).not.toMatch(/dogechain\.info/i);
+        }
+      });
     });
 
     describe('EVM Networks', () => {
@@ -279,6 +291,17 @@ describe('Network Registry', () => {
       );
       expect(getExplorerTxUrl('flux-mainnet', txHash)).toBe(
         `https://blockbook.runonflux.io/tx/${txHash}`
+      );
+    });
+
+    it('should generate leftover-free OKLink account and tx URLs for Dogecoin', () => {
+      const address = 'DH5yaieqoZN36fDVciNyRueRGvGLR3mr7L';
+      const txHash = 'e2d81c9a536e2b86d7eb2dd1307eaa0dac5c52a35187d163bfc6f601254d26cf';
+      expect(getExplorerAccountUrl('dogecoin-mainnet', address)).toBe(
+        `https://www.oklink.com/doge/address/${address}`
+      );
+      expect(getExplorerTxUrl('dogecoin-mainnet', txHash)).toBe(
+        `https://www.oklink.com/doge/tx/${txHash}`
       );
     });
 

@@ -228,8 +228,9 @@ export const DOGECOIN_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 3, // BIP44 coin type for Dogecoin
   network: 'mainnet',
+  // Leftover dogechain.info/api/v1 now 403s (Cloudflare challenge).
+  // BlockCypher still answers as a leftover public hop.
   apiUrls: [
-    'https://dogechain.info/api/v1',
     'https://api.blockcypher.com/v1/doge/main',
   ],
   addressType: 'p2pkh', // D... addresses (no SegWit support)
@@ -237,7 +238,10 @@ export const DOGECOIN_MAINNET: BitcoinNetworkConfig = {
     pubKeyHash: 0x1e, // D addresses (30)
     scriptHash: 0x16, // 9 or A addresses (22)
   },
-  explorerUrl: 'https://dogechain.info',
+  // Leftover dogechain.info now 403s (Cloudflare challenge). OKLink
+  // still serves address/tx pages with the same path shape as other
+  // UTXO explorers.
+  explorerUrl: 'https://www.oklink.com/doge',
   explorerAccountPath: '/address/{address}',
   explorerTxPath: '/tx/{txHash}',
 };

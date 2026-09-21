@@ -113,9 +113,9 @@ const WebAppFrame: React.FC<{ children: React.ReactNode }> = ({ children }) => (
         for IBC transfers, multi-chain swaps, and secure asset management across supported networks.
       </Text>
       <Text fontSize="xs" color="gray.500" mt={2}>
-        Leftover Flux explorer hosts last checked in September 2026. Account and
-        transaction links now use Flux Blockbook after leftover explorer.runonflux.io
-        /address and /tx paths started returning 404s.
+        Leftover Dogecoin explorer hosts last checked in September 2026. Account and
+        transaction links now use OKLink after leftover dogechain.info started
+        returning Cloudflare 403s.
       </Text>
     </Box>
   </Flex>

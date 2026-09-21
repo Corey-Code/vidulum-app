@@ -40,7 +40,7 @@ const DOGECOIN_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 3,
   network: 'mainnet',
-  apiUrls: ['https://dogechain.info/api/v1'],
+  apiUrls: ['https://api.blockcypher.com/v1/doge/main'],
   addressType: 'p2pkh',
   addressPrefix: {
     pubKeyHash: 0x1e,
