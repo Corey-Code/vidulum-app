@@ -24,13 +24,14 @@ export const SOLANA_MAINNET: SvmNetworkConfig = {
   isMainnet: true,
   rpcUrls: [
     'https://api.mainnet-beta.solana.com',
-    'https://solana-api.projectserum.com',
-    'https://rpc.ankr.com/solana',
-    'https://solana-mainnet.rpc.extrnode.com',
+    'https://solana-rpc.publicnode.com',
+    'https://solana.publicnode.com',
   ],
   logoUrl:
-    'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
-  explorerUrl: 'https://explorer.solana.com',
+    'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/info/logo.png',
+  // Leftover explorer.solana.com now returns a Vercel Security Checkpoint
+  // 429. SolanaFM still serves address/tx pages with the same paths.
+  explorerUrl: 'https://solana.fm',
   explorerAccountPath: '/address/{address}',
   explorerTxPath: '/tx/{txHash}',
 };
@@ -48,8 +49,10 @@ export const SOLANA_DEVNET: SvmNetworkConfig = {
   isMainnet: false,
   rpcUrls: ['https://api.devnet.solana.com'],
   logoUrl:
-    'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
-  explorerUrl: 'https://explorer.solana.com',
+    'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/info/logo.png',
+  // Leftover explorer.solana.com now 429s. SolanaFM still serves
+  // ?cluster=devnet address/tx pages.
+  explorerUrl: 'https://solana.fm',
   explorerAccountPath: '/address/{address}?cluster=devnet',
   explorerTxPath: '/tx/{txHash}?cluster=devnet',
 };
@@ -66,8 +69,10 @@ export const SOLANA_TESTNET: SvmNetworkConfig = {
   cluster: 'testnet',
   rpcUrls: ['https://api.testnet.solana.com'],
   logoUrl:
-    'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
-  explorerUrl: 'https://explorer.solana.com',
+    'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/info/logo.png',
+  // Leftover explorer.solana.com now 429s. SolanaFM still serves
+  // ?cluster=testnet address/tx pages.
+  explorerUrl: 'https://solana.fm',
   explorerAccountPath: '/address/{address}?cluster=testnet',
   explorerTxPath: '/tx/{txHash}?cluster=testnet',
 };
