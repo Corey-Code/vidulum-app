@@ -378,6 +378,25 @@ describe('Network Registry', () => {
         expect(SOLANA_MAINNET.explorerAccountPath).toBeDefined();
         expect(SOLANA_MAINNET.explorerTxPath).toBeDefined();
       });
+
+      it('should use leftover-free Solana explorer and public RPC hops', () => {
+        expect(SOLANA_MAINNET.explorerUrl).toBe('https://solana.fm');
+        expect(SOLANA_MAINNET.explorerAccountPath).toBe('/address/{address}');
+        expect(SOLANA_MAINNET.explorerTxPath).toBe('/tx/{txHash}');
+        expect(SOLANA_DEVNET.explorerUrl).toBe('https://solana.fm');
+        expect(SOLANA_MAINNET.rpcUrls).toEqual([
+          'https://api.mainnet-beta.solana.com',
+          'https://solana-rpc.publicnode.com',
+          'https://solana.publicnode.com',
+        ]);
+        for (const url of [
+          ...SOLANA_MAINNET.rpcUrls,
+          SOLANA_MAINNET.explorerUrl,
+          SOLANA_DEVNET.explorerUrl,
+        ]) {
+          expect(url).not.toMatch(/explorer\.solana\.com|projectserum|ankr\.com\/solana|extrnode/i);
+        }
+      });
     });
 
     describe('getSvmNetworkById', () => {
@@ -419,15 +438,13 @@ describe('Network Registry', () => {
       it('should generate correct account explorer URL for Solana', () => {
         const address = '11111111111111111111111111111111';
         const url = getExplorerAccountUrl('solana-mainnet', address);
-        expect(url).toBeDefined();
-        expect(url).toContain(address);
+        expect(url).toBe(`https://solana.fm/address/${address}`);
       });
 
       it('should generate correct tx explorer URL for Solana', () => {
         const txHash = '5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp';
         const url = getExplorerTxUrl('solana-mainnet', txHash);
-        expect(url).toBeDefined();
-        expect(url).toContain(txHash);
+        expect(url).toBe(`https://solana.fm/tx/${txHash}`);
       });
     });
   });

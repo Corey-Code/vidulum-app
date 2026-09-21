@@ -51,6 +51,18 @@ Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/
 | Base         | base-mainnet | ETH    | 8453     | Enabled |
 | Arbitrum One | arb1-mainnet | ETH    | 42161    | Enabled |
 
+### SVM Chains (Solana-like)
+
+| Network | Network ID     | Symbol | Address Format | Status  |
+| ------- | -------------- | ------ | -------------- | ------- |
+| Solana  | solana-mainnet | SOL    | Base58         | Enabled |
+
+Advertised Solana mainnet loads balances through current public RPCs (official Solana and PublicNode). Explorer links use [SolanaFM](https://solana.fm) after leftover `explorer.solana.com` started returning a Vercel Security Checkpoint 429. Retired or key-gated leftover hops such as Project Serum, Ankr public RPC, and Extrnode were removed.
+
+Eclipse, Solana Devnet, and Solana Testnet are defined in config but disabled by default.
+
+Supported Solana explorer and public RPC hops were last reviewed in September 2026.
+
 ## Features
 
 - Multi-chain wallet from a single mnemonic
@@ -58,6 +70,7 @@ Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/
 - REStake compatibility detection
 - BeeZee staking pools (Offers)
 - IBC token support
+- Solana (SVM) addresses and balances
 
 ## Installation
 
