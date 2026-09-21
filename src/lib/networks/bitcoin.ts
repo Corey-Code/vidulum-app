@@ -108,7 +108,7 @@ export const FLUX_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 19167, // BIP44 coin type for Flux
   network: 'mainnet',
-  // Leftover explorer.runonflux.io/api now 404s (new SPA). Leftover
+  // Leftover explorer.runonflux.io/api now 404s. Leftover
   // explorer.zelcash.online/api TLS-times out. No public Esplora hop
   // remains; Flux Blockbook is live for explorers but uses a different
   // JSON shape than BitcoinClient.
@@ -118,9 +118,10 @@ export const FLUX_MAINNET: BitcoinNetworkConfig = {
     pubKeyHash: 0x1cb8, // t1 addresses (same as Zcash)
     scriptHash: 0x1cbd, // t3 addresses
   },
-  // Leftover explorer.runonflux.io /address and /tx now 404. Leftover
-  // explorer.zelcash.online TLS-times out. Flux Blockbook still serves
-  // address/tx pages with the same path shape as other UTXO explorers.
+  // Leftover explorer.zelcash.online TLS-times out. Leftover
+  // explorer.runonflux.io /tx pages stay stuck loading. Flux Blockbook
+  // still serves address/tx pages with the same path shape as other
+  // UTXO explorers.
   explorerUrl: 'https://blockbook.runonflux.io',
   explorerAccountPath: '/address/{address}',
   explorerTxPath: '/tx/{txHash}',

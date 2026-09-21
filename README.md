@@ -48,7 +48,7 @@ Advertised Ravencoin explorer links use [Ravencoin Explorer](https://ravencoinex
 
 Supported Ravencoin explorer hops were last reviewed in September 2026.
 
-Advertised Flux explorer links use [Flux Blockbook](https://blockbook.runonflux.io) after leftover `explorer.runonflux.io` `/address` and `/tx` paths started returning 404. Leftover `explorer.runonflux.io/api` 404s the same way, and leftover `explorer.zelcash.online` TLS-times out. No public Esplora hop remains.
+Advertised Flux explorer links use [Flux Blockbook](https://blockbook.runonflux.io) after leftover `explorer.zelcash.online` started TLS-timing out and leftover `explorer.runonflux.io` `/tx` pages stopped loading. Leftover `explorer.runonflux.io/api` 404s, and leftover `explorer.zelcash.online/api` TLS-times out the same way. No public Esplora hop remains.
 
 Supported Flux explorer hops were last reviewed in September 2026.
 

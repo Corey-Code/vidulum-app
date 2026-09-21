@@ -114,8 +114,9 @@ const WebAppFrame: React.FC<{ children: React.ReactNode }> = ({ children }) => (
       </Text>
       <Text fontSize="xs" color="gray.500" mt={2}>
         Leftover Flux explorer hosts last checked in September 2026. Account and
-        transaction links now use Flux Blockbook after leftover explorer.runonflux.io
-        /address and /tx paths started returning 404s.
+        transaction links now use Flux Blockbook after leftover explorer.zelcash.online
+        started TLS-timing out and leftover explorer.runonflux.io /tx pages stopped
+        loading.
       </Text>
     </Box>
   </Flex>
