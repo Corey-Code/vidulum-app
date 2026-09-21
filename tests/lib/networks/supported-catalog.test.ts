@@ -68,6 +68,12 @@ describe('Supported network catalog', () => {
       /current public RPC and LCD/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
+      /leftover official uquad Injective and dYdX hops/
+    );
+    expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
+      /injective\.rpc\.uquad\.org/
+    );
+    expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(
       /leftover Juno Lavender\.Five hops/
     );
     expect(getSupportedNetworkFamilySummary('cosmos')).toMatch(

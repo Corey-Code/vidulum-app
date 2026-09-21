@@ -85,6 +85,8 @@ const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'lavenderfive.com/juno',
   'api.lunaroasis.net',
   'public-celestia-lcd.numia.xyz',
+  'injective.rpc.uquad.org',
+  'dydx.rpc.uquad.org',
 ] as const;
 
 // Default chains to include in the bundle (most popular by TVL/usage)
