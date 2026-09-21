@@ -44,6 +44,10 @@ Advertised Zcash explorer links use [CipherScan](https://cipherscan.app) after l
 
 Supported Zcash explorer hops were last reviewed in September 2026.
 
+Advertised Ravencoin explorer links use [Ravencoin Explorer](https://ravencoinexplorer.com) after leftover `ravencoin.network` started returning 401. Leftover `api.ravencoin.org` TLS-times out, and leftover `ravencoin.network/api` 401s the same way. No public Esplora hop remains.
+
+Supported Ravencoin explorer hops were last reviewed in September 2026.
+
 ### EVM Chains
 
 | Network      | Network ID   | Symbol | Chain ID | Status  |
