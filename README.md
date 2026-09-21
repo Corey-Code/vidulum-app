@@ -40,6 +40,10 @@ Cosmos networks are sourced from the [Cosmos Chain Registry](https://github.com/
 | BitcoinZ  | bitcoinz-mainnet  | BTCZ   | t1... (Transparent) | Enabled |
 | NOSO      | noso-mainnet      | NOSO   | X... (P2PKH)        | Enabled |
 
+Advertised Zcash explorer links use [CipherScan](https://cipherscan.app) after leftover `explorer.zcha.in` started returning Cloudflare 520s. Leftover `api.zcha.in` 520s the same way, and leftover `zcashblockexplorer.com` fails TLS (hostname mismatch). No public Esplora hop remains.
+
+Supported Zcash explorer hops were last reviewed in September 2026.
+
 ### EVM Chains
 
 | Network      | Network ID   | Symbol | Chain ID | Status  |

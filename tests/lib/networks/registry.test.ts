@@ -162,6 +162,18 @@ describe('Network Registry', () => {
           expect(endpoint).toMatch(/^https?:\/\//);
         });
       });
+
+      it('should use leftover-free Zcash explorer hops', () => {
+        const zcash = networkRegistry.getBitcoin('zcash-mainnet')!;
+        expect(zcash).toBeDefined();
+        expect(zcash.explorerUrl).toBe('https://cipherscan.app');
+        expect(zcash.explorerAccountPath).toBe('/address/{address}');
+        expect(zcash.explorerTxPath).toBe('/tx/{txHash}');
+        expect(zcash.apiUrls).toEqual([]);
+        for (const url of [zcash.explorerUrl, ...zcash.apiUrls]) {
+          expect(url).not.toMatch(/zcha\.in|zcashblockexplorer\.com/i);
+        }
+      });
     });
 
     describe('EVM Networks', () => {
@@ -213,6 +225,15 @@ describe('Network Registry', () => {
     it('should generate transaction URL for Bitcoin', () => {
       const url = getExplorerTxUrl('bitcoin-mainnet', 'txhash123');
       expect(url).toContain('txhash123');
+    });
+
+    it('should generate leftover-free CipherScan account and tx URLs for Zcash', () => {
+      const address = 't1Hsc1LR8yKnbbe3twRp88p6vFfC5t7DLbs';
+      const txHash = '8f6f7a6f4f69e770aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+      expect(getExplorerAccountUrl('zcash-mainnet', address)).toBe(
+        `https://cipherscan.app/address/${address}`
+      );
+      expect(getExplorerTxUrl('zcash-mainnet', txHash)).toBe(`https://cipherscan.app/tx/${txHash}`);
     });
 
     it('should generate account URL for EVM', () => {
