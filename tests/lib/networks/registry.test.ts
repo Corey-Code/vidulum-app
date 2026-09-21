@@ -174,6 +174,18 @@ describe('Network Registry', () => {
           expect(url).not.toMatch(/zcha\.in|zcashblockexplorer\.com/i);
         }
       });
+
+      it('should use leftover-free Ravencoin explorer hops', () => {
+        const ravencoin = networkRegistry.getBitcoin('ravencoin-mainnet')!;
+        expect(ravencoin).toBeDefined();
+        expect(ravencoin.explorerUrl).toBe('https://ravencoinexplorer.com');
+        expect(ravencoin.explorerAccountPath).toBe('/address/{address}');
+        expect(ravencoin.explorerTxPath).toBe('/tx/{txHash}');
+        expect(ravencoin.apiUrls).toEqual([]);
+        for (const url of [ravencoin.explorerUrl, ...ravencoin.apiUrls]) {
+          expect(url).not.toMatch(/ravencoin\.network|api\.ravencoin\.org/i);
+        }
+      });
     });
 
     describe('EVM Networks', () => {
@@ -234,6 +246,17 @@ describe('Network Registry', () => {
         `https://cipherscan.app/address/${address}`
       );
       expect(getExplorerTxUrl('zcash-mainnet', txHash)).toBe(`https://cipherscan.app/tx/${txHash}`);
+    });
+
+    it('should generate leftover-free Ravencoin Explorer account and tx URLs', () => {
+      const address = 'RKq6ypcHZP7MzR67cRNgy9N9hm9B7ToZqY';
+      const txHash = '3480049256d63cd936a387874fc437912575f782259badac7a09054b94b3a6d8';
+      expect(getExplorerAccountUrl('ravencoin-mainnet', address)).toBe(
+        `https://ravencoinexplorer.com/address/${address}`
+      );
+      expect(getExplorerTxUrl('ravencoin-mainnet', txHash)).toBe(
+        `https://ravencoinexplorer.com/tx/${txHash}`
+      );
     });
 
     it('should generate account URL for EVM', () => {

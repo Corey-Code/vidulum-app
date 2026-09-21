@@ -113,9 +113,9 @@ const WebAppFrame: React.FC<{ children: React.ReactNode }> = ({ children }) => (
         for IBC transfers, multi-chain swaps, and secure asset management across supported networks.
       </Text>
       <Text fontSize="xs" color="gray.500" mt={2}>
-        Leftover Zcash explorer hosts last checked in September 2026. Account and transaction
-        links now use CipherScan after leftover explorer.zcha.in started returning Cloudflare
-        520s.
+        Leftover Ravencoin explorer hosts last checked in September 2026. Account and
+        transaction links now use Ravencoin Explorer after leftover ravencoin.network started
+        returning 401s.
       </Text>
     </Box>
   </Flex>

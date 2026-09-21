@@ -136,16 +136,19 @@ export const RAVENCOIN_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 175, // BIP44 coin type for Ravencoin
   network: 'mainnet',
-  apiUrls: [
-    'https://api.ravencoin.org/api',
-    'https://ravencoin.network/api',
-  ],
+  // Leftover api.ravencoin.org/api TLS-times out. Leftover
+  // ravencoin.network/api returns 401. No public Esplora hop remains;
+  // Ravencoin Explorer is live for explorers but uses a different JSON
+  // shape than BitcoinClient.
+  apiUrls: [],
   addressType: 'p2pkh', // R... addresses (legacy P2PKH)
   addressPrefix: {
     pubKeyHash: 0x3c, // R addresses (60 in decimal)
     scriptHash: 0x7a, // r addresses (122 in decimal)
   },
-  explorerUrl: 'https://ravencoin.network',
+  // Leftover ravencoin.network now returns 401. Ravencoin Explorer still
+  // serves address/tx pages with the same path shape as other UTXO explorers.
+  explorerUrl: 'https://ravencoinexplorer.com',
   explorerAccountPath: '/address/{address}',
   explorerTxPath: '/tx/{txHash}',
 };
