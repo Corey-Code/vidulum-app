@@ -186,6 +186,18 @@ describe('Network Registry', () => {
           expect(url).not.toMatch(/ravencoin\.network|api\.ravencoin\.org/i);
         }
       });
+
+      it('should use leftover-free Flux explorer hops', () => {
+        const flux = networkRegistry.getBitcoin('flux-mainnet')!;
+        expect(flux).toBeDefined();
+        expect(flux.explorerUrl).toBe('https://blockbook.runonflux.io');
+        expect(flux.explorerAccountPath).toBe('/address/{address}');
+        expect(flux.explorerTxPath).toBe('/tx/{txHash}');
+        expect(flux.apiUrls).toEqual([]);
+        for (const url of [flux.explorerUrl, ...flux.apiUrls]) {
+          expect(url).not.toMatch(/explorer\.runonflux\.io|zelcash\.online/i);
+        }
+      });
     });
 
     describe('EVM Networks', () => {
@@ -256,6 +268,17 @@ describe('Network Registry', () => {
       );
       expect(getExplorerTxUrl('ravencoin-mainnet', txHash)).toBe(
         `https://ravencoinexplorer.com/tx/${txHash}`
+      );
+    });
+
+    it('should generate leftover-free Flux Blockbook account and tx URLs', () => {
+      const address = 't1RnueaYCB8bAHQBUK9rw8RXWKwMQS2gNUz';
+      const txHash = '3638d21407cb91bcab850ecd9411f8067041be4f690fab1096e0e7c472019030';
+      expect(getExplorerAccountUrl('flux-mainnet', address)).toBe(
+        `https://blockbook.runonflux.io/address/${address}`
+      );
+      expect(getExplorerTxUrl('flux-mainnet', txHash)).toBe(
+        `https://blockbook.runonflux.io/tx/${txHash}`
       );
     });
 
