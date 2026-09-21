@@ -108,16 +108,20 @@ export const FLUX_MAINNET: BitcoinNetworkConfig = {
   decimals: 8,
   coinType: 19167, // BIP44 coin type for Flux
   network: 'mainnet',
-  apiUrls: [
-    'https://explorer.runonflux.io/api',
-    'https://explorer.zelcash.online/api',
-  ],
+  // Leftover explorer.runonflux.io/api now 404s (new SPA). Leftover
+  // explorer.zelcash.online/api TLS-times out. No public Esplora hop
+  // remains; Flux Blockbook is live for explorers but uses a different
+  // JSON shape than BitcoinClient.
+  apiUrls: [],
   addressType: 'transparent', // t1... transparent addresses (Zcash-derived)
   addressPrefix: {
     pubKeyHash: 0x1cb8, // t1 addresses (same as Zcash)
     scriptHash: 0x1cbd, // t3 addresses
   },
-  explorerUrl: 'https://explorer.runonflux.io',
+  // Leftover explorer.runonflux.io /address and /tx now 404. Leftover
+  // explorer.zelcash.online TLS-times out. Flux Blockbook still serves
+  // address/tx pages with the same path shape as other UTXO explorers.
+  explorerUrl: 'https://blockbook.runonflux.io',
   explorerAccountPath: '/address/{address}',
   explorerTxPath: '/tx/{txHash}',
 };
