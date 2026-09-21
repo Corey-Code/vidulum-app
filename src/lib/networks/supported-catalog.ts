@@ -4,8 +4,7 @@
  * The live registry can include additional auto-synced chains. This list is the
  * curated set shown in Settings and kept in sync with README.md.
  *
- * Last reviewed: 2026-09-20 (leftover Avalanche snowscan explorer and
- * leftover Juno Lavender.Five / Celestia LCD hop refresh).
+ * Last reviewed: 2026-09-21 (leftover Solana explorer refresh).
  */
 
 export { DEPRECATED_SVM_ENDPOINT_HOSTS } from './svm-endpoints';
@@ -19,7 +18,7 @@ export interface SupportedNetworkEntry {
   family: SupportedNetworkFamily;
 }
 
-export const SUPPORTED_NETWORK_CATALOG_REVIEWED_AT = '2026-09-20';
+export const SUPPORTED_NETWORK_CATALOG_REVIEWED_AT = '2026-09-21';
 
 export const SUPPORTED_NETWORK_CATALOG: readonly SupportedNetworkEntry[] = [
   { id: 'beezee-1', name: 'BeeZee', symbol: 'BZE', family: 'cosmos' },
@@ -73,7 +72,7 @@ export function getSupportedNetworkFamilySummary(family: SupportedNetworkFamily)
     case 'evm':
       return 'Ethereum and compatible networks load balances through current public RPCs (PublicNode, DRPC, and official chain endpoints). Retired leftover hosts such as snowscan.xyz were removed. Earlier leftover 1rpc.io/sepolia, leftover 1rpc.io/eth, moonriver.unitedbloc.com, Sepolia.org RPCs, zkevm.polygonscan.com, Cloudflare Ethereum, Ankr public RPC, and BlastAPI hops stay denylisted.';
     case 'svm':
-      return 'Solana mainnet balances load through current public RPCs (official Solana and PublicNode). Retired or key-gated hosts such as Ankr public RPC and Solana dRPC were removed.';
+      return 'Solana mainnet balances load through current public RPCs (official Solana and PublicNode). Explorer links use SolanaFM after leftover explorer.solana.com started returning a Vercel Security Checkpoint 429. Retired or key-gated hosts such as Ankr public RPC and Solana dRPC were removed.';
     default: {
       const _exhaustive: never = family;
       return _exhaustive;

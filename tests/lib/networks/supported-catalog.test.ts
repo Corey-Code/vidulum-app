@@ -94,6 +94,12 @@ describe('Supported network catalog', () => {
     expect(getSupportedNetworkFamilySummary('svm')).toMatch(
       /current public RPCs/
     );
+    expect(getSupportedNetworkFamilySummary('svm')).toMatch(
+      /SolanaFM/
+    );
+    expect(getSupportedNetworkFamilySummary('svm')).toMatch(
+      /explorer\.solana\.com/
+    );
   });
 
   it('formats the catalog review month for Settings copy', () => {

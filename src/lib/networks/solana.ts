@@ -29,7 +29,9 @@ export const SOLANA_MAINNET: SvmNetworkConfig = {
   ],
   logoUrl:
     'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/info/logo.png',
-  explorerUrl: 'https://explorer.solana.com',
+  // Leftover explorer.solana.com now returns a Vercel Security Checkpoint
+  // 429. SolanaFM still serves address/tx pages with the same paths.
+  explorerUrl: 'https://solana.fm',
   explorerAccountPath: '/address/{address}',
   explorerTxPath: '/tx/{txHash}',
 };
@@ -48,7 +50,9 @@ export const SOLANA_DEVNET: SvmNetworkConfig = {
   rpcUrls: ['https://api.devnet.solana.com'],
   logoUrl:
     'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/info/logo.png',
-  explorerUrl: 'https://explorer.solana.com',
+  // Leftover explorer.solana.com now 429s. SolanaFM still serves
+  // ?cluster=devnet address/tx pages.
+  explorerUrl: 'https://solana.fm',
   explorerAccountPath: '/address/{address}?cluster=devnet',
   explorerTxPath: '/tx/{txHash}?cluster=devnet',
 };
@@ -66,7 +70,9 @@ export const SOLANA_TESTNET: SvmNetworkConfig = {
   rpcUrls: ['https://api.testnet.solana.com'],
   logoUrl:
     'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/info/logo.png',
-  explorerUrl: 'https://explorer.solana.com',
+  // Leftover explorer.solana.com now 429s. SolanaFM still serves
+  // ?cluster=testnet address/tx pages.
+  explorerUrl: 'https://solana.fm',
   explorerAccountPath: '/address/{address}?cluster=testnet',
   explorerTxPath: '/tx/{txHash}?cluster=testnet',
 };
