@@ -38,6 +38,8 @@ describe('SupportedNetworksPanel', () => {
 
     expect(screen.getByText(/BeeZee, Osmosis, AtomOne, Cosmos Hub/)).toBeInTheDocument();
     expect(screen.getByText(/current public RPC and LCD/)).toBeInTheDocument();
+    expect(screen.getByText(/leftover official uquad Injective and dYdX hops/)).toBeInTheDocument();
+    expect(screen.getByText(/injective\.rpc\.uquad\.org/)).toBeInTheDocument();
     expect(screen.getByText(/leftover Juno Lavender\.Five hops/)).toBeInTheDocument();
     expect(screen.getByText(/leftover Celestia lunaroasis LCD/)).toBeInTheDocument();
     expect(screen.getByText(/leftover dYdX Polkachu dao hosts/)).toBeInTheDocument();

@@ -14,7 +14,11 @@
  * timeout). Leftover dYdX Polkachu dao hosts then lingered after the
  * official registry moved to dydx-rpc.polkachu.com. Leftover Juno
  * Lavender.Five hops then lingered (503). Leftover Celestia lunaroasis
- * LCD then lingered (TLS-dead) plus leftover Numia LCD (501). This
+ * LCD then lingered (TLS-dead) plus leftover Numia LCD (501). Leftover
+ * official uquad Injective and dYdX hops then lingered after the
+ * Cosmos Chain Registry started leading those lists with
+ * injective.rpc.uquad.org (401 missing API key) and
+ * dydx.rpc.uquad.org (502). Other uquad hops remain public. This
  * keeps those lists honest.
  */
 
@@ -378,6 +382,23 @@ describe('Cosmos endpoint freshness', () => {
     );
   });
 
+  it('drops leftover official uquad Injective and dYdX hops that 401 or 502', () => {
+    const injective = getChainById('injective-1');
+    expect(injective?.rpc.concat(injective?.rest ?? []).join(' ')).not.toContain(
+      'injective.rpc.uquad.org'
+    );
+    expect(injective?.rpc[0]).toBe('https://injective-rpc.highstakes.ch');
+
+    const dydx = getChainById('dydx-mainnet-1');
+    expect(dydx?.rpc.concat(dydx?.rest ?? []).join(' ')).not.toContain('dydx.rpc.uquad.org');
+    expect(dydx?.rpc).toEqual([
+      'https://dydx-rpc.kingnodes.com:443',
+      'https://dydx-rpc.polkachu.com:443',
+      'https://rpc.lavenderfive.com:443/dydx',
+      'https://dydx-rpc.publicnode.com:443',
+    ]);
+  });
+
   it('replaces leftover official Neutron RPC/LCD hops with current public hops', () => {
     const neutron = getChainById('neutron-1');
     expect(neutron?.rpc).toEqual([
@@ -514,6 +535,10 @@ describe('Cosmos endpoint freshness', () => {
     expect(usesDeprecatedCosmosHost('https://rest.lavenderfive.com:443/juno')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://api.lunaroasis.net')).toBe(true);
     expect(usesDeprecatedCosmosHost('https://public-celestia-lcd.numia.xyz')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://injective.rpc.uquad.org:443')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://dydx.rpc.uquad.org:443')).toBe(true);
+    expect(usesDeprecatedCosmosHost('https://cosmos.rpc.uquad.org:443')).toBe(false);
+    expect(usesDeprecatedCosmosHost('https://celestia.rpc.uquad.org:443')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://rpc.lunaroasis.net')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://public-celestia-rpc.numia.xyz')).toBe(false);
     expect(usesDeprecatedCosmosHost('https://dydx-rpc.polkachu.com:443')).toBe(false);
@@ -554,9 +579,12 @@ describe('Cosmos endpoint freshness', () => {
         'https://rpc.lavenderfive.com:443/juno',
         'https://api.lunaroasis.net',
         'https://public-celestia-lcd.numia.xyz',
+        'https://injective.rpc.uquad.org:443',
+        'https://dydx.rpc.uquad.org:443',
         'https://dydx-rpc.polkachu.com:443',
         'https://rpc.lunaroasis.net',
         'https://public-celestia-rpc.numia.xyz',
+        'https://cosmos.rpc.uquad.org:443',
       ])
     ).toEqual([
       'https://rpc.lavenderfive.com:443/cosmoshub',

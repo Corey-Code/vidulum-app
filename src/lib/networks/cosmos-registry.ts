@@ -36,6 +36,9 @@
  * (api.lunaroasis.net) fails TLS; leftover Numia LCD
  * (public-celestia-lcd.numia.xyz) returns 501. Celestia RPC hops
  * (including lunaroasis / Numia RPC) remain public.
+ * Leftover official uquad Injective and dYdX hops refreshed 2026-09-21
+ * after injective.rpc.uquad.org started 401ing without an API key and
+ * dydx.rpc.uquad.org started 502ing. Other uquad hops remain public.
  */
 
 import { CosmosNetworkConfig } from './types';
@@ -175,6 +178,7 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     // dydx-mainnet-rpc.autostake.com now 404s. Leftover dydx-dao-*
     // Polkachu hostnames were dropped after the official registry
     // moved to dydx-rpc.polkachu.com / dydx-api.polkachu.com.
+    // Leftover official dydx.rpc.uquad.org now 502s.
     rpc: [
       'https://dydx-rpc.kingnodes.com:443',
       'https://dydx-rpc.polkachu.com:443',
@@ -210,7 +214,8 @@ export const COSMOS_REGISTRY_CHAINS: CosmosRegistryConfig[] = [
     decimals: 6,
     coinType: 60,
     // goldenratiostaking.net now 502s. stakeflow.io no longer resolves.
-    // Leftover Polkachu RPC/LCD now time out. PublicNode remains public.
+    // Leftover Polkachu RPC/LCD now time out. Leftover official
+    // injective.rpc.uquad.org 401s without an API key. PublicNode remains public.
     rpc: [
       'https://injective-rpc.highstakes.ch',
       'https://rpc.lavenderfive.com:443/injective',

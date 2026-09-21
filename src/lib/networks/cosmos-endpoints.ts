@@ -23,6 +23,11 @@
  * rest.lavenderfive.com:443/juno now 503. Leftover Celestia lunaroasis
  * LCD (api.lunaroasis.net) then lingered after TLS handshake failure,
  * and leftover Numia LCD (public-celestia-lcd.numia.xyz) returns 501.
+ * Leftover official uquad Injective and dYdX hops then lingered after
+ * the Cosmos Chain Registry started leading those lists with
+ * injective.rpc.uquad.org (401 missing API key) and
+ * dydx.rpc.uquad.org (502). Other uquad hops (Cosmos Hub, Celestia,
+ * Akash, Neutron, Stride, Osmosis, Axelar) remain public.
  * Keep those hosts out of advertised lists so the first hop can succeed.
  */
 
@@ -86,6 +91,8 @@ export const DEPRECATED_COSMOS_ENDPOINT_HOSTS = [
   'lavenderfive.com/juno',
   'api.lunaroasis.net',
   'public-celestia-lcd.numia.xyz',
+  'injective.rpc.uquad.org',
+  'dydx.rpc.uquad.org',
 ] as const;
 
 export function cosmosEndpointHaystack(
