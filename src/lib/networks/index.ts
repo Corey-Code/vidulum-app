@@ -50,6 +50,8 @@ export {
   svmEndpointHaystack,
   usesDeprecatedSvmHost,
   filterPublicSvmRpcUrls,
+  selectPublicSvmExplorer,
+  type SvmExplorerCandidate,
 } from './svm-endpoints';
 
 export {

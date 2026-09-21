@@ -12,7 +12,7 @@ Solana mainnet is enabled. Devnet, testnet, and Eclipse are defined but disabled
 | ---------------------- | ------------ | ------------------------------------------ |
 | Address display        | Supported    | Shown on the dashboard SVM tab             |
 | Native SOL balance     | Supported    | Via JSON-RPC `getBalance`                  |
-| Explorer links         | Supported    | Solana Explorer / Eclipse Scan             |
+| Explorer links         | Supported    | SolanaFM / Eclipse Scan                    |
 | Extra SVM mainnets     | Config-only  | Add a config entry and enable when ready   |
 
 ## Step 1: Define Network Configuration
@@ -54,7 +54,7 @@ export const NEW_SVM_MAINNET: SvmNetworkConfig = {
 | `rpcUrls`    | RPC endpoints, failover order       | public HTTPS RPCs    |
 | `enabled`    | Whether users see the network       | `true` for mainnets  |
 
-Use more than one public HTTPS RPC so failover can skip a dead host. Do not add retired or key-gated endpoints such as Project Serum, Ankr public RPC (`rpc.ankr.com`), Solana dRPC, or Lava's discontinued Solana host.
+Use more than one public HTTPS RPC so failover can skip a dead host. Do not add retired or key-gated endpoints such as Project Serum, Ankr public RPC (`rpc.ankr.com`), Solana dRPC, or Lava's discontinued Solana host. Do not point Solana explorer links at leftover `explorer.solana.com` (Vercel Security Checkpoint 429); use [SolanaFM](https://solana.fm).
 
 ## Step 2: Register and Advertise
 
@@ -75,7 +75,7 @@ Then run the web app or extension, open Settings, and confirm the network family
 ## Related Files
 
 - `src/lib/networks/solana.ts` — SVM network configs
-- `src/lib/networks/svm-endpoints.ts` — public-RPC denylist and filters
+- `src/lib/networks/svm-endpoints.ts` — public-RPC / leftover explorer denylist and filters
 - `src/lib/networks/supported-catalog.ts` — curated user-facing list
 - `src/lib/solana/client.ts` — JSON-RPC balance and account reads
 - `src/popup/components/SupportedNetworksPanel.tsx` — Settings summary

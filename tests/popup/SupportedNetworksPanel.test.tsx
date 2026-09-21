@@ -63,6 +63,8 @@ describe('SupportedNetworksPanel', () => {
     expect(screen.getByText(/1rpc\.io\/sepolia, leftover 1rpc\.io\/eth, moonriver\.unitedbloc\.com, Sepolia\.org RPCs, zkevm\.polygonscan\.com/)).toBeInTheDocument();
     expect(screen.getByText(/^Solana$/)).toBeInTheDocument();
     expect(screen.getByText(/official Solana and PublicNode/)).toBeInTheDocument();
+    expect(screen.getByText(/SolanaFM/)).toBeInTheDocument();
+    expect(screen.getByText(/explorer\.solana\.com/)).toBeInTheDocument();
     expect(screen.getByText(/Ankr public RPC and Solana dRPC/)).toBeInTheDocument();
   });
 });

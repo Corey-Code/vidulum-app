@@ -3,8 +3,11 @@
  *
  * SolanaClient starts on rpcUrls[0] and can switch hops for failover.
  * After a period of low activity, several bundled hosts were key-gated,
- * paid-only, or discontinued. Keep those hosts out of advertised lists
- * so the first hop can succeed without an API key.
+ * paid-only, or discontinued. Leftover explorer.solana.com then lingered
+ * after the official explorer started returning a Vercel Security
+ * Checkpoint 429. SolanaFM still serves public address/tx pages with
+ * the same path templates. Keep those hosts out of advertised lists so
+ * the first hop can succeed without an API key.
  */
 
 export const DEPRECATED_SVM_ENDPOINT_HOSTS = [
@@ -14,6 +17,7 @@ export const DEPRECATED_SVM_ENDPOINT_HOSTS = [
   'solana.drpc.org',
   'solana.lava.build',
   'gateway.tatum.io',
+  'explorer.solana.com',
 ] as const;
 
 export function svmEndpointHaystack(rpcUrls: readonly string[], explorerUrl?: string): string {
@@ -39,4 +43,21 @@ export function filterPublicSvmRpcUrls(urls: string[]): string[] {
       return true;
     })
     .slice(0, 5);
+}
+
+export interface SvmExplorerCandidate {
+  url?: string;
+}
+
+/**
+ * Pick a live public explorer, skipping leftover explorer.solana.com
+ * after it started returning a Vercel Security Checkpoint 429.
+ */
+export function selectPublicSvmExplorer(
+  explorers: readonly SvmExplorerCandidate[] = []
+): SvmExplorerCandidate | undefined {
+  return explorers.find((explorer) => {
+    const url = explorer.url;
+    return Boolean(url && url.startsWith('https://') && !usesDeprecatedSvmHost(url));
+  });
 }
