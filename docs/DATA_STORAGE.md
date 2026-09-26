@@ -1,3 +1,3 @@
 # Data Storage
 
-All wallet data is stored locally on-device. Seeds and private keys are never transmitted, logged, or included in CI. CI workflows must never require secrets beyond the default `GITHUB_TOKEN`.
+All sensitive data (keys, seeds) is stored locally on the user's device using encrypted storage. No sensitive data is transmitted to remote servers.

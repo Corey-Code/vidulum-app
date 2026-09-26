@@ -1,3 +1,3 @@
 # Purpose
 
-Vidulum App provides a self-custody, multi-chain wallet experience. Users retain control of their assets at all times.
+Vidulum is a self-custodial wallet application providing multi-chain asset management for users.

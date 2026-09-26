@@ -1,5 +1,5 @@
 # Adding a Cosmos Chain
 
-1. Add the chain entry to the chain registry source.
-2. Run `npm run sync:chain-registry` to regenerate `src/lib/assets/chainRegistry.ts`.
-3. Verify bech32 prefix, denom, and RPC/REST endpoints.
+1. Add chain metadata to the chain registry source data.
+2. Run `npm run sync-registry`.
+3. Add tests covering the new chain.
