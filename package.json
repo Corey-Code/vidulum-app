@@ -1,17 +1,31 @@
 {
   "name": "vidulum-app",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": true,
-  "description": "Vidulum wallet application",
-  "engines": {
-    "node": ">=22"
-  },
+  "description": "Vidulum wallet app",
+  "engines": { "node": ">=20 <21" },
   "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/copy-static.js",
+    "dev": "bash scripts/dev-web.sh",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write .",
     "test": "jest",
-    "lint": "eslint .",
-    "build": "node scripts/copy-static.js"
+    "sync:chains": "ts-node scripts/sync-chain-registry.ts",
+    "sync:evm": "ts-node scripts/sync-evm-registry.ts"
   },
   "devDependencies": {
-    "jest": "^29.7.0"
+    "@babel/preset-env": "^7.24.0",
+    "@babel/preset-typescript": "^7.24.0",
+    "@types/jest": "^29.5.12",
+    "@typescript-eslint/eslint-plugin": "^7.4.0",
+    "@typescript-eslint/parser": "^7.4.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "prettier": "^3.2.5",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.3"
   }
 }

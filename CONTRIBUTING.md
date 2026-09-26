@@ -1,6 +1,20 @@
 # Contributing
 
-1. Fork the repository and create a feature branch.
-2. Make your changes with tests.
-3. Run `npm run lint` and `npm test`.
-4. Open a pull request with a clear description.
+Thanks for contributing to vidulum-app!
+
+## Getting started
+
+1. Install Node.js 20 (`nvm use`).
+2. Run `npm ci`.
+3. Run `npm test` and `npm run lint` before opening a PR.
+
+## Guidelines
+
+- Keep PRs focused; one concern per PR.
+- Add tests for new behavior.
+- Never commit secrets, seeds, private keys, or credentials.
+- Follow the existing code style (Prettier + ESLint).
+
+## Reporting issues
+
+Open a GitHub issue with reproduction steps and environment details.

@@ -4,5 +4,8 @@ build/
 coverage/
 .env
 .env.local
+.env.*.local
 *.log
 .DS_Store
+.vscode/
+.idea/
