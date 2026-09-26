@@ -1,42 +1,22 @@
 {
   "manifest_version": 3,
-  "name": "Vidulum App",
-  "version": "1.0.0",
-  "description": "Multi-chain browser wallet supporting Cosmos SDK, Bitcoin/UTXO, and EVM networks",
-  "permissions": ["storage", "activeTab"],
-  "host_permissions": ["https://*.vidulum.app/*"],
-  "optional_host_permissions": ["<all_urls>"],
-  "background": {
-    "service_worker": "background.js"
-  },
-  "action": {
-    "default_popup": "popup.html",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
-    }
-  },
+  "name": "Vidulum Wallet",
+  "version": "1.4.0",
+  "description": "Multi-chain wallet for Cosmos, EVM, Solana, and UTXO assets.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
+  "background": { "service_worker": "background/service-worker.js" },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
-      "run_at": "document_start",
-      "all_frames": true
+      "js": ["content/inpage.js"],
+      "run_at": "document_start"
     }
   ],
-  "web_accessible_resources": [
-    {
-      "resources": ["inpage.js"],
-      "matches": ["<all_urls>"]
-    }
-  ],
-  "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
-  }
+  "permissions": ["storage"],
+  "host_permissions": ["https://*/*"],
+  "action": { "default_icon": { "128": "icons/icon128.png" } }
 }

@@ -1,25 +1,9 @@
-export default {
-  preset: 'ts-jest',
+module.exports = {
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+  transform: { '^.+\.(ts|tsx|js|jsx)$': 'babel-jest' },
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
+    '\\.(css|less|png|svg)$': '<rootDir>/__mocks__/fileMock.js',
   },
-  transform: {
-    '^.+\\.tsx?$': [
-      'ts-jest',
-      {
-        tsconfig: {
-          jsx: 'react-jsx',
-          esModuleInterop: true,
-        },
-      },
-    ],
-    // Transform ES modules from @noble packages
-    '^.+\\.js$': 'babel-jest',
-  },
-  transformIgnorePatterns: [
-    // Transform @noble packages which use ES modules
-    'node_modules/(?!(@noble|@scure)/)',
-  ],
+  testMatch: ['<rootDir>/src/**/*.test.(ts|tsx)'],
+  collectCoverageFrom: ['src/**/*.(ts|tsx)', '!src/**/*.d.ts'],
 };
