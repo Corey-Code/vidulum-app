@@ -1,3 +1,5 @@
 # Adding a Network Type
 
-Document the new network type in the registry and ensure the background service worker routes it correctly.
+1. Extend the network type union in the shared types module.
+2. Update registry generation scripts if needed.
+3. Add tests covering the new network type.

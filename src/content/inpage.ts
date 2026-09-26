@@ -1,4 +1,2 @@
-// In-page script entry point.
-import { injectProvider } from './inject';
-
-injectProvider();
+// In-page provider bootstrap.
+window.postMessage({ type: 'VIDULUM_REQUEST', payload: { method: 'vidulum_connect' } }, '*');

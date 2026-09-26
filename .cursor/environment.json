@@ -1,5 +1,3 @@
 {
-  "node": "22",
-  "install": "npm ci",
-  "test": "npm test"
+  "node": "20"
 }

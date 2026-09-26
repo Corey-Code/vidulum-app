@@ -1,3 +1,5 @@
-# Adding an SVM Chain
+# Adding an SVM (Solana) Chain
 
-Add chain metadata to `src/lib/assets/chainRegistry.ts` and add tests for address derivation.
+1. Add cluster/RPC configuration to the registry.
+2. Verify program IDs and address encoding.
+3. Add tests.

@@ -1,3 +1,3 @@
 # Privacy Policy
 
-Vidulum does not collect or transmit personal data. Keys and seeds remain on-device.
+Vidulum App does not collect or transmit personal data, wallet seeds, private keys, or signing secrets. All sensitive material remains on-device.

@@ -1,3 +1,5 @@
 # Adding a UTXO Chain
 
-Add chain metadata to `src/lib/assets/chainRegistry.ts` and add tests for address derivation.
+1. Add chain parameters (magic, address version, explorer) to the registry.
+2. Verify address derivation against test vectors.
+3. Add tests.

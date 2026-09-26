@@ -1,7 +1,10 @@
+/** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: 'jsdom',
+  roots: ['<rootDir>/src'],
   transform: {
-    '^.+\\.[tj]sx?$': 'babel-jest',
+    '^.+\\.(ts|tsx|js|jsx)$': 'babel-jest',
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  collectCoverageFrom: ['src/**/*.{ts,tsx}'],
 };
