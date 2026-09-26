@@ -1,15 +1,13 @@
-# vidulum-app
+# Vidulum App
 
-Vidulum multi-chain wallet application.
+Vidulum wallet application.
 
 ## Development
 
+Requires Node.js 22 (see `.nvmrc`).
+
 ```sh
-npm install
+nvm use
+npm ci
 npm test
-npm run lint
 ```
-
-See `docs/` for guides on adding chains and network types.
-
-This repository does not handle seeds, private keys, or funds in CI tooling.

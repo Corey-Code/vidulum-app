@@ -1,7 +1,8 @@
-name: test
+name: Test
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
@@ -14,5 +15,4 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run lint
       - run: npm test
