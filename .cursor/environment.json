@@ -1,5 +1,5 @@
 {
-  "node": "20.11.1",
-  "installCommand": "npm ci",
-  "testCommand": "npm test -- --watchAll=false"
+  "node": "22",
+  "install": "npm ci",
+  "test": "npm test"
 }

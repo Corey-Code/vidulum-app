@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd "$(dirname "$0")/.."
-export NODE_ENV=development
-npx webpack serve --mode development --open
+npm ci
+npm run build
+npm test --if-present
