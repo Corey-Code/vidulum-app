@@ -4,5 +4,9 @@ build/
 coverage/
 .env
 .env.local
+.env.*.local
 *.log
 .DS_Store
+.idea/
+.vscode/
+web-dist/
