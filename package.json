@@ -2,21 +2,16 @@
   "name": "vidulum-app",
   "version": "1.0.0",
   "private": true,
+  "description": "Vidulum wallet application",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "build": "node scripts/copy-static.js",
     "test": "jest",
-    "lint": "eslint src --ext .ts,.tsx",
-    "sync-registry": "ts-node scripts/sync-chain-registry.ts"
+    "lint": "eslint .",
+    "build": "node scripts/copy-static.js"
   },
   "devDependencies": {
-    "@types/jest": "^29.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
-    "eslint": "^8.57.0",
-    "jest": "^29.0.0",
-    "prettier": "^3.0.0",
-    "ts-jest": "^29.0.0",
-    "ts-node": "^10.9.0",
-    "typescript": "^5.4.0"
+    "jest": "^29.7.0"
   }
 }
