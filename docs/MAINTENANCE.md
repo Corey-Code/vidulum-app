@@ -1,9 +1,12 @@
-# Maintenance Notes
+# Maintenance
 
-This repository went through a period of low activity. This PR brings the app back up to date with routine maintenance changes only:
+This repo went through a period of low activity. To bring it back up to date:
 
-- Refreshed documentation and contributing guidelines.
-- Updated CI workflow configuration.
-- No changes to wallet seeds, private keys, signing secrets, or fund-handling logic.
+1. CI was updated to use current major versions of `actions/checkout` and `actions/setup-node` (v5), resolving the Node.js 20 deprecation warnings.
+2. The Node version pinned in `.nvmrc` and `.node-version` was bumped to the active LTS line (22).
+3. Run `npm ci` and `npm audit fix` locally before merging dependency updates.
 
-spine-card: fcf23a0b
+## CI notes
+
+- The `test` workflow runs on `ubuntu-latest`.
+- Node version is read from `.nvmrc` via `node-version-file` so local and CI environments stay in sync.
