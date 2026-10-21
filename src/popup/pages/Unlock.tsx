@@ -1,5 +1,11 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
   Box,
   Button,
   Input,
@@ -15,14 +21,18 @@ import { useWalletStore } from '@/store/walletStore';
 
 interface Props {
   onSuccess: () => void;
+  onReset: () => void;
 }
 
-const Unlock: React.FC<Props> = ({ onSuccess }) => {
+const Unlock: React.FC<Props> = ({ onSuccess, onReset }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const cancelRef = useRef<HTMLButtonElement>(null);
 
-  const { unlock } = useWalletStore();
+  const { unlock, resetWallet } = useWalletStore();
   const toast = useToast();
 
   const handleUnlock = async (e: React.FormEvent) => {
@@ -55,6 +65,24 @@ const Unlock: React.FC<Props> = ({ onSuccess }) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReset = async () => {
+    setResetting(true);
+    try {
+      await resetWallet();
+      setResetOpen(false);
+      onReset();
+    } catch (error) {
+      toast({
+        title: 'Could not reset wallet',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        status: 'error',
+        duration: 4000,
+      });
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -127,8 +155,61 @@ const Unlock: React.FC<Props> = ({ onSuccess }) => {
             >
               Unlock
             </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              color="gray.500"
+              _hover={{ color: 'white' }}
+              size="sm"
+              onClick={() => setResetOpen(true)}
+            >
+              Forgot password?
+            </Button>
           </VStack>
         </form>
+
+        <AlertDialog
+          isOpen={resetOpen}
+          leastDestructiveRef={cancelRef}
+          onClose={() => setResetOpen(false)}
+          isCentered
+        >
+          <AlertDialogOverlay>
+            <AlertDialogContent bg="#141414" color="white" mx={4}>
+              <AlertDialogHeader fontSize="lg" fontWeight="semibold">
+                Reset this wallet?
+              </AlertDialogHeader>
+              <AlertDialogBody>
+                <Text color="gray.300" fontSize="sm">
+                  This removes the wallet saved in this browser. Your coins stay on the chain. You
+                  need your recovery phrase to import it and choose a new password. Without that
+                  phrase, this copy cannot be restored.
+                </Text>
+              </AlertDialogBody>
+              <AlertDialogFooter>
+                <Button
+                  ref={cancelRef}
+                  variant="ghost"
+                  onClick={() => setResetOpen(false)}
+                  isDisabled={resetting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  bg="red.500"
+                  color="white"
+                  _hover={{ bg: 'red.600' }}
+                  ml={3}
+                  onClick={handleReset}
+                  isLoading={resetting}
+                >
+                  Reset wallet
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialogOverlay>
+        </AlertDialog>
       </VStack>
     </Box>
   );
