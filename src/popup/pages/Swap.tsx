@@ -580,6 +580,8 @@ const SwapPage: React.FC<SwapPageProps> = ({ onBack }) => {
               experimentalFeatures: ['hyperlane', 'cctp', 'eureka'],
               allowMultiTx: true,
               allowUnsafe: false,
+              // Workaround for a @skip-go/widget DOM nesting warning in RoutePreferenceSelector
+              // (div rendered inside p); keeping goFast false avoids rendering that section.
               goFast: false,
             }}
             batchSignTxs={true}

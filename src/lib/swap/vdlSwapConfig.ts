@@ -9,6 +9,8 @@ export interface SkipDefaultRoute {
   srcAssetDenom?: string;
   destChainId?: string;
   destAssetDenom?: string;
+  srcLocked?: boolean;
+  destLocked?: boolean;
 }
 
 export interface SkipAssetFilter {
@@ -46,6 +48,7 @@ export function vdlSwapConfig(mode: VdlSwapMode): VdlSwapConfig {
         defaultRoute: {
           destChainId: VDL_CHAIN_ID,
           destAssetDenom: VDL_DENOM,
+          destLocked: true,
         },
         filter: { destination: vdlOnly },
         filterOut: { source: vdlOnly },
@@ -55,6 +58,7 @@ export function vdlSwapConfig(mode: VdlSwapMode): VdlSwapConfig {
         defaultRoute: {
           srcChainId: VDL_CHAIN_ID,
           srcAssetDenom: VDL_DENOM,
+          srcLocked: true,
         },
         filter: { source: vdlOnly },
         filterOut: { destination: vdlOnly },

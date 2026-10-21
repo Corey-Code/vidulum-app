@@ -7,7 +7,9 @@ describe('vdlSwapConfig', () => {
     expect(config.defaultRoute).toEqual({
       destChainId: VDL_CHAIN_ID,
       destAssetDenom: VDL_DENOM,
+      destLocked: true,
     });
+    expect(config.defaultRoute.srcLocked).toBeUndefined();
     expect(config.defaultRoute.srcChainId).toBeUndefined();
     expect(config.defaultRoute.srcAssetDenom).toBeUndefined();
     expect(config.defaultRoute).not.toHaveProperty('amountIn');
@@ -30,7 +32,9 @@ describe('vdlSwapConfig', () => {
     expect(config.defaultRoute).toEqual({
       srcChainId: VDL_CHAIN_ID,
       srcAssetDenom: VDL_DENOM,
+      srcLocked: true,
     });
+    expect(config.defaultRoute.destLocked).toBeUndefined();
     expect(config.defaultRoute.destChainId).toBeUndefined();
     expect(config.defaultRoute.destAssetDenom).toBeUndefined();
     expect(config.defaultRoute).not.toHaveProperty('amountIn');
