@@ -19,6 +19,17 @@ import {
   UtxoAddressStyle,
   resolveUtxoAddressStyle,
 } from '@/lib/crypto/bitcoin';
+import {
+  DEMO_MNEMONIC,
+  applyDemoMessages,
+  demoAddressForPrefix,
+  demoChainAddress,
+  demoTxHash,
+  isDemoSession,
+  setDemoSession,
+  spendDemo,
+} from '@/lib/demo/session';
+import { useChainStore } from '@/store/chainStore';
 
 /**
  * Sync keyring state with background service worker
@@ -123,8 +134,31 @@ async function preDeriveAllAccounts(keyring: Keyring): Promise<void> {
   }
 }
 
+function makeDemoAccount(index: number, name: string, id: string): KeyringAccount {
+  return {
+    id,
+    name,
+    address: demoAddressForPrefix('bze', index),
+    pubKey: new Uint8Array(33),
+    algo: 'secp256k1',
+    hdPath: `m/44'/118'/0'/0/${index}`,
+    accountIndex: index,
+  };
+}
+
+function pushDemoAccount(name: string, idPrefix: string): KeyringAccount {
+  const { accounts } = useWalletStore.getState();
+  const account = makeDemoAccount(accounts.length, name, `${idPrefix}-${accounts.length}`);
+  useWalletStore.setState({
+    accounts: [...accounts, account],
+    selectedAccount: account,
+  });
+  return account;
+}
+
 interface WalletState {
   // State
+  isDemo: boolean;
   isInitialized: boolean;
   isLocked: boolean;
   accounts: KeyringAccount[];
@@ -142,6 +176,8 @@ interface WalletState {
   unlock: (password: string) => Promise<void>;
   lock: () => Promise<void>;
   resetWallet: () => Promise<void>;
+  startDemo: () => void;
+  exitDemo: () => void;
   selectAccount: (accountId: string) => void;
   selectChain: (chainId: string) => void;
   setAutoLockMinutes: (minutes: number) => Promise<void>;
@@ -247,6 +283,7 @@ interface WalletState {
 }
 
 export const useWalletStore = create<WalletState>((set, get) => ({
+  isDemo: false,
   isInitialized: false,
   isLocked: true,
   accounts: [],
@@ -258,6 +295,8 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   utxoAddressStyle: {},
 
   initialize: async () => {
+    if (get().isDemo || isDemoSession()) return;
+
     const hasWallet = await EncryptedStorage.hasWallet();
     const hasSession = await EncryptedStorage.getSession();
     const preferences = await EncryptedStorage.getPreferences();
@@ -361,6 +400,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   },
 
   createWallet: async (password: string, accountName: string = 'Account 1') => {
+    if (get().isDemo) get().exitDemo();
     const mnemonic = await MnemonicManager.generateMnemonicAsync();
     const keyring = new Keyring();
 
@@ -395,6 +435,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   },
 
   importWallet: async (mnemonic: string, password: string, accountName: string = 'Account 1') => {
+    if (get().isDemo) get().exitDemo();
     if (!MnemonicManager.validateMnemonic(mnemonic)) {
       throw new Error('Invalid mnemonic phrase');
     }
@@ -502,6 +543,11 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   },
 
   lock: async () => {
+    if (get().isDemo) {
+      get().exitDemo();
+      return;
+    }
+
     await EncryptedStorage.clearSession();
     const { keyring } = get();
 
@@ -539,6 +585,35 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     });
   },
 
+  startDemo: () => {
+    const account = makeDemoAccount(0, 'Demo Account', 'demo-0');
+    setDemoSession(true);
+    set({
+      isDemo: true,
+      isInitialized: true,
+      isLocked: false,
+      accounts: [account],
+      selectedAccount: account,
+      selectedChainId: 'beezee-1',
+      keyring: null,
+      connectedDapps: new Map(),
+    });
+  },
+
+  exitDemo: () => {
+    setDemoSession(false);
+    useChainStore.getState().clearBalances();
+    set({
+      isDemo: false,
+      isInitialized: false,
+      isLocked: true,
+      accounts: [],
+      selectedAccount: null,
+      keyring: null,
+      connectedDapps: new Map(),
+    });
+  },
+
   selectAccount: (accountId: string) => {
     const { accounts } = get();
     // Find by ID only - no fallback to address
@@ -564,10 +639,12 @@ export const useWalletStore = create<WalletState>((set, get) => ({
 
   setAutoLockMinutes: async (minutes: number) => {
     set({ autoLockMinutes: minutes });
+    if (get().isDemo) return;
     await EncryptedStorage.savePreferences({ autoLockMinutes: minutes });
   },
 
   updateActivity: () => {
+    if (get().isDemo) return;
     // Update last activity timestamp (call this on user interactions)
     EncryptedStorage.setLastActivity();
   },
@@ -584,6 +661,14 @@ export const useWalletStore = create<WalletState>((set, get) => ({
         ? { ...selectedAccount, name: newName }
         : selectedAccount;
 
+    if (get().isDemo) {
+      set({
+        accounts: updatedAccounts,
+        selectedAccount: updatedSelected,
+      });
+      return;
+    }
+
     // Persist to storage
     await EncryptedStorage.updateAccounts(updatedAccounts);
 
@@ -594,6 +679,10 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   },
 
   addAccount: async (name: string) => {
+    if (get().isDemo) {
+      return pushDemoAccount(name, 'demo');
+    }
+
     const { keyring, accounts, updateSession } = get();
 
     if (!keyring) {
@@ -624,6 +713,11 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   },
 
   createAccountWithNewMnemonic: async (name: string, password: string) => {
+    if (get().isDemo) {
+      const account = pushDemoAccount(name, 'imported');
+      return { account, mnemonic: DEMO_MNEMONIC };
+    }
+
     const { accounts } = get();
 
     // Verify the password is correct for the main wallet
@@ -757,6 +851,10 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     name: string,
     password: string
   ) => {
+    if (get().isDemo) {
+      return pushDemoAccount(name, 'demo');
+    }
+
     const { keyring, accounts, updateSession } = get();
 
     // Helper function to derive from main wallet
@@ -1004,6 +1102,13 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   },
 
   importAccountFromMnemonic: async (mnemonic: string, name: string, password: string) => {
+    if (get().isDemo) {
+      if (!mnemonic.trim()) {
+        throw new Error('Enter a recovery phrase to continue the demo');
+      }
+      return pushDemoAccount(name, 'imported');
+    }
+
     const { accounts } = get();
 
     // Verify the password is correct for the main wallet
@@ -1161,6 +1266,9 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   },
 
   signAmino: async (signerAddress: string, signDoc: any) => {
+    if (get().isDemo) {
+      throw new Error('Demo wallet cannot sign.');
+    }
     const { keyring, isLocked } = get();
 
     if (isLocked || !keyring) {
@@ -1171,6 +1279,9 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   },
 
   signDirect: async (signerAddress: string, signDoc: any) => {
+    if (get().isDemo) {
+      throw new Error('Demo wallet cannot sign.');
+    }
     const { keyring, isLocked } = get();
 
     if (isLocked || !keyring) {
@@ -1181,6 +1292,9 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   },
 
   signArbitrary: async (signerAddress: string, data: string | Uint8Array) => {
+    if (get().isDemo) {
+      throw new Error('Demo wallet cannot sign.');
+    }
     const { keyring, isLocked } = get();
 
     if (isLocked || !keyring) {
@@ -1198,6 +1312,11 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     denom: string,
     memo: string = ''
   ) => {
+    if (get().isDemo) {
+      spendDemo(chainId, denom, amount);
+      return demoTxHash();
+    }
+
     const { keyring, isLocked, selectedAccount } = get();
 
     if (isLocked || !keyring) {
@@ -1288,6 +1407,11 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     fee?: { amount: Array<{ denom: string; amount: string }>; gas: string },
     memo: string = ''
   ) => {
+    if (get().isDemo) {
+      applyDemoMessages(chainId, messages);
+      return demoTxHash();
+    }
+
     const { keyring, isLocked, selectedAccount } = get();
 
     if (isLocked || !keyring) {
@@ -1367,6 +1491,11 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     fee?: { amount: Array<{ denom: string; amount: string }>; gas: string },
     memo: string = ''
   ) => {
+    if (get().isDemo) {
+      applyDemoMessages(chainId, messages);
+      return demoTxHash();
+    }
+
     const { keyring, isLocked, selectedAccount } = get();
 
     if (isLocked || !keyring) {
@@ -1475,13 +1604,18 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   },
 
   hasMnemonicInMemory: () => {
+    if (get().isDemo) return true;
     const { keyring } = get();
     return keyring ? keyring.hasMnemonic() : false;
   },
 
   getAddressForChain: (chainPrefix: string) => {
-    const { selectedAccount } = get();
+    const { selectedAccount, isDemo } = get();
     if (!selectedAccount) return null;
+
+    if (isDemo) {
+      return demoAddressForPrefix(chainPrefix, selectedAccount.accountIndex ?? 0);
+    }
 
     // If address already has the right prefix, return it
     if (selectedAccount.address.startsWith(chainPrefix)) {
@@ -1516,11 +1650,13 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   setUtxoAddressStyle: async (networkId: string, style: UtxoAddressStyle) => {
     const next = { ...get().utxoAddressStyle, [networkId]: style };
     set({ utxoAddressStyle: next });
+    if (get().isDemo) return;
     await EncryptedStorage.savePreferences({ utxoAddressStyle: next });
   },
 
   // Bitcoin-specific methods
   getBitcoinAddress: async (networkId: string, accountIndex?: number, cosmosAddress?: string) => {
+    if (get().isDemo) return demoChainAddress(networkId, accountIndex);
     const { keyring, selectedAccount, accounts, updateSession } = get();
     if (!keyring) return null;
 
@@ -1620,6 +1756,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
 
   // EVM-specific methods
   getEvmAddress: async (networkId: string, accountIndex?: number, cosmosAddress?: string) => {
+    if (get().isDemo) return demoChainAddress(networkId, accountIndex);
     const { keyring, selectedAccount, accounts, updateSession } = get();
     if (!keyring) return null;
 
@@ -1695,6 +1832,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
 
   // SVM (Solana)-specific methods
   getSvmAddress: async (networkId: string, accountIndex?: number, cosmosAddress?: string) => {
+    if (get().isDemo) return demoChainAddress(networkId, accountIndex);
     const { keyring, selectedAccount, accounts, updateSession } = get();
     if (!keyring) return null;
 

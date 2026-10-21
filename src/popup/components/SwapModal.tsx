@@ -27,6 +27,7 @@ import {
 } from '@chakra-ui/react';
 import { ChevronDownIcon, RepeatIcon } from '@chakra-ui/icons';
 import { useWalletStore } from '@/store/walletStore';
+import { demoTxHash, isDemoSession, spendDemo } from '@/lib/demo/session';
 import { useChainStore } from '@/store/chainStore';
 import { ChainInfo } from '@/types/wallet';
 import { fetchChainAssets } from '@/lib/assets/chainRegistry';
@@ -375,6 +376,21 @@ const SwapModal: React.FC<SwapModalProps> = ({
       return;
     }
 
+    if (isDemoSession()) {
+      const out = (parseFloat(fromAmount) * 0.98).toFixed(6);
+      setToAmount(out);
+      setSelectedRoute({
+        path: [fromToken.denom, toToken.denom],
+        pools: ['demo'],
+        estimatedOutput: BigInt(Math.floor(parseFloat(out) * 10 ** toToken.decimals)),
+        priceImpact: 0.2,
+        totalFee: 0.003,
+        hops: 1,
+      });
+      setFetchingQuote(false);
+      return;
+    }
+
     const currentFromToken = fromToken;
     const calculateQuote = async () => {
       setFetchingQuote(true);
@@ -718,6 +734,21 @@ const SwapModal: React.FC<SwapModalProps> = ({
 
     if (!selectedRoute) {
       toast({ title: 'No swap route available', status: 'error', duration: 2000 });
+      return;
+    }
+
+    if (isDemoSession()) {
+      const smallest = Math.floor(parseFloat(fromAmount) * Math.pow(10, fromToken.decimals)).toString();
+      if (/^\d+$/.test(smallest)) spendDemo(chainId, fromToken.denom, smallest);
+      const hash = demoTxHash();
+      toast({
+        title: 'Swap complete',
+        description: `Demo only. TX: ${hash.slice(0, 16)}...`,
+        status: 'success',
+        duration: 5000,
+      });
+      onSuccess?.();
+      onClose();
       return;
     }
 

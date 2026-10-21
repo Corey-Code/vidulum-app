@@ -2,6 +2,7 @@ import React, { useMemo, useCallback, useRef, useState } from 'react';
 import { Box, HStack, Text, useToast, IconButton, Button } from '@chakra-ui/react';
 import { ArrowBackIcon } from '@chakra-ui/icons';
 import { Widget } from '@skip-go/widget';
+import DemoSwap from '@/popup/components/DemoSwap';
 import { useWalletStore } from '@/store/walletStore';
 import { useNetworkStore } from '@/store/networkStore';
 import {
@@ -51,7 +52,7 @@ interface SwapPageProps {
 }
 
 const SwapPage: React.FC<SwapPageProps> = ({ onBack }) => {
-  const { selectedAccount, keyring } = useWalletStore();
+  const { isDemo, selectedAccount, keyring } = useWalletStore();
   const { getEnabledNetworks } = useNetworkStore();
   const toast = useToast();
   const lastErrorToastRef = useRef<{ message: string; timestamp: number } | null>(null);
@@ -572,6 +573,9 @@ const SwapPage: React.FC<SwapPageProps> = ({ onBack }) => {
       {/* Skip Go Widget */}
       <Box flex="1" overflow="auto" p={2}>
         <Box w="100%" maxW="480px" mx="auto">
+          {isDemo ? (
+            <DemoSwap key={mode} mode={mode} />
+          ) : (
           <Widget
             key={mode}
             apiUrl={SKIP_GO_API_URL}
@@ -616,6 +620,7 @@ const SwapPage: React.FC<SwapPageProps> = ({ onBack }) => {
             // --- Disable shadow DOM for better extension compatibility ---
             disableShadowDom={true}
           />
+          )}
         </Box>
       </Box>
     </Box>

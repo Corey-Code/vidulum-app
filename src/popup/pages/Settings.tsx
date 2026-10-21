@@ -16,6 +16,7 @@ import { ArrowBackIcon, ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons'
 import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
 import { EncryptedStorage } from '@/lib/storage/encrypted-storage';
+import { DEMO_MNEMONIC, isDemoSession } from '@/lib/demo/session';
 import { FEATURES } from '@/lib/config/features';
 import { setDeveloperModeLogging } from '@/lib/debug/developerMode';
 import SupportedNetworksPanel from '../components/SupportedNetworksPanel';
@@ -45,6 +46,17 @@ interface SettingsProps {
 const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   const { accounts, autoLockMinutes, setAutoLockMinutes, lock } = useWalletStore();
   const toast = useToast();
+
+  const skipDemoSave = () => {
+    if (!isDemoSession()) return false;
+    toast({
+      title: 'Demo only',
+      description: 'That change was not saved.',
+      status: 'info',
+      duration: 2000,
+    });
+    return true;
+  };
 
   // dApp compatibility settings
   const [enableKeplrInjection, setEnableKeplrInjection] = useState(false);
@@ -96,6 +108,7 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   // Handle Keplr injection toggle
   const handleKeplrInjectionToggle = async (enabled: boolean) => {
     setEnableKeplrInjection(enabled);
+    if (skipDemoSave()) return;
     try {
       const result = await browser.storage.local.get(SETTINGS_KEY);
       const settings = result[SETTINGS_KEY] || {};
@@ -121,6 +134,7 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   // Handle Metamask injection toggle
   const handleMetamaskInjectionToggle = async (enabled: boolean) => {
     setEnableMetamaskInjection(enabled);
+    if (skipDemoSave()) return;
     try {
       const result = await browser.storage.local.get(SETTINGS_KEY);
       const settings = result[SETTINGS_KEY] || {};
@@ -146,6 +160,7 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   // Handle Phantom injection toggle
   const handlePhantomInjectionToggle = async (enabled: boolean) => {
     setEnablePhantomInjection(enabled);
+    if (skipDemoSave()) return;
     try {
       const result = await browser.storage.local.get(SETTINGS_KEY);
       const settings = result[SETTINGS_KEY] || {};
@@ -171,6 +186,7 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   // Handle Coinbase Wallet injection toggle
   const handleCoinbaseInjectionToggle = async (enabled: boolean) => {
     setEnableCoinbaseInjection(enabled);
+    if (skipDemoSave()) return;
     try {
       const result = await browser.storage.local.get(SETTINGS_KEY);
       const settings = result[SETTINGS_KEY] || {};
@@ -199,6 +215,7 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
     if (featureKey === 'DEVELOPER_MODE') {
       setDeveloperModeLogging(enabled);
     }
+    if (skipDemoSave()) return;
     try {
       const result = await browser.storage.local.get(SETTINGS_KEY);
       const settings = result[SETTINGS_KEY] || {};
@@ -248,6 +265,13 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
 
     setRevealLoading(true);
     try {
+      if (isDemoSession()) {
+        setRevealedMnemonic(DEMO_MNEMONIC);
+        setRevealedImportedMnemonics([]);
+        setRevealStep('revealed');
+        return;
+      }
+
       // Load main wallet mnemonic
       const wallet = await EncryptedStorage.loadWallet(revealPassword);
       if (!wallet) {
@@ -733,6 +757,11 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
                       : 'accounts'}
                     )
                   </Text>
+                  {isDemoSession() && (
+                    <Text fontSize="xs" color="yellow.300" mb={2}>
+                      Demo only. This is not a recovery phrase.
+                    </Text>
+                  )}
                   <Box p={3} bg="#141414" borderRadius="lg" border="1px" borderColor="#2a2a2a">
                     <Text
                       fontSize="xs"

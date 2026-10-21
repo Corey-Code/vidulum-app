@@ -36,6 +36,7 @@ import {
 } from '@chakra-ui/icons';
 import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
+import { demoAddressForPrefix, demoChainAddress } from '@/lib/demo/session';
 import { useChainStore } from '@/store/chainStore';
 import { UI_CHAINS, SUPPORTED_CHAINS, getNetworkType } from '@/lib/cosmos/chains';
 import { Keyring } from '@/lib/crypto/keyring';
@@ -87,6 +88,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   onNavigateToSwap,
 }) => {
   const {
+    isDemo,
     selectedAccount,
     accounts,
     selectAccount,
@@ -506,6 +508,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     };
 
     setCustomAssetNamesByChain(nextAll);
+    if (useWalletStore.getState().isDemo) return;
     await browser.storage.local.set({ [CUSTOM_ASSET_NAMES_KEY]: nextAll });
   };
 
@@ -583,6 +586,14 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // Convert any account's address to the selected chain's format
   const getAccountChainAddress = (account: { address: string; accountIndex?: number }) => {
+    if (isDemo) {
+      const index = account.accountIndex ?? 0;
+      if (isBitcoinSelected || isEvmSelected || isSvmSelected) {
+        return demoChainAddress(selectedChainId, index);
+      }
+      return demoAddressForPrefix(selectedChain.prefix || 'bze', index);
+    }
+
     // For Bitcoin, use cached derived address (keyed by cosmos address)
     if (isBitcoinSelected) {
       const accountCache = bitcoinAddressCacheRef.current.get(account.address);

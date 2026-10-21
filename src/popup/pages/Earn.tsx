@@ -200,12 +200,36 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
       }
     } catch (error) {
       console.error('Failed to fetch staking pools:', error);
-      toast({
-        title: 'Failed to load pools',
-        description: 'Could not fetch staking pools',
-        status: 'error',
-        duration: 3000,
-      });
+      if (useWalletStore.getState().isDemo) {
+        setPools([
+          {
+            index: 'demo',
+            name: 'BZE Demo Pool',
+            stakeDenom: 'ubze',
+            stakeSymbol: 'BZE',
+            rewardDenom: 'ubze',
+            rewardSymbol: 'BZE',
+            dailyReward: '1000000',
+            minStake: '1000000',
+            totalStaked: '500000000000',
+            lockDays: 0,
+            status: 'running',
+            apr: 12,
+            userStake: '0',
+            pendingRewards: '0',
+            daysRemaining: 30,
+            daysElapsed: 1,
+            totalDays: 31,
+          },
+        ]);
+      } else {
+        toast({
+          title: 'Failed to load pools',
+          description: 'Could not fetch staking pools',
+          status: 'error',
+          duration: 3000,
+        });
+      }
     } finally {
       setLoading(false);
     }

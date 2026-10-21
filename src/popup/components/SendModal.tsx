@@ -29,6 +29,7 @@ import {
 } from '@chakra-ui/react';
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import { useWalletStore } from '@/store/walletStore';
+import { demoTxHash, isDemoSession, spendDemo } from '@/lib/demo/session';
 import { useChainStore } from '@/store/chainStore';
 import { ChainInfo } from '@/types/wallet';
 import { fetchChainAssets, RegistryAsset, parseBeeZeeLPToken } from '@/lib/assets/chainRegistry';
@@ -393,6 +394,7 @@ const SendModal: React.FC<SendModalProps> = ({
   }, [tokensWithBalance, selectedDenom, isBitcoin, isEvm, registryAssets]);
 
   const validateAddress = (address: string): boolean => {
+    if (isDemoSession() && address.trim().length > 0) return true;
     if (isBitcoin) {
       const network = chainId === 'bitcoin-mainnet' ? 'mainnet' : 'testnet';
       return isValidBitcoinAddress(address, network);
@@ -570,6 +572,26 @@ const SendModal: React.FC<SendModalProps> = ({
 
     setLoading(true);
     try {
+      if (isDemoSession()) {
+        const hash = demoTxHash();
+        if (selectedToken && amount) {
+          const smallest = Math.floor(
+            parseFloat(amount) * Math.pow(10, selectedToken.decimals)
+          ).toString();
+          if (/^\d+$/.test(smallest)) spendDemo(chainId, selectedDenom, smallest);
+        }
+        toast({
+          title: 'Transaction sent!',
+          description: `Demo only. TX: ${hash.slice(0, 16)}...`,
+          status: 'success',
+          duration: 5000,
+        });
+        await fetchBalance(chainId, chainAddress);
+        onSuccess?.();
+        onClose();
+        return;
+      }
+
       if (isBitcoin) {
         // UTXO transaction signing and sending
         const btcNetwork = networkRegistry.getBitcoin(chainId);

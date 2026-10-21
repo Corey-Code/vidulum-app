@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box } from '@chakra-ui/react';
+import { Box, Button, HStack, Text } from '@chakra-ui/react';
 import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
 import { MessageType } from '@/types/messages';
@@ -54,7 +54,7 @@ const App: React.FC = () => {
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
   const [approvalId, setApprovalId] = useState<string | null>(null);
   const resetToImport = useRef(false);
-  const { isInitialized, isLocked, initialize } = useWalletStore();
+  const { isDemo, isInitialized, isLocked, initialize, startDemo, exitDemo } = useWalletStore();
 
   // Minimum display time for smooth loading animation
   useEffect(() => {
@@ -130,6 +130,17 @@ const App: React.FC = () => {
     setView('import');
   };
 
+  const handleTryDemo = () => {
+    startDemo();
+    setView('dashboard');
+  };
+
+  const handleExitDemo = () => {
+    exitDemo();
+    resetToImport.current = false;
+    setView('create');
+  };
+
   const switchToImport = () => {
     setView('import');
   };
@@ -189,6 +200,23 @@ const App: React.FC = () => {
       bg="#0a0a0a"
       color="white"
     >
+      {isDemo && (
+        <HStack
+          px={3}
+          py={2}
+          bg="#1a1400"
+          borderBottom="1px"
+          borderColor="yellow.700"
+          justify="space-between"
+        >
+          <Text fontSize="xs" color="yellow.200">
+            Demo. Nothing is saved or sent.
+          </Text>
+          <Button size="xs" variant="outline" colorScheme="yellow" onClick={handleExitDemo}>
+            Exit demo
+          </Button>
+        </HStack>
+      )}
       {view === 'loading' && (
         <Box
           p={8}
@@ -203,10 +231,18 @@ const App: React.FC = () => {
         </Box>
       )}
       {view === 'create' && (
-        <CreateWallet onSuccess={handleCreateSuccess} onSwitchToImport={switchToImport} />
+        <CreateWallet
+          onSuccess={handleCreateSuccess}
+          onSwitchToImport={switchToImport}
+          onTryDemo={handleTryDemo}
+        />
       )}
       {view === 'import' && (
-        <ImportWallet onSuccess={handleImportSuccess} onSwitchToCreate={switchToCreate} />
+        <ImportWallet
+          onSuccess={handleImportSuccess}
+          onSwitchToCreate={switchToCreate}
+          onTryDemo={handleTryDemo}
+        />
       )}
       {view === 'unlock' && (
         <Unlock onSuccess={handleUnlockSuccess} onReset={handleWalletReset} />

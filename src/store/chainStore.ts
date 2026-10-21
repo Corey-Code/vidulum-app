@@ -6,6 +6,7 @@ import { getChainWebSocket, disconnectAllWebSockets } from '@/lib/cosmos/websock
 import { getBitcoinClient } from '@/lib/bitcoin/client';
 import { getEvmClient } from '@/lib/evm/client';
 import { networkRegistry } from '@/lib/networks';
+import { demoBalances, isDemoSession } from '@/lib/demo/session';
 
 export interface LoadingStatus {
   isLoading: boolean;
@@ -66,6 +67,19 @@ export const useChainStore = create<ChainState>((set, get) => ({
   },
 
   fetchBalance: async (networkId: string, address: string) => {
+    if (isDemoSession()) {
+      const balances = demoBalances(networkId);
+      const { balances: currentBalances } = get();
+      let chainBalances = currentBalances.get(networkId);
+      if (!chainBalances) {
+        chainBalances = new Map();
+        currentBalances.set(networkId, chainBalances);
+      }
+      chainBalances.set(address, balances);
+      set({ balances: new Map(currentBalances), loadingStatus: { isLoading: false, message: '' } });
+      return balances;
+    }
+
     const networkType = getNetworkType(networkId);
     const { setLoadingStatus } = get();
 
@@ -157,6 +171,8 @@ export const useChainStore = create<ChainState>((set, get) => ({
   },
 
   subscribeToBalanceUpdates: (chainId: string, address: string) => {
+    if (isDemoSession()) return;
+
     const chain = get().getChain(chainId);
     if (!chain) {
       console.warn(`Cannot subscribe: Chain ${chainId} not found`);
