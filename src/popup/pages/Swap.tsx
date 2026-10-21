@@ -16,6 +16,7 @@ import { createWalletClient, defineChain, http, type Hex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import {
+  SKIP_GO_API_URL,
   vdlSwapConfig,
   vdlSwapCopy,
   VDL_SWAP_TITLE,
@@ -29,7 +30,6 @@ import {
  */
 const VIDULUM_FEE_BPS = import.meta.env.VIDULUM_FEE_BPS || '';
 const VIDULUM_FEE_BASE_ADDRESS = import.meta.env.VIDULUM_FEE_BASE_ADDRESS || '';
-const SKIP_API_URL = 'https://api.vidulum.app/skip/api/skip/v2';
 
 const skipSvmChainIdByNetworkId: Record<string, string> = {
   'solana-mainnet': 'solana',
@@ -574,7 +574,7 @@ const SwapPage: React.FC<SwapPageProps> = ({ onBack }) => {
         <Box w="100%" maxW="480px" mx="auto">
           <Widget
             key={mode}
-            apiUrl={SKIP_API_URL}
+            apiUrl={SKIP_GO_API_URL}
             defaultRoute={swapConfig.defaultRoute}
             routeConfig={{
               experimentalFeatures: ['hyperlane', 'cctp', 'eureka'],

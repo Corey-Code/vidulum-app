@@ -2,6 +2,13 @@ export const VDL_CHAIN_ID = 'beezee-1';
 export const VDL_DENOM = 'factory/bze13gzq40che93tgfm9kzmkpjamah5nj0j73pyhqk/uvdl';
 export const VDL_SWAP_TITLE = 'Buy / Sell VDL';
 
+/**
+ * @skip-go/client appends `/v2/...` to this origin.
+ * Skip allows browser CORS, so the wallet calls it directly.
+ * Do not add `/v2` here, and do not point this at a hostname with no DNS record.
+ */
+export const SKIP_GO_API_URL = 'https://api.skip.build';
+
 export type VdlSwapMode = 'buy' | 'sell';
 
 export interface SkipDefaultRoute {

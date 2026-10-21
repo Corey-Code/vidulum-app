@@ -1,4 +1,11 @@
-import { vdlSwapConfig, vdlSwapCopy, VDL_CHAIN_ID, VDL_DENOM, VDL_SWAP_TITLE } from '@/lib/swap/vdlSwapConfig';
+import {
+  SKIP_GO_API_URL,
+  vdlSwapConfig,
+  vdlSwapCopy,
+  VDL_CHAIN_ID,
+  VDL_DENOM,
+  VDL_SWAP_TITLE,
+} from '@/lib/swap/vdlSwapConfig';
 
 describe('vdlSwapConfig', () => {
   it('buys VDL on BeeZee and leaves the pay-with side open', () => {
@@ -70,5 +77,11 @@ describe('vdlSwapConfig', () => {
     expect(VDL_SWAP_TITLE).toBe('Buy / Sell VDL');
     expect(vdlSwapCopy('buy')).toBe('Pay with any asset. Receive VDL.');
     expect(vdlSwapCopy('sell')).toBe('Pay with VDL. Receive any asset.');
+  });
+
+  it('calls Skip directly so the client can append /v2', () => {
+    expect(SKIP_GO_API_URL).toBe('https://api.skip.build');
+    expect(SKIP_GO_API_URL.endsWith('/v2')).toBe(false);
+    expect(SKIP_GO_API_URL.includes('api.vidulum.app')).toBe(false);
   });
 });
