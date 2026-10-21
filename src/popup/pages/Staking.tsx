@@ -27,6 +27,7 @@ import {
 } from '@chakra-ui/react';
 import { ArrowBackIcon, RepeatIcon } from '@chakra-ui/icons';
 import { useWalletStore } from '@/store/walletStore';
+import { demoStakeSnapshot, isDemoSession } from '@/lib/demo/session';
 import { SUPPORTED_CHAINS } from '@/lib/cosmos/chains';
 import {
   fetchValidators,
@@ -164,6 +165,18 @@ const Staking: React.FC<StakingProps> = ({ onBack }) => {
 
   const loadStakingData = async () => {
     if (!chainConfig || !chainAddress) return;
+
+    if (isDemoSession()) {
+      const snapshot = demoStakeSnapshot(selectedChainId, chainAddress);
+      setValidators(snapshot.validators);
+      setDelegations(snapshot.delegations);
+      setRewards(snapshot.rewards);
+      setUnbonding(snapshot.unbonding);
+      setAvailableBalance(snapshot.available);
+      setBaseAPR(snapshot.apr);
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     try {

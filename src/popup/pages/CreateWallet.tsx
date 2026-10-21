@@ -18,9 +18,10 @@ import { useWalletStore } from '@/store/walletStore';
 interface Props {
   onSuccess: () => void;
   onSwitchToImport: () => void;
+  onTryDemo: () => void;
 }
 
-const CreateWallet: React.FC<Props> = ({ onSuccess, onSwitchToImport }) => {
+const CreateWallet: React.FC<Props> = ({ onSuccess, onSwitchToImport, onTryDemo }) => {
   const [step, setStep] = useState<'password' | 'mnemonic'>('password');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -164,6 +165,19 @@ const CreateWallet: React.FC<Props> = ({ onSuccess, onSwitchToImport }) => {
               isDisabled={!password || !confirmPassword}
             >
               Create Wallet
+            </Button>
+
+            <Button
+              w="full"
+              size="lg"
+              variant="outline"
+              borderColor="gray.600"
+              color="white"
+              _hover={{ bg: 'whiteAlpha.100' }}
+              borderRadius="xl"
+              onClick={onTryDemo}
+            >
+              Try the demo
             </Button>
 
             <Button

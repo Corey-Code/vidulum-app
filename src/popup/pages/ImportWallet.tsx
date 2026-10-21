@@ -18,9 +18,10 @@ import { MnemonicManager } from '@/lib/crypto/mnemonic';
 interface Props {
   onSuccess: () => void;
   onSwitchToCreate: () => void;
+  onTryDemo: () => void;
 }
 
-const ImportWallet: React.FC<Props> = ({ onSuccess, onSwitchToCreate }) => {
+const ImportWallet: React.FC<Props> = ({ onSuccess, onSwitchToCreate, onTryDemo }) => {
   const [mnemonic, setMnemonic] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -201,6 +202,19 @@ const ImportWallet: React.FC<Props> = ({ onSuccess, onSwitchToCreate }) => {
             isDisabled={!mnemonic || !password || !confirmPassword}
           >
             Import Wallet
+          </Button>
+
+          <Button
+            w="full"
+            size="lg"
+            variant="outline"
+            borderColor="gray.600"
+            color="white"
+            _hover={{ bg: 'whiteAlpha.100' }}
+            borderRadius="xl"
+            onClick={onTryDemo}
+          >
+            Try the demo
           </Button>
 
           <Button
