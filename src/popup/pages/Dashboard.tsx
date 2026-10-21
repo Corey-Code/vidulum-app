@@ -56,6 +56,7 @@ import NetworkManagerModal from '../components/NetworkManagerModal';
 import IBCTransferModal from '../components/IBCTransferModal';
 import { useNetworkStore } from '@/store/networkStore';
 import { fetchIBCConnections, IBCChannel } from '@/lib/cosmos/ibc-connections';
+import { VDL_SWAP_TITLE } from '@/lib/swap/vdlSwapConfig';
 
 interface DashboardProps {
   onNavigateToStaking?: () => void;
@@ -803,7 +804,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Scrollable Content */}
       <Box flex={1} overflowY="auto" px={5} py={5} pb={14}>
         <VStack spacing={5} align="stretch">
-          {/* Cross Chain Swaps Button */}
+          {/* Buy / Sell VDL */}
           <Button
             flex={1}
             variant="outline"
@@ -814,7 +815,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             onClick={onNavigateToSwap}
           >
             <Text fontSize="lg" margin={2}>
-              Cross-Chain Swaps
+              {VDL_SWAP_TITLE}
             </Text>
           </Button>
 
