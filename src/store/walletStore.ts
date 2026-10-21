@@ -141,6 +141,7 @@ interface WalletState {
   importWallet: (mnemonic: string, password: string, accountName?: string) => Promise<void>;
   unlock: (password: string) => Promise<void>;
   lock: () => Promise<void>;
+  resetWallet: () => Promise<void>;
   selectAccount: (accountId: string) => void;
   selectChain: (chainId: string) => void;
   setAutoLockMinutes: (minutes: number) => Promise<void>;
@@ -513,6 +514,26 @@ export const useWalletStore = create<WalletState>((set, get) => ({
 
     set({
       isLocked: true,
+      keyring: null,
+      connectedDapps: new Map(),
+    });
+  },
+
+  resetWallet: async () => {
+    const { keyring } = get();
+
+    if (keyring) {
+      keyring.clear();
+    }
+
+    await EncryptedStorage.deleteWallet();
+    await lockBackground();
+
+    set({
+      isInitialized: false,
+      isLocked: false,
+      accounts: [],
+      selectedAccount: null,
       keyring: null,
       connectedDapps: new Map(),
     });

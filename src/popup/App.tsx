@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Box } from '@chakra-ui/react';
 import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
@@ -53,6 +53,7 @@ const App: React.FC = () => {
   const [isReady, setIsReady] = useState(false);
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
   const [approvalId, setApprovalId] = useState<string | null>(null);
+  const resetToImport = useRef(false);
   const { isInitialized, isLocked, initialize } = useWalletStore();
 
   // Minimum display time for smooth loading animation
@@ -104,7 +105,7 @@ const App: React.FC = () => {
     if (approvalId) return;
 
     if (!isInitialized) {
-      setView('create');
+      setView(resetToImport.current ? 'import' : 'create');
     } else if (isLocked) {
       setView('unlock');
     } else {
@@ -122,6 +123,11 @@ const App: React.FC = () => {
 
   const handleUnlockSuccess = () => {
     setView('dashboard');
+  };
+
+  const handleWalletReset = () => {
+    resetToImport.current = true;
+    setView('import');
   };
 
   const switchToImport = () => {
@@ -202,7 +208,9 @@ const App: React.FC = () => {
       {view === 'import' && (
         <ImportWallet onSuccess={handleImportSuccess} onSwitchToCreate={switchToCreate} />
       )}
-      {view === 'unlock' && <Unlock onSuccess={handleUnlockSuccess} />}
+      {view === 'unlock' && (
+        <Unlock onSuccess={handleUnlockSuccess} onReset={handleWalletReset} />
+      )}
       {view === 'dashboard' && (
         <Dashboard
           onNavigateToStaking={navigateToStaking}
