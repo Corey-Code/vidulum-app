@@ -1,5 +1,5 @@
-import React, { useMemo, useCallback, useRef } from 'react';
-import { Box, HStack, Text, useToast, IconButton } from '@chakra-ui/react';
+import React, { useMemo, useCallback, useRef, useState } from 'react';
+import { Box, HStack, Text, useToast, IconButton, Button } from '@chakra-ui/react';
 import { ArrowBackIcon } from '@chakra-ui/icons';
 import { Widget } from '@skip-go/widget';
 import { useWalletStore } from '@/store/walletStore';
@@ -7,8 +7,6 @@ import { useNetworkStore } from '@/store/networkStore';
 import {
   networkRegistry,
   isCosmosNetwork,
-  isEvmNetwork,
-  isSvmNetwork,
   getHealthyEndpoint,
 } from '@/lib/networks';
 import type { CosmosNetworkConfig, SvmNetworkConfig } from '@/lib/networks';
@@ -17,6 +15,12 @@ import { fromBech32 } from '@cosmjs/encoding';
 import { createWalletClient, defineChain, http, type Hex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { Keypair, PublicKey } from '@solana/web3.js';
+import {
+  vdlSwapConfig,
+  vdlSwapCopy,
+  VDL_SWAP_TITLE,
+  type VdlSwapMode,
+} from '@/lib/swap/vdlSwapConfig';
 
 /**
  * Vidulum affiliate fee configuration.
@@ -51,6 +55,8 @@ const SwapPage: React.FC<SwapPageProps> = ({ onBack }) => {
   const { getEnabledNetworks } = useNetworkStore();
   const toast = useToast();
   const lastErrorToastRef = useRef<{ message: string; timestamp: number } | null>(null);
+  const [mode, setMode] = useState<VdlSwapMode>('buy');
+  const swapConfig = useMemo(() => vdlSwapConfig(mode), [mode]);
 
   /**
    * Build connected addresses map for ALL Cosmos chains in the registry.
@@ -282,35 +288,6 @@ const SwapPage: React.FC<SwapPageProps> = ({ onBack }) => {
 
     return adapterLike as any;
   }, []);
-
-  /**
-   * Build the source filter so the widget only shows chains/assets
-   * the user has enabled in their network preferences.
-   */
-  const sourceFilter = useMemo<Record<string, string[] | undefined>>(() => {
-    const filter: Record<string, string[] | undefined> = {};
-    const enabledNetworks = getEnabledNetworks();
-
-    for (const network of enabledNetworks) {
-      if (isCosmosNetwork(network)) {
-        if (connectedAddresses[network.id]) {
-          filter[network.id] = undefined;
-        }
-      } else if (isEvmNetwork(network)) {
-        const skipChainId = String(network.chainId);
-        if (connectedAddresses[skipChainId]) {
-          filter[skipChainId] = undefined;
-        }
-      } else if (isSvmNetwork(network)) {
-        const skipChainId = getSkipSvmChainId(network);
-        if (connectedAddresses[skipChainId]) {
-          filter[skipChainId] = undefined;
-        }
-      }
-    }
-
-    return filter;
-  }, [getEnabledNetworks, connectedAddresses]);
 
   /**
    * Build chainIdsToAffiliates for Vidulum's fee collection.
@@ -550,7 +527,7 @@ const SwapPage: React.FC<SwapPageProps> = ({ onBack }) => {
     <Box h="full" bg="#0a0a0a" color="white" display="flex" flexDirection="column">
       {/* Header */}
       <Box p={4} borderBottom="1px" borderColor="#2a2a2a">
-        <HStack>
+        <HStack mb={3}>
           <IconButton
             aria-label="Back"
             icon={<ArrowBackIcon />}
@@ -560,38 +537,54 @@ const SwapPage: React.FC<SwapPageProps> = ({ onBack }) => {
             onClick={onBack}
           />
           <Text fontSize="xl" fontWeight="bold">
-            Cross-Chain Swap
+            {VDL_SWAP_TITLE}
           </Text>
         </HStack>
+        <HStack spacing={2} mb={2}>
+          <Button
+            size="sm"
+            bg={mode === 'buy' ? '#00e5ff' : 'transparent'}
+            color={mode === 'buy' ? '#0a0a0a' : 'gray.300'}
+            borderWidth="1px"
+            borderColor={mode === 'buy' ? '#00e5ff' : 'gray.600'}
+            _hover={{ bg: mode === 'buy' ? '#00e5ff' : 'whiteAlpha.100' }}
+            onClick={() => setMode('buy')}
+          >
+            Buy
+          </Button>
+          <Button
+            size="sm"
+            bg={mode === 'sell' ? '#00e5ff' : 'transparent'}
+            color={mode === 'sell' ? '#0a0a0a' : 'gray.300'}
+            borderWidth="1px"
+            borderColor={mode === 'sell' ? '#00e5ff' : 'gray.600'}
+            _hover={{ bg: mode === 'sell' ? '#00e5ff' : 'whiteAlpha.100' }}
+            onClick={() => setMode('sell')}
+          >
+            Sell
+          </Button>
+        </HStack>
+        <Text fontSize="sm" color="gray.400">
+          {vdlSwapCopy(mode)}
+        </Text>
       </Box>
 
       {/* Skip Go Widget */}
       <Box flex="1" overflow="auto" p={2}>
         <Box w="100%" maxW="480px" mx="auto">
           <Widget
+            key={mode}
             apiUrl={SKIP_API_URL}
-            // --- Default route: start with Osmosis OSMO ---
-            defaultRoute={{
-              srcChainId: 'osmosis-1',
-              srcAssetDenom: 'uosmo',
-            }}
-            // --- Route configuration ---
+            defaultRoute={swapConfig.defaultRoute}
             routeConfig={{
               experimentalFeatures: ['hyperlane', 'cctp', 'eureka'],
               allowMultiTx: true,
               allowUnsafe: false,
-              // Workaround for a current @skip-go/widget DOM nesting warning in
-              // RoutePreferenceSelector (div rendered inside p).
-              // Keeping this false avoids rendering that faulty section.
               goFast: false,
             }}
-            // --- Sign all txs upfront for multi-tx routes ---
             batchSignTxs={true}
-            // --- Only show chains the user has enabled ---
-            filter={{
-              source: sourceFilter,
-            }}
-            // --- Swap settings ---
+            filter={swapConfig.filter}
+            filterOut={swapConfig.filterOut}
             settings={{
               slippage: 0.5,
             }}
