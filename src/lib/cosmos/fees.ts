@@ -42,8 +42,6 @@ export interface SimulateResult {
   gasWanted: number;
 }
 
-const BZE_SIMULATE_PROXY_URL = 'https://api.vidulum.app/bze/cosmos/tx/v1beta1/simulate';
-
 // Cache for params
 let tradebinParamsCache: TradebinParams | null = null;
 let tradebinParamsCacheTime = 0;
@@ -148,6 +146,12 @@ export function parseFeeString(feeStr: string): { amount: string; denom: string 
   return { amount: '0', denom: 'ubze' };
 }
 
+/** Chain REST simulate path. BeeZee answers this directly; do not proxy it. */
+export function cosmosSimulateUrl(restEndpoint: string): string {
+  const base = restEndpoint.replace(/\/$/, '');
+  return `${base}/cosmos/tx/v1beta1/simulate`;
+}
+
 /**
  * Simulate a transaction to get accurate gas estimate
  */
@@ -166,9 +170,7 @@ export async function simulateTransaction(
 
     const txBytes = TxRaw.encode(txRaw).finish();
 
-    const simulateUrl = restEndpoint.includes('rest.getbze.com')
-      ? BZE_SIMULATE_PROXY_URL
-      : `${restEndpoint}/cosmos/tx/v1beta1/simulate`;
+    const simulateUrl = cosmosSimulateUrl(restEndpoint);
 
     const response = await fetch(simulateUrl, {
       method: 'POST',
