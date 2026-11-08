@@ -4,8 +4,12 @@
  * Shared types and interfaces for all network configurations.
  */
 
+import type { EndpointHealthPhase } from '@/types/network-phase';
+
 // Network types supported by the wallet
 export type NetworkType = 'cosmos' | 'bitcoin' | 'evm' | 'svm';
+
+export type { EndpointHealthPhase };
 
 // Endpoint health status tracking
 export interface EndpointHealth {
@@ -13,7 +17,12 @@ export interface EndpointHealth {
   lastSuccess?: number; // Timestamp of last successful request
   lastFailure?: number; // Timestamp of last failed request
   consecutiveFailures: number; // Count of consecutive failures
-  isHealthy: boolean; // Current health status
+  /** Explicit health phase (replaces isHealthy boolean product). */
+  phase: EndpointHealthPhase;
+  /**
+   * @deprecated Prefer `phase === 'healthy' | 'degraded'`. Kept in sync for callers.
+   */
+  isHealthy: boolean;
 }
 
 // Base network configuration shared by all networks

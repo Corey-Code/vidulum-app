@@ -42,7 +42,6 @@ export interface Currency {
 export interface WalletState {
   accounts: WalletAccount[];
   selectedAccount: WalletAccount | null;
-  connectedDapps: Map<string, string[]>;
   /** @deprecated Prefer `phase` — kept in sync via lifecycleFlagsFromPhase */
   isLocked: boolean;
   /** @deprecated Prefer `phase` — kept in sync via lifecycleFlagsFromPhase */

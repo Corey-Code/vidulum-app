@@ -194,7 +194,6 @@ interface WalletState {
   selectedAccount: KeyringAccount | null;
   selectedChainId: string;
   autoLockMinutes: number;
-  connectedDapps: Map<string, Set<string>>; // origin -> chainIds
   keyring: Keyring | null;
   utxoAddressStyle: Record<string, UtxoAddressStyle>;
 
@@ -231,11 +230,7 @@ interface WalletState {
   // Get wallets that can be used as derivation source (main + imported with their own mnemonic)
   getSourceWallets: () => Array<{ address: string; name: string; isMain: boolean }>;
 
-  // DApp connections
-  requestConnection: (origin: string, chainId: string) => Promise<boolean>;
-  disconnect: (origin: string, chainId?: string) => void;
-  isConnected: (origin: string, chainId: string) => boolean;
-  getConnectedChains: (origin: string) => string[];
+  // DApp connections live in background SessionManager (chrome.storage), not the popup store.
 
   // Transaction signing
   signAmino: (signerAddress: string, signDoc: any) => Promise<any>;
@@ -320,7 +315,6 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   selectedAccount: null,
   selectedChainId: 'beezee-1',
   autoLockMinutes: 15,
-  connectedDapps: new Map(),
   keyring: null,
   utxoAddressStyle: {},
 
@@ -598,8 +592,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
 
     set(
       withPhase({ status: 'locked' }, null, {
-        connectedDapps: new Map(),
-      })
+            })
     );
   },
 
@@ -617,8 +610,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       withPhase({ status: 'none' }, null, {
         accounts: [],
         selectedAccount: null,
-        connectedDapps: new Map(),
-      })
+            })
     );
   },
 
@@ -629,8 +621,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
         accounts: [account],
         selectedAccount: account,
         selectedChainId: 'beezee-1',
-        connectedDapps: new Map(),
-      })
+            })
     );
   },
 
@@ -640,8 +631,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       withPhase({ status: 'none' }, null, {
         accounts: [],
         selectedAccount: null,
-        connectedDapps: new Map(),
-      })
+            })
     );
   },
 
@@ -1245,56 +1235,6 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     return importedAccount;
   },
 
-  requestConnection: async (origin: string, chainId: string) => {
-    const { connectedDapps, isLocked } = get();
-
-    if (isLocked) {
-      throw new Error('Wallet is locked');
-    }
-
-    // In production, show approval modal to user
-    const approved = true; // TODO: Implement approval flow
-
-    if (approved) {
-      const chainSet = connectedDapps.get(origin) || new Set();
-      chainSet.add(chainId);
-      connectedDapps.set(origin, chainSet);
-
-      set({ connectedDapps: new Map(connectedDapps) });
-    }
-
-    return approved;
-  },
-
-  disconnect: (origin: string, chainId?: string) => {
-    const { connectedDapps } = get();
-
-    if (chainId) {
-      const chainSet = connectedDapps.get(origin);
-      if (chainSet) {
-        chainSet.delete(chainId);
-        if (chainSet.size === 0) {
-          connectedDapps.delete(origin);
-        }
-      }
-    } else {
-      connectedDapps.delete(origin);
-    }
-
-    set({ connectedDapps: new Map(connectedDapps) });
-  },
-
-  isConnected: (origin: string, chainId: string) => {
-    const { connectedDapps } = get();
-    const chainSet = connectedDapps.get(origin);
-    return chainSet ? chainSet.has(chainId) : false;
-  },
-
-  getConnectedChains: (origin: string) => {
-    const { connectedDapps } = get();
-    const chainSet = connectedDapps.get(origin);
-    return chainSet ? Array.from(chainSet) : [];
-  },
 
   signAmino: async (signerAddress: string, signDoc: any) => {
     if (get().isDemo) {
