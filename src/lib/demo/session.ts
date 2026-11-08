@@ -3,6 +3,11 @@ import { VDL_DENOM } from '@/lib/swap/vdlSwapConfig';
 import type { Balance } from '@/types/wallet';
 import type { Delegation, UnbondingDelegation, Validator } from '@/lib/cosmos/staking';
 
+/**
+ * Demo ledger mirror. UI/store authority is `WalletPhase.status === 'demo'` in walletStore.
+ * Lib modules (chainStore, etc.) cannot import the store without cycles, so they read this
+ * flag. Only walletStore lifecycle transitions may call setDemoSession.
+ */
 let active = false;
 const spent = new Map<string, bigint>();
 const extraDelegations: Delegation[] = [];
@@ -13,6 +18,7 @@ export function isDemoSession(): boolean {
   return active;
 }
 
+/** @internal Prefer walletStore startDemo/exitDemo — do not call from UI. */
 export function setDemoSession(next: boolean): void {
   active = next;
   if (!next) {

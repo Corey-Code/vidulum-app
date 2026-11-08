@@ -4,6 +4,7 @@ import { Keyring } from '@/lib/crypto/keyring';
 import { EncryptedStorage } from '@/lib/storage/encrypted-storage';
 import { getChainInfo, SUPPORTED_CHAINS } from '@/lib/cosmos/chains';
 import { initDeveloperModeLogging } from '@/lib/debug/developerMode';
+import type { BgSessionStatus } from '@/types/session';
 
 // Storage key for connected dApps
 const CONNECTED_DAPPS_KEY = 'connected_dapps';
@@ -15,6 +16,8 @@ class SessionManager {
   private keyring: Keyring | null = null;
   private connectedDapps: Map<string, Set<string>> = new Map(); // origin -> chainIds
   private initialized: boolean = false;
+  /** True when chrome session storage has a session id but keyring is not synced yet. */
+  private storageSessionPresent: boolean = false;
 
   async initialize() {
     if (this.initialized) return;
@@ -22,13 +25,22 @@ class SessionManager {
     // Restore connected dApps from storage
     await this.loadConnections();
 
-    const sessionId = await EncryptedStorage.getSession();
-    if (sessionId) {
-      // Session exists but keyring needs to be synced from popup
-      // The popup will send SYNC_KEYRING when it opens
-    }
+    const sessionState = await EncryptedStorage.getSessionState();
+    // expired is still "session present until popup clears" — treat as awaiting_sync so
+    // popup initialize (which clears expired) can reconcile; without keyring we cannot unlock.
+    this.storageSessionPresent = sessionState === 'active' || sessionState === 'expired';
 
     this.initialized = true;
+  }
+
+  /**
+   * Explicit background session phase (replaces initialized + keyring? + inferred session).
+   */
+  getStatus(): BgSessionStatus {
+    if (!this.initialized) return 'uninitialized';
+    if (this.keyring) return 'unlocked';
+    if (this.storageSessionPresent) return 'awaiting_sync';
+    return 'locked';
   }
 
   private async loadConnections() {
@@ -63,6 +75,7 @@ class SessionManager {
 
   setKeyring(keyring: Keyring) {
     this.keyring = keyring;
+    this.storageSessionPresent = true;
   }
 
   getKeyring(): Keyring | null {
@@ -74,6 +87,7 @@ class SessionManager {
       this.keyring.clear();
     }
     this.keyring = null;
+    this.storageSessionPresent = false;
     // Note: Don't clear connections when locking - keep them for when user unlocks
   }
 

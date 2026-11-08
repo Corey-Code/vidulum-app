@@ -27,6 +27,7 @@ import {
 import { deriveEvmKeyPair, getEvmDerivationPath } from './evm';
 import { deriveSolanaKeyPair, getSolanaDerivationPath } from './solana';
 import { networkRegistry } from '@/lib/networks';
+import type { KeyringCapability } from '@/types/session';
 
 // Ensure Buffer is available at module load time
 const BufferImpl = ensureBuffer();
@@ -1004,6 +1005,18 @@ export class Keyring {
   // Check if mnemonic is available (needed for Bitcoin)
   hasMnemonic(): boolean {
     return !!this.mnemonic;
+  }
+
+  /**
+   * Explicit signing/derivation readiness.
+   * - empty: no cosmos wallet loaded
+   * - session: cosmos wallet restored from session (addresses OK; mnemonic not in memory)
+   * - full: mnemonic present — can derive BTC/EVM/SVM and re-sign with passwordless paths
+   */
+  getCapability(): KeyringCapability {
+    if (!this.wallet) return 'empty';
+    if (this.mnemonic) return 'full';
+    return 'session';
   }
 
   clear(): void {

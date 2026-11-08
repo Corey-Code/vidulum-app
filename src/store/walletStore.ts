@@ -30,6 +30,30 @@ import {
   spendDemo,
 } from '@/lib/demo/session';
 import { useChainStore } from '@/store/chainStore';
+import {
+  lifecycleFlagsFromPhase,
+  unlockedCapability,
+  type WalletPhase,
+} from '@/types/session';
+
+/**
+ * Apply a wallet lifecycle phase atomically: phase + legacy booleans + demo mirror.
+ * Keyring is cleared unless phase is unlocked.
+ */
+function withPhase(
+  phase: WalletPhase,
+  keyring: Keyring | null = null,
+  extra: Record<string, unknown> = {}
+) {
+  setDemoSession(phase.status === 'demo');
+  const flags = lifecycleFlagsFromPhase(phase);
+  return {
+    phase,
+    ...flags,
+    keyring: phase.status === 'unlocked' ? keyring : null,
+    ...extra,
+  };
+}
 
 /**
  * Sync keyring state with background service worker
@@ -158,8 +182,13 @@ function pushDemoAccount(name: string, idPrefix: string): KeyringAccount {
 
 interface WalletState {
   // State
+  /** Authoritative wallet lifecycle. Legacy booleans below are derived via withPhase(). */
+  phase: WalletPhase;
+  /** @deprecated Prefer phase.status === 'demo' */
   isDemo: boolean;
+  /** @deprecated Prefer phase.status locked|unlocked|demo */
   isInitialized: boolean;
+  /** @deprecated Prefer phase.status === 'locked' | 'booting' */
   isLocked: boolean;
   accounts: KeyringAccount[];
   selectedAccount: KeyringAccount | null;
@@ -283,6 +312,7 @@ interface WalletState {
 }
 
 export const useWalletStore = create<WalletState>((set, get) => ({
+  phase: { status: 'booting' },
   isDemo: false,
   isInitialized: false,
   isLocked: true,
@@ -295,32 +325,30 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   utxoAddressStyle: {},
 
   initialize: async () => {
-    if (get().isDemo || isDemoSession()) return;
+    if (get().phase.status === 'demo' || get().isDemo || isDemoSession()) return;
 
     const hasWallet = await EncryptedStorage.hasWallet();
-    const hasSession = await EncryptedStorage.getSession();
+    const sessionState = await EncryptedStorage.getSessionState();
     const preferences = await EncryptedStorage.getPreferences();
 
     console.log('=== Wallet Initialize ===');
     console.log('hasWallet:', hasWallet);
-    console.log('hasSession:', hasSession);
+    console.log('sessionState:', sessionState);
 
-    // Check if we should auto-lock due to inactivity
-    const shouldAutoLock = await EncryptedStorage.shouldAutoLock();
-    if (shouldAutoLock && hasSession) {
+    if (sessionState === 'expired') {
       console.log('Auto-locking due to inactivity');
       await EncryptedStorage.clearSession();
-      set({
-        isInitialized: hasWallet,
-        isLocked: true,
-        autoLockMinutes: preferences.autoLockMinutes ?? 15,
-        utxoAddressStyle: preferences.utxoAddressStyle ?? {},
-      });
+      set(
+        withPhase(hasWallet ? { status: 'locked' } : { status: 'none' }, null, {
+          autoLockMinutes: preferences.autoLockMinutes ?? 15,
+          utxoAddressStyle: preferences.utxoAddressStyle ?? {},
+        })
+      );
       return;
     }
 
-    // If we have a session, try to restore the wallet from session storage
-    if (hasSession) {
+    // If we have an active session, try to restore the wallet from session storage
+    if (sessionState === 'active') {
       const serializedWallet = await EncryptedStorage.getSerializedWallet();
       if (serializedWallet) {
         try {
@@ -372,16 +400,16 @@ export const useWalletStore = create<WalletState>((set, get) => ({
           // Sync with background service worker so dApps can use the wallet
           syncKeyringWithBackground(serializedWallet);
 
-          set({
-            isInitialized: true,
-            isLocked: false,
-            accounts: uniqueAccounts,
-            selectedAccount,
-            selectedChainId: preferences.selectedChainId || 'beezee-1',
-            autoLockMinutes: preferences.autoLockMinutes ?? 15,
-            utxoAddressStyle: preferences.utxoAddressStyle ?? {},
-            keyring,
-          });
+          const capability = unlockedCapability(keyring.getCapability());
+          set(
+            withPhase({ status: 'unlocked', capability }, keyring, {
+              accounts: uniqueAccounts,
+              selectedAccount,
+              selectedChainId: preferences.selectedChainId || 'beezee-1',
+              autoLockMinutes: preferences.autoLockMinutes ?? 15,
+              utxoAddressStyle: preferences.utxoAddressStyle ?? {},
+            })
+          );
           return;
         } catch (error) {
           console.error('Failed to restore wallet from session:', error);
@@ -390,17 +418,17 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       }
     }
 
-    // No valid session or failed to restore - show as locked
-    set({
-      isInitialized: hasWallet,
-      isLocked: hasWallet, // If wallet exists, show unlock; otherwise show create
-      autoLockMinutes: preferences.autoLockMinutes ?? 15,
-      utxoAddressStyle: preferences.utxoAddressStyle ?? {},
-    });
+    // No valid session or failed to restore
+    set(
+      withPhase(hasWallet ? { status: 'locked' } : { status: 'none' }, null, {
+        autoLockMinutes: preferences.autoLockMinutes ?? 15,
+        utxoAddressStyle: preferences.utxoAddressStyle ?? {},
+      })
+    );
   },
 
   createWallet: async (password: string, accountName: string = 'Account 1') => {
-    if (get().isDemo) get().exitDemo();
+    if (get().phase.status === 'demo' || get().isDemo) get().exitDemo();
     const mnemonic = await MnemonicManager.generateMnemonicAsync();
     const keyring = new Keyring();
 
@@ -423,19 +451,22 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     await EncryptedStorage.setSession(sessionId, serializedWallet);
     await EncryptedStorage.setLastActivity();
 
-    set({
-      isInitialized: true,
-      isLocked: false,
-      accounts,
-      selectedAccount: accounts[0] || null,
-      keyring,
-    });
+    set(
+      withPhase(
+        { status: 'unlocked', capability: unlockedCapability(keyring.getCapability()) },
+        keyring,
+        {
+          accounts,
+          selectedAccount: accounts[0] || null,
+        }
+      )
+    );
 
     return mnemonic;
   },
 
   importWallet: async (mnemonic: string, password: string, accountName: string = 'Account 1') => {
-    if (get().isDemo) get().exitDemo();
+    if (get().phase.status === 'demo' || get().isDemo) get().exitDemo();
     if (!MnemonicManager.validateMnemonic(mnemonic)) {
       throw new Error('Invalid mnemonic phrase');
     }
@@ -460,13 +491,16 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     await EncryptedStorage.setSession(sessionId, serializedWallet);
     await EncryptedStorage.setLastActivity();
 
-    set({
-      isInitialized: true,
-      isLocked: false,
-      accounts,
-      selectedAccount: accounts[0] || null,
-      keyring,
-    });
+    set(
+      withPhase(
+        { status: 'unlocked', capability: unlockedCapability(keyring.getCapability()) },
+        keyring,
+        {
+          accounts,
+          selectedAccount: accounts[0] || null,
+        }
+      )
+    );
   },
 
   unlock: async (password: string) => {
@@ -531,19 +565,23 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     // Sync with background service worker so dApps can use the wallet
     syncKeyringWithBackground(serializedWallet);
 
-    set({
-      isLocked: false,
-      accounts: uniqueAccounts,
-      selectedAccount,
-      selectedChainId,
-      autoLockMinutes: preferences.autoLockMinutes ?? 15,
-      utxoAddressStyle: preferences.utxoAddressStyle ?? {},
-      keyring,
-    });
+    set(
+      withPhase(
+        { status: 'unlocked', capability: unlockedCapability(keyring.getCapability()) },
+        keyring,
+        {
+          accounts: uniqueAccounts,
+          selectedAccount,
+          selectedChainId,
+          autoLockMinutes: preferences.autoLockMinutes ?? 15,
+          utxoAddressStyle: preferences.utxoAddressStyle ?? {},
+        }
+      )
+    );
   },
 
   lock: async () => {
-    if (get().isDemo) {
+    if (get().phase.status === 'demo' || get().isDemo) {
       get().exitDemo();
       return;
     }
@@ -558,11 +596,11 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     // Notify background to also lock
     lockBackground();
 
-    set({
-      isLocked: true,
-      keyring: null,
-      connectedDapps: new Map(),
-    });
+    set(
+      withPhase({ status: 'locked' }, null, {
+        connectedDapps: new Map(),
+      })
+    );
   },
 
   resetWallet: async () => {
@@ -575,43 +613,36 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     await EncryptedStorage.deleteWallet();
     await lockBackground();
 
-    set({
-      isInitialized: false,
-      isLocked: false,
-      accounts: [],
-      selectedAccount: null,
-      keyring: null,
-      connectedDapps: new Map(),
-    });
+    set(
+      withPhase({ status: 'none' }, null, {
+        accounts: [],
+        selectedAccount: null,
+        connectedDapps: new Map(),
+      })
+    );
   },
 
   startDemo: () => {
     const account = makeDemoAccount(0, 'Demo Account', 'demo-0');
-    setDemoSession(true);
-    set({
-      isDemo: true,
-      isInitialized: true,
-      isLocked: false,
-      accounts: [account],
-      selectedAccount: account,
-      selectedChainId: 'beezee-1',
-      keyring: null,
-      connectedDapps: new Map(),
-    });
+    set(
+      withPhase({ status: 'demo' }, null, {
+        accounts: [account],
+        selectedAccount: account,
+        selectedChainId: 'beezee-1',
+        connectedDapps: new Map(),
+      })
+    );
   },
 
   exitDemo: () => {
-    setDemoSession(false);
     useChainStore.getState().clearBalances();
-    set({
-      isDemo: false,
-      isInitialized: false,
-      isLocked: true,
-      accounts: [],
-      selectedAccount: null,
-      keyring: null,
-      connectedDapps: new Map(),
-    });
+    set(
+      withPhase({ status: 'none' }, null, {
+        accounts: [],
+        selectedAccount: null,
+        connectedDapps: new Map(),
+      })
+    );
   },
 
   selectAccount: (accountId: string) => {
@@ -1604,9 +1635,10 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   },
 
   hasMnemonicInMemory: () => {
-    if (get().isDemo) return true;
-    const { keyring } = get();
-    return keyring ? keyring.hasMnemonic() : false;
+    const { phase, keyring, isDemo } = get();
+    if (phase.status === 'demo' || isDemo) return true;
+    if (phase.status === 'unlocked') return phase.capability === 'full';
+    return keyring?.getCapability() === 'full';
   },
 
   getAddressForChain: (chainPrefix: string) => {
