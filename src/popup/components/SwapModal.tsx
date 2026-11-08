@@ -42,6 +42,7 @@ import { SignMode } from 'cosmjs-types/cosmos/tx/signing/v1beta1/signing';
 import { Any } from 'cosmjs-types/google/protobuf/any';
 import { PubKey } from 'cosmjs-types/cosmos/crypto/secp256k1/keys';
 import type { OfflineSigner } from '@cosmjs/proto-signing';
+import type { SwapFlow } from '@/types/flows';
 
 // Helper to encode a string as protobuf bytes (wire type 2)
 function encodeString(fieldNum: number, value: string): Uint8Array {
@@ -210,12 +211,19 @@ const SwapModal: React.FC<SwapModalProps> = ({
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
   const [slippage, setSlippage] = useState(0.1);
-  const [loading, setLoading] = useState(false);
-  const [fetchingQuote, setFetchingQuote] = useState(false);
-  const [step, setStep] = useState<'input' | 'confirm' | 'password'>('input');
+  const [flow, setFlow] = useState<SwapFlow>({ step: 'input' });
   const [password, setPassword] = useState('');
   const [pools, setPools] = useState<LiquidityPool[]>([]);
-  const [loadingPools, setLoadingPools] = useState(false);
+
+  const loadingPools = flow.step === 'loading_pools';
+  const loading = flow.step === 'swapping';
+  const fetchingQuote = flow.step === 'input' && flow.busy === 'quote';
+  const step: 'input' | 'confirm' | 'password' =
+    flow.step === 'password'
+      ? 'password'
+      : flow.step === 'confirm' || flow.step === 'swapping'
+        ? 'confirm'
+        : 'input';
   const [txFee, setTxFee] = useState<FeeEstimate | null>(null);
   const [tradeFee, setTradeFee] = useState<FeeEstimate | null>(null);
   const [selectedRoute, setSelectedRoute] = useState<SwapRoute | null>(null);
@@ -229,7 +237,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
   // Fetch liquidity pools, tokens, and fees on mount
   const fetchPoolsAndTokens = useCallback(
     async (signal: AbortSignal) => {
-      setLoadingPools(true);
+      setFlow({ step: 'loading_pools' });
       try {
         let fetchedPools: LiquidityPool[] = [];
 
@@ -313,7 +321,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
         console.error('Failed to fetch pools/tokens:', error);
       } finally {
         if (!signal.aborted) {
-          setLoadingPools(false);
+          setFlow({ step: 'input' });
         }
       }
     },
@@ -387,13 +395,13 @@ const SwapModal: React.FC<SwapModalProps> = ({
         totalFee: 0.003,
         hops: 1,
       });
-      setFetchingQuote(false);
+      setFlow({ step: 'input' });
       return;
     }
 
     const currentFromToken = fromToken;
     const calculateQuote = async () => {
-      setFetchingQuote(true);
+      setFlow({ step: 'input', busy: 'quote' });
       try {
         const inputAmountRaw = BigInt(
           Math.floor(parseFloat(fromAmount) * Math.pow(10, currentFromToken.decimals))
@@ -435,7 +443,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
         setToAmount('');
         setSelectedRoute(null);
       } finally {
-        setFetchingQuote(false);
+        setFlow({ step: 'input' });
       }
     };
 
@@ -676,7 +684,6 @@ const SwapModal: React.FC<SwapModalProps> = ({
     if (!isOpen) {
       setFromAmount('');
       setToAmount('');
-      setStep('input');
       setPassword('');
       setSelectedRoute(null);
       setPools([]);
@@ -687,7 +694,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
       setToToken(null);
       setTxFee(null);
       setTradeFee(null);
-      setLoadingPools(false);
+      setFlow({ step: 'input' });
     }
   }, [isOpen]);
 
@@ -712,7 +719,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
       return;
     }
 
-    setStep('confirm');
+    setFlow({ step: 'confirm' });
     updateActivity();
   };
 
@@ -760,11 +767,11 @@ const SwapModal: React.FC<SwapModalProps> = ({
       !passwordForSigning;
 
     if (needsPassword) {
-      setStep('password');
+      setFlow({ step: 'password' });
       return;
     }
 
-    setLoading(true);
+    setFlow({ step: 'swapping' });
     try {
       const inputAmountRaw = Math.floor(parseFloat(fromAmount) * Math.pow(10, fromToken.decimals));
       const minOutputAmountRaw = Math.floor(
@@ -1022,7 +1029,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
         duration: 5000,
       });
     } finally {
-      setLoading(false);
+      setFlow({ step: 'confirm' });
     }
   };
 
@@ -1516,7 +1523,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
               <Button
                 variant="ghost"
                 flex={1}
-                onClick={() => setStep('confirm')}
+                onClick={() => setFlow({ step: 'confirm' })}
                 color="gray.400"
                 _hover={{ color: 'white', bg: 'whiteAlpha.100' }}
               >
@@ -1541,7 +1548,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
               <Button
                 variant="ghost"
                 flex={1}
-                onClick={() => setStep('input')}
+                onClick={() => setFlow({ step: 'input' })}
                 color="gray.400"
                 _hover={{ color: 'white', bg: 'whiteAlpha.100' }}
               >

@@ -34,6 +34,7 @@ import {
   getChainDisplayName,
 } from '@/lib/cosmos/ibc-connections';
 import { COSMOS_REGISTRY_CHAINS } from '@/lib/networks/cosmos-registry';
+import type { IbcFlow } from '@/types/flows';
 
 interface IBCTransferModalProps {
   isOpen: boolean;
@@ -61,15 +62,20 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
   const { fetchBalance } = useChainStore();
   const toast = useToast();
 
-  const [step, setStep] = useState<'select-destination' | 'input-amount' | 'confirm' | 'password'>(
-    'select-destination'
-  );
+  const [flow, setFlow] = useState<IbcFlow>({ step: 'loading_connections' });
   const [ibcConnections, setIbcConnections] = useState<IBCChannel[]>([]);
-  const [loadingConnections, setLoadingConnections] = useState(true);
   const [selectedDestination, setSelectedDestination] = useState<IBCChannel | null>(null);
   const [amount, setAmount] = useState('');
-  const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState('');
+
+  const loadingConnections = flow.step === 'loading_connections';
+  const loading = flow.step === 'transferring';
+  const step: 'select-destination' | 'input-amount' | 'confirm' | 'password' =
+    flow.step === 'loading_connections' || flow.step === 'transferring'
+      ? flow.step === 'transferring'
+        ? 'confirm'
+        : 'select-destination'
+      : flow.step;
 
   // Get source chain config
   const sourceChain = COSMOS_REGISTRY_CHAINS.find((c) => c.id === sourceChainId);
@@ -81,7 +87,7 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
   // Load IBC connections when modal opens
   useEffect(() => {
     if (isOpen) {
-      setLoadingConnections(true);
+      setFlow({ step: 'loading_connections' });
       fetchIBCConnections(sourceChainId)
         .then((connections) => {
           setIbcConnections(connections);
@@ -91,7 +97,7 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
           setIbcConnections([]);
         })
         .finally(() => {
-          setLoadingConnections(false);
+          setFlow({ step: 'select-destination' });
         });
     }
   }, [isOpen, sourceChainId]);
@@ -99,7 +105,7 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
   // Reset state when modal closes
   useEffect(() => {
     if (!isOpen) {
-      setStep('select-destination');
+      setFlow({ step: 'select-destination' });
       setSelectedDestination(null);
       setAmount('');
       setPassword('');
@@ -123,7 +129,7 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
   // Handle destination selection
   const handleSelectDestination = (connection: IBCChannel) => {
     setSelectedDestination(connection);
-    setStep('input-amount');
+    setFlow({ step: 'input-amount' });
   };
 
   // Handle max amount
@@ -160,11 +166,11 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
 
     // Check if we need password for cross-chain signing
     if (!usePassword && !hasMnemonicInMemory()) {
-      setStep('password');
+      setFlow({ step: 'password' });
       return;
     }
 
-    setLoading(true);
+    setFlow({ step: 'transferring' });
 
     try {
       const amountNum = parseFloat(amount);
@@ -229,7 +235,7 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
         duration: 5000,
       });
     } finally {
-      setLoading(false);
+      setFlow({ step: 'confirm' });
     }
   };
 
@@ -568,14 +574,14 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
               <Button
                 variant="ghost"
                 color="gray.500"
-                onClick={() => setStep('select-destination')}
+                onClick={() => setFlow({ step: 'select-destination' })}
               >
                 Back
               </Button>
               <Button
                 flex={1}
                 colorScheme="purple"
-                onClick={() => setStep('confirm')}
+                onClick={() => setFlow({ step: 'confirm' })}
                 isDisabled={!isValidAmount()}
               >
                 Continue
@@ -588,7 +594,7 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
               <Button
                 variant="ghost"
                 color="gray.500"
-                onClick={() => setStep('input-amount')}
+                onClick={() => setFlow({ step: 'input-amount' })}
                 isDisabled={loading}
               >
                 Back
@@ -611,7 +617,7 @@ const IBCTransferModal: React.FC<IBCTransferModalProps> = ({
                 variant="ghost"
                 color="gray.500"
                 onClick={() => {
-                  setStep('confirm');
+                  setFlow({ step: 'confirm' });
                   setPassword('');
                 }}
                 isDisabled={loading}
