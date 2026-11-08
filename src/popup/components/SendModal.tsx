@@ -39,6 +39,7 @@ import { getBitcoinClient, createSendTransaction, btcToSats } from '@/lib/bitcoi
 import { isValidEvmAddress } from '@/lib/crypto/evm';
 import { getEvmClient, formatEther } from '@/lib/evm/client';
 import { NetworkType, networkRegistry } from '@/lib/networks';
+import type { SendFlow } from '@/types/flows';
 
 interface SendModalProps {
   isOpen: boolean;
@@ -67,15 +68,19 @@ const SendModal: React.FC<SendModalProps> = ({
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [memo, setMemo] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<'input' | 'confirm'>('input');
+  const [flow, setFlow] = useState<SendFlow>({ step: 'loading_assets' });
   const [selectedDenom, setSelectedDenom] = useState<string>('');
   const [registryAssets, setRegistryAssets] = useState<RegistryAsset[]>([]);
-  const [loadingAssets, setLoadingAssets] = useState(true);
   const [estimatedFee, setEstimatedFee] = useState<FeeEstimate | null>(null);
-  const [simulatingFee, setSimulatingFee] = useState(false);
   const [isSweepAll, setIsSweepAll] = useState(false);
-  const [calculatingMax, setCalculatingMax] = useState(false);
+
+  // Legacy view flags derived from SendFlow (busy folded into step)
+  const loadingAssets = flow.step === 'loading_assets';
+  const step: 'input' | 'confirm' =
+    flow.step === 'confirm' || flow.step === 'sending' ? 'confirm' : 'input';
+  const loading = flow.step === 'sending';
+  const simulatingFee = flow.step === 'input' && flow.busy === 'fee';
+  const calculatingMax = flow.step === 'input' && flow.busy === 'max';
 
   const toast = useToast();
 
@@ -138,7 +143,7 @@ const SendModal: React.FC<SendModalProps> = ({
   // Fetch assets from chain registry
   useEffect(() => {
     const loadAssets = async () => {
-      setLoadingAssets(true);
+      setFlow({ step: 'loading_assets' });
       try {
         const assets = await fetchChainAssets(chainId);
         setRegistryAssets(assets);
@@ -146,7 +151,7 @@ const SendModal: React.FC<SendModalProps> = ({
         console.error('Failed to fetch chain registry assets:', error);
         setRegistryAssets([]);
       } finally {
-        setLoadingAssets(false);
+        setFlow({ step: 'input' });
       }
     };
     if (isOpen) {
@@ -251,7 +256,7 @@ const SendModal: React.FC<SendModalProps> = ({
         return;
       }
 
-      setSimulatingFee(true);
+      setFlow({ step: 'input', busy: 'fee' });
       try {
         const selectedToken = getTokenConfig(selectedDenom);
         const amountInSmallestUnit = Math.floor(
@@ -286,7 +291,7 @@ const SendModal: React.FC<SendModalProps> = ({
           });
         }
       } finally {
-        setSimulatingFee(false);
+        setFlow({ step: 'input' });
       }
     };
 
@@ -365,7 +370,7 @@ const SendModal: React.FC<SendModalProps> = ({
       setRecipient('');
       setAmount('');
       setMemo('');
-      setStep('input');
+      setFlow({ step: 'input' });
       setSelectedDenom('');
       setIsSweepAll(false);
     }
@@ -438,7 +443,7 @@ const SendModal: React.FC<SendModalProps> = ({
         setIsSweepAll(true); // Enable sweep mode for exact max
       };
 
-      setCalculatingMax(true);
+      setFlow({ step: 'input', busy: 'max' });
       try {
         // Fetch actual UTXOs to calculate accurate fee estimate for UI display
         const client = getBitcoinClient(chainId);
@@ -472,7 +477,7 @@ const SendModal: React.FC<SendModalProps> = ({
         const estimatedVbytes = 110; // Conservative single SegWit input estimate
         calculateAndSetMaxAmount(estimatedVbytes);
       } finally {
-        setCalculatingMax(false);
+        setFlow({ step: 'input' });
       }
       return;
     }
@@ -564,13 +569,13 @@ const SendModal: React.FC<SendModalProps> = ({
       return;
     }
 
-    setStep('confirm');
+    setFlow({ step: 'confirm' });
   };
 
   const handleSend = async () => {
     if (!chainAddress) return;
 
-    setLoading(true);
+    setFlow({ step: 'sending' });
     try {
       if (isDemoSession()) {
         const hash = demoTxHash();
@@ -724,7 +729,7 @@ const SendModal: React.FC<SendModalProps> = ({
         duration: 5000,
       });
     } finally {
-      setLoading(false);
+      setFlow({ step: 'confirm' });
     }
   };
 
@@ -1033,7 +1038,7 @@ const SendModal: React.FC<SendModalProps> = ({
               <Button
                 variant="ghost"
                 flex={1}
-                onClick={() => setStep('input')}
+                onClick={() => setFlow({ step: 'input' })}
                 color="gray.400"
                 _hover={{ color: 'white', bg: 'whiteAlpha.100' }}
               >

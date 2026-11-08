@@ -38,6 +38,7 @@ import browser from 'webextension-polyfill';
 import { useWalletStore } from '@/store/walletStore';
 import { demoAddressForPrefix, demoChainAddress } from '@/lib/demo/session';
 import { useChainStore } from '@/store/chainStore';
+import type { AddAccountFlow } from '@/types/flows';
 import { UI_CHAINS, SUPPORTED_CHAINS, getNetworkType } from '@/lib/cosmos/chains';
 import { Keyring } from '@/lib/crypto/keyring';
 import {
@@ -95,7 +96,6 @@ const Dashboard: React.FC<DashboardProps> = ({
     selectChain,
     selectedChainId,
     renameAccount,
-    addAccount,
     createAccountWithNewMnemonic,
     importAccountFromMnemonic,
     deriveAccountFromSource,
@@ -123,26 +123,41 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [editingTokenDenom, setEditingTokenDenom] = useState<string | null>(null);
   const [editingTokenName, setEditingTokenName] = useState('');
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
-  const [addAccountStep, setAddAccountStep] = useState<
-    | 'none'
-    | 'choose'
-    | 'select-source'
-    | 'derive-from-source'
-    | 'create'
-    | 'create-new'
-    | 'show-mnemonic'
-    | 'import'
-    | 'import-key'
-    | 'import-mnemonic'
-  >('none');
+  const [addAccountFlow, setAddAccountFlow] = useState<AddAccountFlow>({ step: 'none' });
+  const addAccountStep = addAccountFlow.step;
+  const setAddAccountStep = (step: AddAccountFlow['step']) => {
+    switch (step) {
+      case 'derive-from-source':
+      case 'create-new':
+      case 'import-mnemonic':
+        setAddAccountFlow({ step, busy: false });
+        break;
+      case 'show-mnemonic':
+        setAddAccountFlow({
+          step: 'show-mnemonic',
+          mnemonic: generatedMnemonicDraft,
+          confirmed: false,
+        });
+        break;
+      default:
+        setAddAccountFlow({ step });
+        break;
+    }
+  };
   const [newAccountName, setNewAccountName] = useState('');
   const [selectedSourceWallet, setSelectedSourceWallet] = useState<string | null>(null); // null = main wallet
   const [importMnemonic, setImportMnemonic] = useState('');
   const [importPassword, setImportPassword] = useState('');
-  const [generatedMnemonic, setGeneratedMnemonic] = useState('');
+  const [generatedMnemonicDraft, setGeneratedMnemonicDraft] = useState('');
   const [createPassword, setCreatePassword] = useState('');
-  const [mnemonicConfirmed, setMnemonicConfirmed] = useState(false);
-  const [addingLoading, setAddingLoading] = useState(false);
+  const generatedMnemonic =
+    addAccountFlow.step === 'show-mnemonic' ? addAccountFlow.mnemonic : generatedMnemonicDraft;
+  const mnemonicConfirmed =
+    addAccountFlow.step === 'show-mnemonic' ? addAccountFlow.confirmed : false;
+  const addingLoading =
+    (addAccountFlow.step === 'derive-from-source' && addAccountFlow.busy) ||
+    (addAccountFlow.step === 'create-new' && addAccountFlow.busy) ||
+    (addAccountFlow.step === 'import-mnemonic' && addAccountFlow.busy);
   const [bitcoinAddress, setBitcoinAddress] = useState<string>('');
   const [loadingBtcAddress, setLoadingBtcAddress] = useState(false);
   // Cache of Bitcoin addresses for all accounts: cosmosAddress -> networkId -> address
@@ -628,14 +643,26 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const resetAddAccountFlow = () => {
-    setAddAccountStep('none');
+    setAddAccountFlow({ step: 'none' });
     setNewAccountName('');
     setSelectedSourceWallet(null);
     setImportMnemonic('');
     setImportPassword('');
-    setGeneratedMnemonic('');
+    setGeneratedMnemonicDraft('');
     setCreatePassword('');
-    setMnemonicConfirmed(false);
+  };
+
+  const setAddingBusy = (busy: boolean) => {
+    setAddAccountFlow((prev) => {
+      if (
+        prev.step === 'derive-from-source' ||
+        prev.step === 'create-new' ||
+        prev.step === 'import-mnemonic'
+      ) {
+        return { ...prev, busy };
+      }
+      return prev;
+    });
   };
 
   // Update activity on mount and interactions
@@ -1064,7 +1091,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                           isLoading={addingLoading}
                           isDisabled={!importPassword}
                           onClick={async () => {
-                            setAddingLoading(true);
+                            setAddingBusy(true);
                             try {
                               await deriveAccountFromSource(
                                 selectedSourceWallet,
@@ -1087,7 +1114,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                 duration: 3000,
                               });
                             } finally {
-                              setAddingLoading(false);
+                              setAddingBusy(false);
                             }
                           }}
                         >
@@ -1097,68 +1124,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                           size="sm"
                           variant="ghost"
                           onClick={() => setAddAccountStep('select-source')}
-                        >
-                          Back
-                        </Button>
-                      </HStack>
-                    </VStack>
-                  </Box>
-                )}
-
-                {addAccountStep === 'create' && (
-                  <Box px={3} py={2}>
-                    <VStack spacing={2} align="stretch">
-                      <Text fontSize="sm" fontWeight="medium" color="gray.400">
-                        Derive from Main Wallet
-                      </Text>
-                      <Text fontSize="xs" color="gray.500">
-                        Uses the same recovery phrase as your main wallet.
-                      </Text>
-                      <Input
-                        size="sm"
-                        bg="#0a0a0a"
-                        borderColor="#3a3a3a"
-                        placeholder="Account name"
-                        value={newAccountName}
-                        onChange={(e) => setNewAccountName(e.target.value)}
-                        autoFocus
-                      />
-                      <HStack>
-                        <Button
-                          size="sm"
-                          colorScheme="cyan"
-                          flex={1}
-                          isLoading={addingLoading}
-                          onClick={async () => {
-                            setAddingLoading(true);
-                            try {
-                              await addAccount(newAccountName || `Account ${accounts.length + 1}`);
-                              toast({
-                                title: 'Account created',
-                                status: 'success',
-                                duration: 2000,
-                              });
-                              setIsAccountMenuOpen(false);
-                              resetAddAccountFlow();
-                            } catch (error) {
-                              toast({
-                                title: 'Failed',
-                                description:
-                                  error instanceof Error ? error.message : 'Unknown error',
-                                status: 'error',
-                                duration: 3000,
-                              });
-                            } finally {
-                              setAddingLoading(false);
-                            }
-                          }}
-                        >
-                          Create
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setAddAccountStep('choose')}
                         >
                           Back
                         </Button>
@@ -1202,14 +1167,18 @@ const Dashboard: React.FC<DashboardProps> = ({
                           isLoading={addingLoading}
                           isDisabled={!createPassword}
                           onClick={async () => {
-                            setAddingLoading(true);
+                            setAddingBusy(true);
                             try {
                               const result = await createAccountWithNewMnemonic(
                                 newAccountName || `Account ${accounts.length + 1}`,
                                 createPassword
                               );
-                              setGeneratedMnemonic(result.mnemonic);
-                              setAddAccountStep('show-mnemonic');
+                              setGeneratedMnemonicDraft(result.mnemonic);
+                              setAddAccountFlow({
+                                step: 'show-mnemonic',
+                                mnemonic: result.mnemonic,
+                                confirmed: false,
+                              });
                             } catch (error) {
                               toast({
                                 title: 'Failed',
@@ -1219,7 +1188,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                 duration: 3000,
                               });
                             } finally {
-                              setAddingLoading(false);
+                              setAddingBusy(false);
                             }
                           }}
                         >
@@ -1268,7 +1237,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                           type="checkbox"
                           id="mnemonicConfirm"
                           checked={mnemonicConfirmed}
-                          onChange={(e) => setMnemonicConfirmed(e.target.checked)}
+                          onChange={(e) => setAddAccountFlow((prev) => prev.step === 'show-mnemonic' ? { ...prev, confirmed: e.target.checked } : prev)}
                           style={{ accentColor: '#00BCD4' }}
                         />
                         <Text
@@ -1387,7 +1356,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                           isLoading={addingLoading}
                           isDisabled={!importMnemonic || !importPassword}
                           onClick={async () => {
-                            setAddingLoading(true);
+                            setAddingBusy(true);
                             try {
                               await importAccountFromMnemonic(
                                 importMnemonic.trim(),
@@ -1410,7 +1379,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                 duration: 3000,
                               });
                             } finally {
-                              setAddingLoading(false);
+                              setAddingBusy(false);
                             }
                           }}
                         >

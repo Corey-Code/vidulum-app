@@ -5,6 +5,7 @@ import { EncryptedStorage } from '@/lib/storage/encrypted-storage';
 import { getChainInfo, SUPPORTED_CHAINS } from '@/lib/cosmos/chains';
 import { initDeveloperModeLogging } from '@/lib/debug/developerMode';
 import type { BgSessionStatus } from '@/types/session';
+import type { ApprovalStatus, StoredApprovalRecord } from '@/types/flows';
 
 // Storage key for connected dApps
 const CONNECTED_DAPPS_KEY = 'connected_dapps';
@@ -29,6 +30,9 @@ class SessionManager {
     // expired is still "session present until popup clears" — treat as awaiting_sync so
     // popup initialize (which clears expired) can reconcile; without keyring we cannot unlock.
     this.storageSessionPresent = sessionState === 'active' || sessionState === 'expired';
+
+    // SW restart drops in-memory resolvers — any leftover storage entries are orphans
+    await reclaimOrphanedApprovals();
 
     this.initialized = true;
   }
@@ -598,14 +602,9 @@ async function handleSyncKeyring(payload: any = {}): Promise<MessageResponse> {
 // Storage key for pending approvals
 const PENDING_APPROVALS_KEY = 'pending_approvals';
 
-// Pending approval structure for storage
-interface StoredApproval {
-  id: string;
-  type: 'connection' | 'transaction' | 'signing';
-  origin: string;
-  data: any;
-  createdAt: number;
-}
+type StoredApproval = StoredApprovalRecord;
+
+const ACTIVE_APPROVAL_STATUSES: ApprovalStatus[] = ['pending', 'awaiting_user'];
 
 // In-memory resolvers for pending approvals
 const approvalResolvers = new Map<
@@ -619,35 +618,77 @@ function generateApprovalId(): string {
   return `approval_${Date.now()}_${++approvalIdCounter}`;
 }
 
+function normalizeApproval(raw: StoredApproval | Record<string, unknown>): StoredApproval {
+  const status = (raw as StoredApproval).status;
+  return {
+    id: String((raw as StoredApproval).id),
+    type: (raw as StoredApproval).type,
+    origin: String((raw as StoredApproval).origin ?? ''),
+    data: (raw as StoredApproval).data,
+    createdAt: Number((raw as StoredApproval).createdAt ?? Date.now()),
+    status: status ?? 'awaiting_user',
+  };
+}
+
 // Save pending approval to storage (so popup can access it)
 async function savePendingApproval(approval: StoredApproval): Promise<void> {
   if (typeof chrome !== 'undefined' && chrome.storage?.local) {
     const result = await browser.storage.local.get(PENDING_APPROVALS_KEY);
-    const approvals: StoredApproval[] = result[PENDING_APPROVALS_KEY] || [];
+    const approvals: StoredApproval[] = (result[PENDING_APPROVALS_KEY] || []).map(normalizeApproval);
     approvals.push(approval);
     await browser.storage.local.set({ [PENDING_APPROVALS_KEY]: approvals });
     // Update badge to show pending count
-    await updateBadge(approvals.length);
+    await updateBadge(approvals.filter((a) => ACTIVE_APPROVAL_STATUSES.includes(a.status)).length);
   }
 }
 
-// Get all pending approvals from storage
-async function getPendingApprovals(): Promise<StoredApproval[]> {
+async function updateApprovalStatus(approvalId: string, status: ApprovalStatus): Promise<void> {
+  if (typeof chrome === 'undefined' || !chrome.storage?.local) return;
+  const approvals = await getAllStoredApprovals();
+  const next = approvals.map((a) => (a.id === approvalId ? { ...a, status } : a));
+  await browser.storage.local.set({ [PENDING_APPROVALS_KEY]: next });
+  await updateBadge(next.filter((a) => ACTIVE_APPROVAL_STATUSES.includes(a.status)).length);
+}
+
+async function getAllStoredApprovals(): Promise<StoredApproval[]> {
   if (typeof chrome !== 'undefined' && chrome.storage?.local) {
     const result = await browser.storage.local.get(PENDING_APPROVALS_KEY);
-    return result[PENDING_APPROVALS_KEY] || [];
+    return (result[PENDING_APPROVALS_KEY] || []).map(normalizeApproval);
   }
   return [];
+}
+
+// Active (user-facing) pending approvals only
+async function getPendingApprovals(): Promise<StoredApproval[]> {
+  const all = await getAllStoredApprovals();
+  return all.filter((a) => ACTIVE_APPROVAL_STATUSES.includes(a.status));
 }
 
 // Remove pending approval from storage
 async function removePendingApproval(approvalId: string): Promise<void> {
   if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-    const approvals = await getPendingApprovals();
+    const approvals = await getAllStoredApprovals();
     const filtered = approvals.filter((a) => a.id !== approvalId);
     await browser.storage.local.set({ [PENDING_APPROVALS_KEY]: filtered });
-    await updateBadge(filtered.length);
+    await updateBadge(filtered.filter((a) => ACTIVE_APPROVAL_STATUSES.includes(a.status)).length);
   }
+}
+
+/**
+ * After service-worker restart, in-memory resolvers are gone.
+ * Mark leftover storage rows orphaned and clear them so the popup does not show dead prompts.
+ */
+async function reclaimOrphanedApprovals(): Promise<void> {
+  const approvals = await getAllStoredApprovals();
+  if (approvals.length === 0) return;
+
+  console.warn(
+    `Clearing ${approvals.length} orphaned approval(s) after service worker start (no live resolvers)`
+  );
+  if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+    await browser.storage.local.set({ [PENDING_APPROVALS_KEY]: [] });
+  }
+  await updateBadge(0);
 }
 
 // Update extension badge to show pending approval count
@@ -767,7 +808,7 @@ async function handleGetApproval(payload: any = {}): Promise<MessageResponse> {
 async function handleResolveApproval(payload: any = {}): Promise<MessageResponse> {
   const { approvalId, approved } = payload;
 
-  // Remove from storage
+  await updateApprovalStatus(approvalId, approved ? 'approved' : 'rejected');
   await removePendingApproval(approvalId);
 
   // Resolve the in-memory promise if it exists
@@ -780,44 +821,50 @@ async function handleResolveApproval(payload: any = {}): Promise<MessageResponse
   return { success: true, data: null };
 }
 
+async function beginApprovalRequest(
+  approval: StoredApproval,
+  resolve: (approved: boolean) => void,
+  reject: (error: Error) => void
+): Promise<void> {
+  approvalResolvers.set(approval.id, { resolve, reject });
+
+  try {
+    await savePendingApproval(approval);
+    await openExtensionPopup();
+    await updateApprovalStatus(approval.id, 'awaiting_user');
+  } catch (error) {
+    approvalResolvers.delete(approval.id);
+    reject(error instanceof Error ? error : new Error(String(error)));
+    return;
+  }
+
+  setTimeout(
+    async () => {
+      if (approvalResolvers.has(approval.id)) {
+        approvalResolvers.delete(approval.id);
+        await updateApprovalStatus(approval.id, 'timed_out');
+        await removePendingApproval(approval.id);
+        resolve(false);
+      }
+    },
+    5 * 60 * 1000
+  );
+}
+
 // Helper functions to show approval popups
 async function showApprovalPopup(origin: string, chainId: string): Promise<boolean> {
   const approvalId = generateApprovalId();
 
   return new Promise((resolve, reject) => {
-    // Store resolver in memory
-    approvalResolvers.set(approvalId, { resolve, reject });
-
-    // Save approval to storage for popup to access
     const approval: StoredApproval = {
       id: approvalId,
       type: 'connection',
       origin,
       data: { chainId },
       createdAt: Date.now(),
+      status: 'pending',
     };
-
-    savePendingApproval(approval)
-      .then(() => {
-        // Open the extension popup automatically
-        openExtensionPopup();
-      })
-      .catch((error) => {
-        approvalResolvers.delete(approvalId);
-        reject(error);
-      });
-
-    // Timeout after 5 minutes
-    setTimeout(
-      async () => {
-        if (approvalResolvers.has(approvalId)) {
-          approvalResolvers.delete(approvalId);
-          await removePendingApproval(approvalId);
-          resolve(false); // Auto-reject on timeout
-        }
-      },
-      5 * 60 * 1000
-    );
+    void beginApprovalRequest(approval, resolve, reject);
   });
 }
 
@@ -825,36 +872,15 @@ async function showTransactionApproval(signDoc: any, origin: string = ''): Promi
   const approvalId = generateApprovalId();
 
   return new Promise((resolve, reject) => {
-    approvalResolvers.set(approvalId, { resolve, reject });
-
     const approval: StoredApproval = {
       id: approvalId,
       type: 'transaction',
       origin,
       data: { signDoc },
       createdAt: Date.now(),
+      status: 'pending',
     };
-
-    savePendingApproval(approval)
-      .then(() => {
-        // Open the extension popup automatically
-        openExtensionPopup();
-      })
-      .catch((error) => {
-        approvalResolvers.delete(approvalId);
-        reject(error);
-      });
-
-    setTimeout(
-      async () => {
-        if (approvalResolvers.has(approvalId)) {
-          approvalResolvers.delete(approvalId);
-          await removePendingApproval(approvalId);
-          resolve(false);
-        }
-      },
-      5 * 60 * 1000
-    );
+    void beginApprovalRequest(approval, resolve, reject);
   });
 }
 
@@ -862,36 +888,15 @@ async function showSigningApproval(data: any, origin: string = ''): Promise<bool
   const approvalId = generateApprovalId();
 
   return new Promise((resolve, reject) => {
-    approvalResolvers.set(approvalId, { resolve, reject });
-
     const approval: StoredApproval = {
       id: approvalId,
       type: 'signing',
       origin,
       data: { message: data },
       createdAt: Date.now(),
+      status: 'pending',
     };
-
-    savePendingApproval(approval)
-      .then(() => {
-        // Open the extension popup automatically
-        openExtensionPopup();
-      })
-      .catch((error) => {
-        approvalResolvers.delete(approvalId);
-        reject(error);
-      });
-
-    setTimeout(
-      async () => {
-        if (approvalResolvers.has(approvalId)) {
-          approvalResolvers.delete(approvalId);
-          await removePendingApproval(approvalId);
-          resolve(false);
-        }
-      },
-      5 * 60 * 1000
-    );
+    void beginApprovalRequest(approval, resolve, reject);
   });
 }
 

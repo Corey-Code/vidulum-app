@@ -3,14 +3,8 @@ import { Box, VStack, HStack, Text, Button, Spinner, Badge, Code, Divider } from
 import { CheckIcon, CloseIcon, ViewIcon, ViewOffIcon } from '@chakra-ui/icons';
 import browser from 'webextension-polyfill';
 import { MessageType } from '@/types/messages';
-import { parseSignDoc, ParsedTransaction } from '@/lib/cosmos/tx-parser';
-
-interface ApprovalData {
-  id: string;
-  type: 'connection' | 'transaction' | 'signing';
-  origin: string;
-  data: any;
-}
+import { parseSignDoc } from '@/lib/cosmos/tx-parser';
+import type { ApprovalUiState } from '@/types/flows';
 
 interface ApprovalProps {
   approvalId: string;
@@ -18,17 +12,7 @@ interface ApprovalProps {
 }
 
 const Approval: React.FC<ApprovalProps> = ({ approvalId, onComplete }) => {
-  const [approval, setApproval] = useState<ApprovalData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [responding, setResponding] = useState(false);
-  const [showRawTx, setShowRawTx] = useState(false);
-  const [parsedTx, setParsedTx] = useState<{
-    messages: ParsedTransaction[];
-    chainId: string;
-    memo?: string;
-  } | null>(null);
-  const [parsingTx, setParsingTx] = useState(false);
+  const [ui, setUi] = useState<ApprovalUiState>({ status: 'loading' });
 
   // Fetch approval details
   useEffect(() => {
@@ -40,66 +24,82 @@ const Approval: React.FC<ApprovalProps> = ({ approvalId, onComplete }) => {
         });
 
         if (response.success && response.data) {
-          setApproval(response.data);
+          setUi({
+            status: 'ready',
+            approval: response.data,
+            responding: false,
+            showRawTx: false,
+            txParse: { status: 'idle' },
+          });
         } else {
-          setError(response.error || 'Approval not found');
+          setUi({ status: 'error', message: response.error || 'Approval not found' });
         }
-      } catch (err) {
-        setError('Failed to load approval request');
-      } finally {
-        setLoading(false);
+      } catch {
+        setUi({ status: 'error', message: 'Failed to load approval request' });
       }
     };
 
     fetchApproval();
   }, [approvalId]);
 
-  // Parse transaction when approval is loaded
+  // Parse transaction once when a ready transaction approval loads
+  const readyApproval = ui.status === 'ready' ? ui.approval : null;
+  const txParseStatus = ui.status === 'ready' ? ui.txParse.status : null;
   useEffect(() => {
-    const parseTx = async () => {
-      if (!approval || approval.type !== 'transaction' || !approval.data?.signDoc) {
-        return;
-      }
+    if (!readyApproval || readyApproval.type !== 'transaction' || !readyApproval.data?.signDoc) {
+      return;
+    }
+    if (txParseStatus !== 'idle') return;
 
-      setParsingTx(true);
+    let cancelled = false;
+    setUi((prev) =>
+      prev.status === 'ready' ? { ...prev, txParse: { status: 'parsing' } } : prev
+    );
+
+    const parseTx = async () => {
       try {
-        const signDoc = approval.data.signDoc;
+        const signDoc = readyApproval.data.signDoc;
         const chainId = signDoc.chain_id || signDoc.chainId || 'beezee-1';
         const parsed = await parseSignDoc(chainId, signDoc);
-        setParsedTx(parsed);
+        if (cancelled) return;
+        setUi((prev) =>
+          prev.status === 'ready' ? { ...prev, txParse: { status: 'done', parsed } } : prev
+        );
       } catch (err) {
         console.error('Failed to parse transaction:', err);
-        // Fallback to raw display
-      } finally {
-        setParsingTx(false);
+        if (cancelled) return;
+        setUi((prev) =>
+          prev.status === 'ready' ? { ...prev, txParse: { status: 'failed' } } : prev
+        );
       }
     };
 
-    parseTx();
-  }, [approval]);
+    void parseTx();
+    return () => {
+      cancelled = true;
+    };
+  }, [readyApproval, txParseStatus]);
 
   const handleResponse = async (approved: boolean) => {
-    setResponding(true);
+    if (ui.status !== 'ready') return;
+    setUi({ ...ui, responding: true });
     try {
       await browser.runtime.sendMessage({
         type: MessageType.RESOLVE_APPROVAL,
         payload: { approvalId, approved },
       });
 
-      // If we have a callback (normal popup), use it to navigate
-      // Otherwise close the window (separate popup window)
       if (onComplete) {
         onComplete();
       } else {
         window.close();
       }
-    } catch (err) {
-      setError('Failed to send response');
-      setResponding(false);
+    } catch {
+      setUi({ status: 'error', message: 'Failed to send response' });
     }
   };
 
-  if (loading) {
+  if (ui.status === 'loading') {
     return (
       <Box minH="100vh" bg="#0a0a0a" color="white" p={6}>
         <VStack spacing={4} justify="center" h="full" minH="400px">
@@ -110,11 +110,11 @@ const Approval: React.FC<ApprovalProps> = ({ approvalId, onComplete }) => {
     );
   }
 
-  if (error || !approval) {
+  if (ui.status === 'error') {
     return (
       <Box minH="100vh" bg="#0a0a0a" color="white" p={6}>
         <VStack spacing={4} justify="center" h="full" minH="400px">
-          <Text color="red.400">{error || 'Approval not found'}</Text>
+          <Text color="red.400">{ui.message}</Text>
           <Button
             onClick={() => (onComplete ? onComplete() : window.close())}
             variant="ghost"
@@ -126,6 +126,10 @@ const Approval: React.FC<ApprovalProps> = ({ approvalId, onComplete }) => {
       </Box>
     );
   }
+
+  const { approval, responding, showRawTx, txParse } = ui;
+  const parsingTx = txParse.status === 'parsing';
+  const parsedTx = txParse.status === 'done' ? txParse.parsed : null;
 
   return (
     <Box minH="100vh" bg="#0a0a0a" color="white" p={4}>
@@ -195,7 +199,6 @@ const Approval: React.FC<ApprovalProps> = ({ approvalId, onComplete }) => {
               </VStack>
             ) : parsedTx && !showRawTx ? (
               <>
-                {/* Parsed Transaction Summary */}
                 {parsedTx.messages.map((msg, idx) => (
                   <Box
                     key={idx}
@@ -224,7 +227,6 @@ const Approval: React.FC<ApprovalProps> = ({ approvalId, onComplete }) => {
                   </Box>
                 ))}
 
-                {/* Fee info */}
                 {approval.data?.signDoc?.fee && (
                   <Box bg="#141414" borderRadius="lg" p={3} borderWidth="1px" borderColor="#2a2a2a">
                     <HStack justify="space-between" fontSize="xs">
@@ -238,13 +240,12 @@ const Approval: React.FC<ApprovalProps> = ({ approvalId, onComplete }) => {
                   </Box>
                 )}
 
-                {/* Toggle to show raw */}
                 <Button
                   variant="ghost"
                   size="xs"
                   color="gray.500"
                   leftIcon={<ViewIcon />}
-                  onClick={() => setShowRawTx(true)}
+                  onClick={() => setUi({ ...ui, showRawTx: true })}
                   alignSelf="center"
                 >
                   Show Raw Transaction
@@ -252,7 +253,6 @@ const Approval: React.FC<ApprovalProps> = ({ approvalId, onComplete }) => {
               </>
             ) : (
               <>
-                {/* Raw Transaction View */}
                 <Text fontSize="sm" color="gray.300" textAlign="center">
                   Review and approve this transaction
                 </Text>
@@ -286,7 +286,7 @@ const Approval: React.FC<ApprovalProps> = ({ approvalId, onComplete }) => {
                     size="xs"
                     color="gray.500"
                     leftIcon={<ViewOffIcon />}
-                    onClick={() => setShowRawTx(false)}
+                    onClick={() => setUi({ ...ui, showRawTx: false })}
                     alignSelf="center"
                   >
                     Show Summary

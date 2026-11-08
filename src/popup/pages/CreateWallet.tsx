@@ -14,6 +14,7 @@ import {
 } from '@chakra-ui/react';
 import { ViewIcon, ViewOffIcon, CopyIcon, AddIcon } from '@chakra-ui/icons';
 import { useWalletStore } from '@/store/walletStore';
+import type { CreateWalletFlow } from '@/types/flows';
 
 interface Props {
   onSuccess: () => void;
@@ -22,13 +23,10 @@ interface Props {
 }
 
 const CreateWallet: React.FC<Props> = ({ onSuccess, onSwitchToImport, onTryDemo }) => {
-  const [step, setStep] = useState<'password' | 'mnemonic'>('password');
+  const [flow, setFlow] = useState<CreateWalletFlow>({ step: 'password', busy: false });
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [mnemonic, setMnemonic] = useState('');
-  const [confirmed, setConfirmed] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const { createWallet } = useWalletStore();
   const toast = useToast();
@@ -53,11 +51,10 @@ const CreateWallet: React.FC<Props> = ({ onSuccess, onSwitchToImport, onTryDemo 
       return;
     }
 
-    setLoading(true);
+    setFlow({ step: 'password', busy: true });
     try {
       const generatedMnemonic = await createWallet(password);
-      setMnemonic(generatedMnemonic);
-      setStep('mnemonic');
+      setFlow({ step: 'mnemonic', mnemonic: generatedMnemonic, confirmed: false });
     } catch (error) {
       toast({
         title: 'Failed to create wallet',
@@ -65,13 +62,13 @@ const CreateWallet: React.FC<Props> = ({ onSuccess, onSwitchToImport, onTryDemo 
         status: 'error',
         duration: 5000,
       });
-    } finally {
-      setLoading(false);
+      setFlow({ step: 'password', busy: false });
     }
   };
 
   const handleCopyMnemonic = () => {
-    navigator.clipboard.writeText(mnemonic);
+    if (flow.step !== 'mnemonic') return;
+    navigator.clipboard.writeText(flow.mnemonic);
     toast({
       title: 'Copied to clipboard',
       status: 'success',
@@ -80,12 +77,12 @@ const CreateWallet: React.FC<Props> = ({ onSuccess, onSwitchToImport, onTryDemo 
   };
 
   const handleFinish = () => {
-    if (confirmed) {
+    if (flow.step === 'mnemonic' && flow.confirmed) {
       onSuccess();
     }
   };
 
-  if (step === 'password') {
+  if (flow.step === 'password') {
     return (
       <Box h="full" bg="#0a0a0a" display="flex" alignItems="center" justifyContent="center" p={6}>
         <VStack spacing={8} align="stretch" w="full" maxW="320px">
@@ -161,7 +158,7 @@ const CreateWallet: React.FC<Props> = ({ onSuccess, onSwitchToImport, onTryDemo 
               _hover={{ bg: 'cyan.600' }}
               borderRadius="xl"
               onClick={handleCreateWallet}
-              isLoading={loading}
+              isLoading={flow.busy}
               isDisabled={!password || !confirmPassword}
             >
               Create Wallet
@@ -209,7 +206,7 @@ const CreateWallet: React.FC<Props> = ({ onSuccess, onSwitchToImport, onTryDemo 
 
         <Box position="relative" bg="#141414" borderRadius="xl" p={4}>
           <Textarea
-            value={mnemonic}
+            value={flow.step === 'mnemonic' ? flow.mnemonic : ''}
             readOnly
             rows={4}
             fontFamily="mono"
@@ -235,8 +232,12 @@ const CreateWallet: React.FC<Props> = ({ onSuccess, onSwitchToImport, onTryDemo 
 
         <Box bg="#141414" borderRadius="xl" p={4}>
           <Checkbox
-            isChecked={confirmed}
-            onChange={(e) => setConfirmed(e.target.checked)}
+            isChecked={flow.step === 'mnemonic' ? flow.confirmed : false}
+            onChange={(e) => {
+              if (flow.step === 'mnemonic') {
+                setFlow({ ...flow, confirmed: e.target.checked });
+              }
+            }}
             colorScheme="cyan"
           >
             <Text fontSize="sm" color="gray.400">
@@ -253,7 +254,7 @@ const CreateWallet: React.FC<Props> = ({ onSuccess, onSwitchToImport, onTryDemo 
           _hover={{ bg: 'cyan.600' }}
           borderRadius="xl"
           onClick={handleFinish}
-          isDisabled={!confirmed}
+          isDisabled={flow.step !== 'mnemonic' || !flow.confirmed}
         >
           Continue
         </Button>
