@@ -168,29 +168,10 @@ export class BitcoinClient {
   }
 
   /**
-   * Get raw transaction hex
-   * Note: This returns text, not JSON, so we handle it specially
+   * Get raw transaction hex (text body — uses shared failover with parse:'text')
    */
   async getRawTransaction(txid: string): Promise<string> {
-    // Try each endpoint until one succeeds
-    const errors: Error[] = [];
-    
-    for (const apiUrl of this.apiUrls) {
-      try {
-        const response = await fetch(`${apiUrl}/tx/${txid}/hex`, {
-          signal: AbortSignal.timeout(15000),
-        });
-        if (!response.ok) {
-          throw new Error(`Failed to fetch raw transaction: ${response.status}`);
-        }
-        return await response.text();
-      } catch (error) {
-        errors.push(error instanceof Error ? error : new Error(String(error)));
-        continue;
-      }
-    }
-    
-    throw new Error(`All endpoints failed. Last error: ${errors[errors.length - 1]?.message}`);
+    return await fetchWithFailover<string>(this.apiUrls, `/tx/${txid}/hex`, {}, { parse: 'text' });
   }
 
   /**
@@ -213,36 +194,19 @@ export class BitcoinClient {
   }
 
   /**
-   * Broadcast a signed transaction
-   * Note: This requires POST with text body, handled specially
+   * Broadcast a signed transaction (POST text/plain — shared failover)
    */
   async broadcastTransaction(txHex: string): Promise<string> {
-    const errors: Error[] = [];
-    
-    for (const apiUrl of this.apiUrls) {
-      try {
-        const response = await fetch(`${apiUrl}/tx`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain',
-          },
-          body: txHex,
-          signal: AbortSignal.timeout(30000), // Longer timeout for broadcast
-        });
-        
-        if (!response.ok) {
-          const error = await response.text();
-          throw new Error(`Failed to broadcast transaction: ${error}`);
-        }
-        
-        return await response.text(); // Returns txid
-      } catch (error) {
-        errors.push(error instanceof Error ? error : new Error(String(error)));
-        continue;
-      }
-    }
-    
-    throw new Error(`All endpoints failed to broadcast. Last error: ${errors[errors.length - 1]?.message}`);
+    return await fetchWithFailover<string>(
+      this.apiUrls,
+      '/tx',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: txHex,
+      },
+      { parse: 'text', requestTimeoutMs: 30000 }
+    );
   }
 
   /**
@@ -260,28 +224,16 @@ export class BitcoinClient {
   }
 
   /**
-   * Get current block height
-   * Note: Returns text number, not JSON
+   * Get current block height (text number — shared failover)
    */
   async getBlockHeight(): Promise<number> {
-    const errors: Error[] = [];
-    
-    for (const apiUrl of this.apiUrls) {
-      try {
-        const response = await fetch(`${apiUrl}/blocks/tip/height`, {
-          signal: AbortSignal.timeout(15000),
-        });
-        if (!response.ok) {
-          throw new Error(`Failed to fetch block height: ${response.status}`);
-        }
-        return parseInt(await response.text(), 10);
-      } catch (error) {
-        errors.push(error instanceof Error ? error : new Error(String(error)));
-        continue;
-      }
-    }
-    
-    throw new Error(`All endpoints failed. Last error: ${errors[errors.length - 1]?.message}`);
+    const text = await fetchWithFailover<string>(
+      this.apiUrls,
+      '/blocks/tip/height',
+      {},
+      { parse: 'text' }
+    );
+    return parseInt(text, 10);
   }
 }
 

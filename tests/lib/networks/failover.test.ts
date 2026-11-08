@@ -297,7 +297,20 @@ describe('Failover Utility', () => {
 
       const health = getEndpointHealthStatus(endpoints);
       expect(health[0].isHealthy).toBe(false);
+      expect(health[0].phase).toBe('unhealthy');
       expect(health[0].consecutiveFailures).toBe(3);
+    });
+
+    it('should mark endpoint degraded before the unhealthy threshold', async () => {
+      mockFetchSequence([{ error: 'timeout' }, { data: { success: true } }]);
+
+      await fetchWithFailover(endpoints, '/test', {}, { maxRetries: 0, failureThreshold: 3 });
+
+      const health = getEndpointHealthStatus(endpoints);
+      // first endpoint failed once then second succeeded — first stays degraded
+      expect(health[0].phase).toBe('degraded');
+      expect(health[0].isHealthy).toBe(true);
+      expect(health[0].consecutiveFailures).toBe(1);
     });
 
     it('should reset health status with resetEndpointHealth', async () => {

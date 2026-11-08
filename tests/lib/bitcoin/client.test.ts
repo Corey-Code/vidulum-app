@@ -214,21 +214,16 @@ describe('Bitcoin Client', () => {
     });
 
     it('should throw on broadcast failure', async () => {
-      // Mock all endpoints returning failure
-      const failureResponse = {
+      // 4xx is a client error — shared failover throws immediately (no endpoint hop)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
         status: 400,
+        statusText: 'Bad Request',
         text: () => Promise.resolve('Invalid transaction'),
-      };
-      
-      // Need to mock multiple calls since the client has multiple endpoints
-      (global.fetch as jest.Mock)
-        .mockResolvedValueOnce(failureResponse)
-        .mockResolvedValueOnce(failureResponse)
-        .mockResolvedValueOnce(failureResponse);
+      });
 
       await expect(client.broadcastTransaction('badtx')).rejects.toThrow(
-        'All endpoints failed to broadcast'
+        /Request failed: 400/
       );
     });
   });

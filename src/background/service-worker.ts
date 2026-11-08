@@ -12,7 +12,11 @@ const CONNECTED_DAPPS_KEY = 'connected_dapps';
 
 void initDeveloperModeLogging();
 
-// In-memory storage for the current session
+/**
+ * Background session authority.
+ * dApp connection map (`connectedDapps`) is owned here + chrome.storage only —
+ * the popup store must not keep a parallel copy (cleared-on-lock vs persist-on-lock divergence).
+ */
 class SessionManager {
   private keyring: Keyring | null = null;
   private connectedDapps: Map<string, Set<string>> = new Map(); // origin -> chainIds

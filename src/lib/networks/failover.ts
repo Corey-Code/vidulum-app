@@ -51,6 +51,10 @@ function isRpcServerErrorCode(code: number): boolean {
 // Global health tracking for all endpoints
 const endpointHealthMap: Map<string, EndpointHealth> = new Map();
 
+function syncLegacyHealthyFlag(health: EndpointHealth): void {
+  health.isHealthy = health.phase === 'healthy' || health.phase === 'degraded';
+}
+
 /**
  * Get or create health status for an endpoint
  */
@@ -59,10 +63,16 @@ function getEndpointHealth(url: string): EndpointHealth {
     endpointHealthMap.set(url, {
       url,
       consecutiveFailures: 0,
+      phase: 'healthy',
       isHealthy: true,
     });
   }
-  return endpointHealthMap.get(url)!;
+  const health = endpointHealthMap.get(url)!;
+  // Migrate any pre-phase records if present in-memory from older code paths
+  if (!health.phase) {
+    health.phase = health.isHealthy ? 'healthy' : 'unhealthy';
+  }
+  return health;
 }
 
 /**
@@ -72,7 +82,8 @@ function markEndpointSuccess(url: string): void {
   const health = getEndpointHealth(url);
   health.lastSuccess = Date.now();
   health.consecutiveFailures = 0;
-  health.isHealthy = true;
+  health.phase = 'healthy';
+  syncLegacyHealthyFlag(health);
 }
 
 /**
@@ -84,21 +95,29 @@ function markEndpointFailure(url: string, config: FailoverConfig = DEFAULT_CONFI
   health.consecutiveFailures++;
 
   if (health.consecutiveFailures >= config.failureThreshold) {
-    health.isHealthy = false;
+    health.phase = 'unhealthy';
     console.warn(`Endpoint marked unhealthy after ${health.consecutiveFailures} failures: ${url}`);
+  } else {
+    health.phase = 'degraded';
   }
+  syncLegacyHealthyFlag(health);
 }
 
 /**
- * Check if an endpoint should be tried (healthy or recovery time elapsed)
+ * Check if an endpoint should be tried (healthy/degraded, or recovery time elapsed).
+ * When retrying after cooldown, phase becomes `recovering`.
  */
 function shouldTryEndpoint(url: string, config: FailoverConfig = DEFAULT_CONFIG): boolean {
   const health = getEndpointHealth(url);
 
-  if (health.isHealthy) return true;
+  if (health.phase === 'healthy' || health.phase === 'degraded' || health.phase === 'recovering') {
+    return true;
+  }
 
-  // Check if recovery time has elapsed
+  // unhealthy: check if recovery time has elapsed
   if (health.lastFailure && Date.now() - health.lastFailure >= config.recoveryTimeMs) {
+    health.phase = 'recovering';
+    syncLegacyHealthyFlag(health);
     console.log(`Retrying previously unhealthy endpoint: ${url}`);
     return true;
   }
@@ -204,16 +223,20 @@ function createTimeoutController(timeoutMs: number): {
   return { controller, timeoutId };
 }
 
+export type FetchParseMode = 'json' | 'text';
+
 /**
- * Execute a fetch request with failover across multiple endpoints
+ * Execute a fetch request with failover across multiple endpoints.
+ * Use `parse: 'text'` for Esplora hex / tip-height / broadcast responses.
  */
 export async function fetchWithFailover<T>(
   endpoints: string[],
   pathOrUrl: string,
   options: RequestInit = {},
-  config: Partial<FailoverConfig> = {}
+  config: Partial<FailoverConfig> & { parse?: FetchParseMode } = {}
 ): Promise<T> {
-  const cfg = { ...DEFAULT_CONFIG, ...config };
+  const { parse = 'json', ...failoverPartial } = config;
+  const cfg = { ...DEFAULT_CONFIG, ...failoverPartial };
   const sortedEndpoints = getSortedEndpoints(endpoints, cfg);
   const errors: Error[] = [];
   const totalEndpoints = sortedEndpoints.length;
@@ -259,9 +282,10 @@ export async function fetchWithFailover<T>(
           throw new Error(`Request failed: ${response.status} - ${errorText}`);
         }
 
-        const data = await response.json();
+        const data =
+          parse === 'text' ? ((await response.text()) as T) : ((await response.json()) as T);
         markEndpointSuccess(baseUrl);
-        return data as T;
+        return data;
       } catch (error) {
         clearTimeout(timeoutId);
 

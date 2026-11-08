@@ -3,6 +3,8 @@
  * Connects to Tendermint RPC WebSocket to listen for account-related transactions
  */
 
+import type { WsConnState } from '@/types/network-phase';
+
 type EventCallback = (data: any) => void;
 
 interface Subscription {
@@ -17,14 +19,13 @@ export class ChainWebSocket {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 2000;
   private wsUrl: string;
-  private isConnecting = false;
+  private connState: WsConnState = { status: 'idle' };
   private messageId = 0;
   private pendingSubscriptions: Map<string, Subscription> = new Map();
   private connectResolve: (() => void) | null = null;
   private connectReject: ((error: Error) => void) | null = null;
   private connectionTimeout: ReturnType<typeof setTimeout> | null = null;
   private readonly CONNECTION_TIMEOUT_MS = 10000; // 10 second timeout
-  private intentionalDisconnect = false;
 
   constructor(rpcUrl: string) {
     // Convert HTTP RPC URL to WebSocket URL
@@ -33,22 +34,30 @@ export class ChainWebSocket {
       '/websocket';
   }
 
+  /** Explicit connection phase (replaces isConnecting × intentionalDisconnect × readyState). */
+  getConnectionState(): WsConnState {
+    return this.connState;
+  }
+
   /**
    * Connect to the WebSocket
    */
   connect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (this.ws?.readyState === WebSocket.OPEN) {
+      if (this.ws?.readyState === WebSocket.OPEN || this.connState.status === 'open') {
+        this.connState = { status: 'open' };
         resolve();
         return;
       }
 
-      if (this.isConnecting) {
+      if (this.connState.status === 'connecting' || this.connState.status === 'reconnecting') {
         // Wait for existing connection attempt to complete
-        // Store resolve/reject to be called when current attempt finishes
         let settled = false;
         const checkInterval = setInterval(() => {
-          if (!this.isConnecting) {
+          if (
+            this.connState.status !== 'connecting' &&
+            this.connState.status !== 'reconnecting'
+          ) {
             clearInterval(checkInterval);
             if (!settled) {
               settled = true;
@@ -72,14 +81,14 @@ export class ChainWebSocket {
         return;
       }
 
-      this.isConnecting = true;
+      this.connState = { status: 'connecting' };
       this.connectResolve = resolve;
       this.connectReject = reject;
-      this.intentionalDisconnect = false; // Reset flag on new connection attempt
 
       // Set up connection timeout
       this.connectionTimeout = setTimeout(() => {
         this.cleanupConnection();
+        this.connState = { status: 'failed' };
         const rejectFn = this.connectReject;
         this.connectReject = null;
         this.connectResolve = null;
@@ -94,7 +103,7 @@ export class ChainWebSocket {
         this.ws.onopen = () => {
           console.log('WebSocket connected to', this.wsUrl);
           this.clearConnectionTimeout();
-          this.isConnecting = false;
+          this.connState = { status: 'open' };
           this.reconnectAttempts = 0;
 
           // Clear pending subscriptions - they're already in subscriptions map
@@ -127,7 +136,9 @@ export class ChainWebSocket {
         this.ws.onerror = (error) => {
           console.error('WebSocket error:', error);
           this.clearConnectionTimeout();
-          this.isConnecting = false;
+          if (this.connState.status !== 'closed') {
+            this.connState = { status: 'failed' };
+          }
 
           // Reject the promise if it hasn't been resolved yet
           const rejectFn = this.connectReject;
@@ -141,7 +152,6 @@ export class ChainWebSocket {
         this.ws.onclose = () => {
           console.log('WebSocket disconnected');
           this.clearConnectionTimeout();
-          this.isConnecting = false;
 
           // Reject the promise if it hasn't been resolved yet
           const rejectFn = this.connectReject;
@@ -152,13 +162,13 @@ export class ChainWebSocket {
           }
 
           // Only attempt reconnection if this was not an intentional disconnect
-          if (!this.intentionalDisconnect) {
+          if (this.connState.status !== 'closed') {
             this.attemptReconnect();
           }
         };
       } catch (error) {
         this.clearConnectionTimeout();
-        this.isConnecting = false;
+        this.connState = { status: 'failed' };
         const rejectFn = this.connectReject;
         this.connectReject = null;
         this.connectResolve = null;
@@ -186,7 +196,6 @@ export class ChainWebSocket {
    */
   private cleanupConnection(): void {
     this.clearConnectionTimeout();
-    this.isConnecting = false;
     if (this.ws) {
       const state = this.ws.readyState;
       // Only attempt to close if WebSocket is CONNECTING or OPEN
@@ -206,15 +215,21 @@ export class ChainWebSocket {
   private attemptReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.log('Max reconnection attempts reached');
+      this.connState = { status: 'failed' };
       return;
     }
 
     this.reconnectAttempts++;
+    this.connState = { status: 'reconnecting', attempt: this.reconnectAttempts };
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
 
     console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
 
     setTimeout(() => {
+      // Reset to idle briefly so connect() does not treat us as already connecting
+      if (this.connState.status === 'reconnecting') {
+        this.connState = { status: 'idle' };
+      }
       this.connect().catch(console.error);
     }, delay);
   }
@@ -350,7 +365,7 @@ export class ChainWebSocket {
    * Disconnect the WebSocket
    */
   disconnect(): void {
-    this.intentionalDisconnect = true;
+    this.connState = { status: 'closed' };
     this.unsubscribeAll();
     this.clearConnectionTimeout();
     this.connectResolve = null;
@@ -365,7 +380,7 @@ export class ChainWebSocket {
    * Check if connected
    */
   isConnected(): boolean {
-    return this.ws?.readyState === WebSocket.OPEN;
+    return this.connState.status === 'open' || this.ws?.readyState === WebSocket.OPEN;
   }
 }
 
