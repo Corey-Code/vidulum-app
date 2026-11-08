@@ -208,6 +208,37 @@ describe('EncryptedStorage', () => {
       });
     });
 
+    describe('getSessionState', () => {
+      it('returns none when no session id', async () => {
+        mockBrowser.storage.session.get.mockResolvedValueOnce({});
+        await expect(EncryptedStorage.getSessionState()).resolves.toBe('none');
+      });
+
+      it('returns active when session is within auto-lock window', async () => {
+        const recentTimestamp = Date.now() - 5 * 60 * 1000;
+        mockBrowser.storage.session.get
+          .mockResolvedValueOnce({ vidulum_session: 'session-123' })
+          .mockResolvedValueOnce({ lastActivity: recentTimestamp });
+        mockBrowser.storage.local.get.mockResolvedValueOnce({
+          vidulum_preferences: { version: 1, autoLockMinutes: 15 },
+        });
+
+        await expect(EncryptedStorage.getSessionState()).resolves.toBe('active');
+      });
+
+      it('returns expired when inactivity exceeds auto-lock', async () => {
+        const oldTimestamp = Date.now() - 20 * 60 * 1000;
+        mockBrowser.storage.session.get
+          .mockResolvedValueOnce({ vidulum_session: 'session-123' })
+          .mockResolvedValueOnce({ lastActivity: oldTimestamp });
+        mockBrowser.storage.local.get.mockResolvedValueOnce({
+          vidulum_preferences: { version: 1, autoLockMinutes: 15 },
+        });
+
+        await expect(EncryptedStorage.getSessionState()).resolves.toBe('expired');
+      });
+    });
+
     describe('clearSession', () => {
       it('should clear all session data', async () => {
         await EncryptedStorage.clearSession();

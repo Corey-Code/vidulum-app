@@ -54,7 +54,8 @@ const App: React.FC = () => {
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
   const [approvalId, setApprovalId] = useState<string | null>(null);
   const resetToImport = useRef(false);
-  const { isDemo, isInitialized, isLocked, initialize, startDemo, exitDemo } = useWalletStore();
+  const { phase, initialize, startDemo, exitDemo } = useWalletStore();
+  const isDemo = phase.status === 'demo';
 
   // Minimum display time for smooth loading animation
   useEffect(() => {
@@ -98,20 +99,33 @@ const App: React.FC = () => {
     initApp();
   }, [initialize]);
 
-  // Update view when state changes (after initialization AND min time elapsed)
+  // Update view when state changes (after initialization AND min time elapsed).
+  // Prefer phase.status; legacy booleans remain as fallback while migrating.
   useEffect(() => {
     if (!isReady || !minTimeElapsed) return;
     // Don't change view if we're showing an approval
     if (approvalId) return;
 
-    if (!isInitialized) {
-      setView(resetToImport.current ? 'import' : 'create');
-    } else if (isLocked) {
-      setView('unlock');
-    } else {
-      setView('dashboard');
+    switch (phase.status) {
+      case 'booting':
+        // Stay on loader until initialize finishes (isReady already true only after init)
+        break;
+      case 'none':
+        setView(resetToImport.current ? 'import' : 'create');
+        break;
+      case 'locked':
+        setView('unlock');
+        break;
+      case 'unlocked':
+      case 'demo':
+        setView('dashboard');
+        break;
+      default: {
+        const _exhaustive: never = phase;
+        void _exhaustive;
+      }
     }
-  }, [isReady, minTimeElapsed, isInitialized, isLocked, approvalId]);
+  }, [isReady, minTimeElapsed, phase, approvalId]);
 
   const handleCreateSuccess = () => {
     setView('dashboard');
@@ -180,13 +194,23 @@ const App: React.FC = () => {
       return;
     }
 
-    // No more approvals - determine correct view based on wallet state
-    if (!isInitialized) {
-      setView('create');
-    } else if (isLocked) {
-      setView('unlock');
-    } else {
-      setView('dashboard');
+    // No more approvals - determine correct view based on wallet phase
+    switch (phase.status) {
+      case 'booting':
+      case 'none':
+        setView('create');
+        break;
+      case 'locked':
+        setView('unlock');
+        break;
+      case 'unlocked':
+      case 'demo':
+        setView('dashboard');
+        break;
+      default: {
+        const _exhaustive: never = phase;
+        void _exhaustive;
+      }
     }
   };
 

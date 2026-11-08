@@ -78,4 +78,28 @@ describe('Keyring', () => {
       expect(keyring.hasMnemonic()).toBe(true);
     });
   });
+
+  describe('getCapability', () => {
+    it('returns empty for a new keyring', () => {
+      const keyring = new Keyring();
+      expect(keyring.getCapability()).toBe('empty');
+    });
+
+    it('returns full after createFromMnemonic', async () => {
+      const keyring = new Keyring();
+      await keyring.createFromMnemonic(TEST_MNEMONIC, 'bze', [0]);
+      expect(keyring.getCapability()).toBe('full');
+    });
+
+    it('returns session when cosmos wallet is loaded but mnemonic was cleared', async () => {
+      // Mirrors session restore: wallet present, mnemonic not kept in memory
+      const keyring = new Keyring();
+      await keyring.createFromMnemonic(TEST_MNEMONIC, 'bze', [0]);
+      expect(keyring.getCapability()).toBe('full');
+
+      keyring.setMnemonic('');
+      expect(keyring.hasMnemonic()).toBe(false);
+      expect(keyring.getCapability()).toBe('session');
+    });
+  });
 });

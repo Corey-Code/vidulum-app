@@ -494,6 +494,19 @@ export class EncryptedStorage {
     return result[this.SESSION_KEY] || null;
   }
 
+  /**
+   * Single status for session id + auto-lock instead of callers combining keys + shouldAutoLock.
+   * - none: no session id
+   * - expired: session present but inactivity exceeded (caller should clear)
+   * - active: session present and within auto-lock window (or auto-lock disabled)
+   */
+  static async getSessionState(): Promise<'none' | 'active' | 'expired'> {
+    const sessionId = await this.getSession();
+    if (!sessionId) return 'none';
+    if (await this.shouldAutoLock()) return 'expired';
+    return 'active';
+  }
+
   static async getSerializedWallet(): Promise<string | null> {
     const result = await browser.storage.session.get('serializedWallet');
     return result.serializedWallet || null;

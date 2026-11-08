@@ -1,3 +1,5 @@
+import type { WalletPhase } from '@/types/session';
+
 export interface Account {
   id: string;
   name: string;
@@ -41,8 +43,11 @@ export interface WalletState {
   accounts: WalletAccount[];
   selectedAccount: WalletAccount | null;
   connectedDapps: Map<string, string[]>;
+  /** @deprecated Prefer `phase` — kept in sync via lifecycleFlagsFromPhase */
   isLocked: boolean;
+  /** @deprecated Prefer `phase` — kept in sync via lifecycleFlagsFromPhase */
   isInitialized: boolean;
+  phase?: WalletPhase;
 }
 
 export interface WalletAccount {
