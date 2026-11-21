@@ -152,7 +152,8 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack, initialDenom }) => {
         setView(null);
         toast({
           title: `Failed to load ${symbol} earn pool`,
-          description: error instanceof Error ? error.message : 'Could not fetch DenomReward',
+          description:
+            error instanceof Error ? error.message : `Could not fetch ${symbol} earn pool`,
           status: 'error',
           duration: 3000,
         });
@@ -198,7 +199,7 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack, initialDenom }) => {
 
       toast({
         title: `Staked ${symbol}`,
-        description: `Joined DenomReward with ${stakeAmount} ${symbol}. TX: ${txHash.slice(0, 10)}...`,
+        description: `Staked ${stakeAmount} ${symbol}. TX: ${txHash.slice(0, 10)}...`,
         status: 'success',
         duration: 5000,
         isClosable: true,
@@ -229,7 +230,7 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack, initialDenom }) => {
       const txHash = await signAndBroadcast('beezee-1', [msg], undefined, '');
       toast({
         title: 'Rewards claimed',
-        description: `Claimed DenomReward prizes. TX: ${txHash.slice(0, 10)}...`,
+        description: `Claimed ${symbol} rewards. TX: ${txHash.slice(0, 10)}...`,
         status: 'success',
         duration: 5000,
         isClosable: true,
@@ -259,7 +260,7 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack, initialDenom }) => {
       const txHash = await signAndBroadcast('beezee-1', [msg], fee, '');
       toast({
         title: 'Exited stake',
-        description: `Left ${symbol} DenomReward. Lock was ${view?.pool.lock ?? 7}d. TX: ${txHash.slice(0, 10)}...`,
+        description: `Left ${symbol} stake. Lock was ${view?.pool.lock ?? 7}d. TX: ${txHash.slice(0, 10)}...`,
         status: 'success',
         duration: 5000,
         isClosable: true,
@@ -311,7 +312,7 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack, initialDenom }) => {
               </Badge>
             </HStack>
             <Text fontSize="xs" color="gray.500">
-              BeeZee DenomReward · not Offers
+              Stake {symbol} to earn {symbol} · not Offers
             </Text>
           </VStack>
         </HStack>
@@ -354,7 +355,7 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack, initialDenom }) => {
           </VStack>
         ) : !view ? (
           <VStack py={8} spacing={4}>
-            <Text color="gray.500">No {symbol} DenomReward pool found</Text>
+            <Text color="gray.500">No {symbol} earn pool found</Text>
           </VStack>
         ) : (
           <VStack spacing={4} align="stretch">
@@ -466,8 +467,7 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack, initialDenom }) => {
             </Box>
 
             <Text fontSize="xs" color="gray.600" px={1}>
-              DenomReward is BeeZee&apos;s long-lived per-denom pool (one each for VDL and CTL).
-              Time-boxed campaigns live under Offers.
+              Long-lived earn pools for VDL and CTL. Time-boxed campaigns live under Offers.
             </Text>
           </VStack>
         )}
@@ -479,7 +479,7 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack, initialDenom }) => {
           <ModalHeader>
             Stake {symbol}
             <Text fontSize="sm" fontWeight="normal" color="gray.500">
-              Earn {symbol} via DenomReward
+              Earn {symbol}
             </Text>
           </ModalHeader>
           <ModalCloseButton />
@@ -572,7 +572,7 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack, initialDenom }) => {
               Exit {symbol} stake?
             </AlertDialogHeader>
             <AlertDialogBody>
-              Unstakes your full DenomReward position ({formatAmount(view?.userStake || '0')}{' '}
+              Unstakes your full {symbol} position ({formatAmount(view?.userStake || '0')}{' '}
               {symbol}). A {view?.pool.lock ?? 7}-day lock applies from when you joined. Claim
               pending rewards first if you want them now.
             </AlertDialogBody>

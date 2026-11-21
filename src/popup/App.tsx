@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, Button, HStack, Text } from '@chakra-ui/react';
 import browser from 'webextension-polyfill';
+import { CTL_DENOM, VDL_DENOM } from '@/lib/bze/denomRewards';
 import { useWalletStore } from '@/store/walletStore';
 import { MessageType } from '@/types/messages';
 import VidulumLogoLoader from './components/VidulumLogoLoader';
@@ -12,6 +13,7 @@ import Staking from './pages/Staking';
 import Settings from './pages/Settings';
 import Earn from './pages/Earn';
 import DenomEarn from './pages/DenomEarn';
+import StakeHub, { type StakeHubTarget } from './pages/StakeHub';
 import Approval from './pages/Approval';
 import Swap from './pages/Swap';
 
@@ -21,6 +23,7 @@ type View =
   | 'import'
   | 'unlock'
   | 'dashboard'
+  | 'stake-hub'
   | 'staking'
   | 'settings'
   | 'earn'
@@ -56,6 +59,10 @@ const App: React.FC = () => {
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
   const [approvalId, setApprovalId] = useState<string | null>(null);
   const [denomEarnTarget, setDenomEarnTarget] = useState<string | undefined>();
+  /** Where Staking should return: dashboard (non-BeeZee) or stake hub (BeeZee). */
+  const [stakingReturnView, setStakingReturnView] = useState<'dashboard' | 'stake-hub'>(
+    'dashboard'
+  );
   const resetToImport = useRef(false);
   const { phase, initialize, startDemo, exitDemo } = useWalletStore();
   const isDemo = phase.status === 'demo';
@@ -167,7 +174,12 @@ const App: React.FC = () => {
   };
 
   const navigateToStaking = () => {
+    setStakingReturnView('dashboard');
     setView('staking');
+  };
+
+  const navigateToStakeHub = () => {
+    setView('stake-hub');
   };
 
   const navigateToSettings = () => {
@@ -178,17 +190,40 @@ const App: React.FC = () => {
     setView('earn');
   };
 
-  const navigateToDenomEarn = (denom?: string) => {
-    setDenomEarnTarget(denom);
-    setView('denom-earn');
-  };
-
   const navigateToSwap = () => {
     setView('swap');
   };
 
   const navigateToDashboard = () => {
     setView('dashboard');
+  };
+
+  const openDenomEarn = (denom: string) => {
+    setDenomEarnTarget(denom);
+    setView('denom-earn');
+  };
+
+  const handleStakeHubSelect = (target: StakeHubTarget) => {
+    switch (target) {
+      case 'native-bze':
+        setStakingReturnView('stake-hub');
+        setView('staking');
+        break;
+      case 'denom-vdl':
+        openDenomEarn(VDL_DENOM);
+        break;
+      case 'denom-ctl':
+        openDenomEarn(CTL_DENOM);
+        break;
+      default: {
+        const _exhaustive: never = target;
+        void _exhaustive;
+      }
+    }
+  };
+
+  const navigateFromStakingBack = () => {
+    setView(stakingReturnView === 'stake-hub' ? 'stake-hub' : 'dashboard');
   };
 
   const handleApprovalComplete = async () => {
@@ -282,17 +317,20 @@ const App: React.FC = () => {
       {view === 'dashboard' && (
         <Dashboard
           onNavigateToStaking={navigateToStaking}
+          onNavigateToStakeHub={navigateToStakeHub}
           onNavigateToSettings={navigateToSettings}
           onNavigateToEarn={navigateToEarn}
-          onNavigateToDenomEarn={navigateToDenomEarn}
           onNavigateToSwap={navigateToSwap}
         />
       )}
-      {view === 'staking' && <Staking onBack={navigateToDashboard} />}
+      {view === 'stake-hub' && (
+        <StakeHub onBack={navigateToDashboard} onSelect={handleStakeHubSelect} />
+      )}
+      {view === 'staking' && <Staking onBack={navigateFromStakingBack} />}
       {view === 'settings' && <Settings onBack={navigateToDashboard} />}
       {view === 'earn' && <Earn onBack={navigateToDashboard} />}
       {view === 'denom-earn' && (
-        <DenomEarn onBack={navigateToDashboard} initialDenom={denomEarnTarget} />
+        <DenomEarn onBack={navigateToStakeHub} initialDenom={denomEarnTarget} />
       )}
       {view === 'swap' && <Swap onBack={navigateToDashboard} />}
       {view === 'approval' && approvalId && (
