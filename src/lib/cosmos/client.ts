@@ -2,6 +2,11 @@ import { StargateClient, SigningStargateClient, defaultRegistryTypes } from '@co
 import { OfflineSigner, GeneratedType, Registry } from '@cosmjs/proto-signing';
 import { Balance } from '@/types/wallet';
 import { fetchWithFailover, withFailover, FailoverStatusCallback } from '@/lib/networks';
+import {
+  encodeMsgClaimDenomRewards,
+  encodeMsgExitDenomReward,
+  encodeMsgJoinDenomReward,
+} from '@/lib/bze/denomRewards';
 
 // Simple protobuf encoder for BZE messages (no eval required)
 // Protobuf wire format: tag = (field_number << 3) | wire_type
@@ -141,6 +146,20 @@ function createBzeRegistry(): Registry {
   registry.register(
     '/bze.rewards.MsgClaimStakingRewards',
     createMsgType(encodeMsgClaimStakingRewards, { creator: '', reward_id: '' })
+  );
+
+  // DenomReward (stake denom → earn prizes; VDL→VDL path)
+  registry.register(
+    '/bze.rewards.MsgJoinDenomReward',
+    createMsgType(encodeMsgJoinDenomReward, { creator: '', denom: '', amount: '' })
+  );
+  registry.register(
+    '/bze.rewards.MsgExitDenomReward',
+    createMsgType(encodeMsgExitDenomReward, { creator: '', denom: '' })
+  );
+  registry.register(
+    '/bze.rewards.MsgClaimDenomRewards',
+    createMsgType(encodeMsgClaimDenomRewards, { creator: '', denom: '' })
   );
 
   // Osmosis poolmanager swap
