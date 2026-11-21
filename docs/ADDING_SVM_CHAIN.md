@@ -60,7 +60,7 @@ Use more than one public HTTPS RPC so failover can skip a dead host. Do not add 
 
 1. Confirm the new config is exported from `src/lib/networks/solana.ts` and included in `SVM_NETWORKS`.
 2. The unified registry in `src/lib/networks/registry.ts` already registers every SVM config.
-3. If the network should appear in Settings and the README supported-network list, add it to `src/lib/networks/supported-catalog.ts`.
+3. If the network should appear in the README supported-network list, add it to `src/lib/networks/supported-catalog.ts`.
 4. Add or update tests in `tests/lib/networks/registry.test.ts` and `tests/lib/networks/supported-catalog.test.ts`.
 
 ## Step 3: Verify
@@ -70,7 +70,7 @@ npm test -- tests/lib/networks
 npm run lint
 ```
 
-Then run the web app or extension, open Settings, and confirm the network family list still matches what you advertised.
+Then run the web app or extension and confirm the new SVM network loads balances as expected.
 
 ## Related Files
 
@@ -78,4 +78,3 @@ Then run the web app or extension, open Settings, and confirm the network family
 - `src/lib/networks/svm-endpoints.ts` — public-RPC / leftover explorer denylist and filters
 - `src/lib/networks/supported-catalog.ts` — curated user-facing list
 - `src/lib/solana/client.ts` — JSON-RPC balance and account reads
-- `src/popup/components/SupportedNetworksPanel.tsx` — Settings summary

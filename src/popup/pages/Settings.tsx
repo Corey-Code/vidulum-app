@@ -19,7 +19,6 @@ import { EncryptedStorage } from '@/lib/storage/encrypted-storage';
 import { DEMO_MNEMONIC, isDemoSession } from '@/lib/demo/session';
 import { FEATURES } from '@/lib/config/features';
 import { setDeveloperModeLogging } from '@/lib/debug/developerMode';
-import SupportedNetworksPanel from '../components/SupportedNetworksPanel';
 
 // Settings storage key (must match inject.ts)
 const SETTINGS_KEY = 'vidulum_settings';
@@ -675,10 +674,6 @@ const Settings: React.FC<SettingsProps> = ({ onBack }) => {
               </VStack>
             </Collapse>
           </Box>
-
-          <Divider borderColor="#2a2a2a" />
-
-          <SupportedNetworksPanel />
 
           <Divider borderColor="#2a2a2a" />
 

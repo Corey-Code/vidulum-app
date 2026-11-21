@@ -76,7 +76,7 @@ Eclipse, Solana Devnet, and Solana Testnet are defined in config but disabled by
 - Solana (SVM) addresses and balances
 - EVM and Bitcoin-like (UTXO) account views
 
-Supported networks were last reviewed in September 2026. The same curated list appears in Settings.
+Supported networks were last reviewed in September 2026.
 
 ## Installation
 

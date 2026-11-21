@@ -2,7 +2,7 @@
  * User-facing catalog of networks advertised as supported today.
  *
  * The live registry can include additional auto-synced chains. This list is the
- * curated set shown in Settings and kept in sync with README.md.
+ * curated advertised set kept in sync with README.md.
  *
  * Last reviewed: 2026-09-21 (leftover official uquad Injective and dYdX hop refresh).
  */
