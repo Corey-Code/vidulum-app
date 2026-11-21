@@ -1,6 +1,6 @@
 /**
  * BeeZee DenomReward client — stake a denom to earn prizes from schedules.
- * Primary product path for "stake VDL to earn VDL" (factory uvdl).
+ * Product paths: stake VDL→VDL (factory uvdl) and stake CTL→CTL (factory CTL).
  *
  * Proto: https://github.com/bze-alphateam/bze/blob/main/proto/bze/rewards/tx.proto
  * LCD:   https://rest.getbze.com/swagger/swagger.yaml
@@ -11,6 +11,30 @@ import { VDL_DENOM } from '@/lib/swap/vdlSwapConfig';
 import { fromBaseUnits, toBaseUnits } from '@/lib/bze/rewards';
 
 export const BZE_REWARDS_LCD = 'https://rest.getbze.com';
+
+/** CryptoTrtl factory denom on BeeZee (CTL→CTL DenomReward pool) */
+export const CTL_DENOM = 'factory/bze1972aqfzdg29ugjln74edx0xvcg4ehvysjptk77/CTL';
+
+export type DenomRewardAssetSymbol = 'VDL' | 'CTL';
+
+export interface DenomRewardAsset {
+  symbol: DenomRewardAssetSymbol;
+  denom: string;
+  decimals: number;
+  /** Chakra colorScheme accent for the earn surface */
+  colorScheme: 'purple' | 'green';
+}
+
+/** Supported DenomReward earn surfaces (order = UI tab order) */
+export const DENOM_REWARD_ASSETS: readonly DenomRewardAsset[] = [
+  { symbol: 'VDL', denom: VDL_DENOM, decimals: 6, colorScheme: 'purple' },
+  { symbol: 'CTL', denom: CTL_DENOM, decimals: 6, colorScheme: 'green' },
+] as const;
+
+export function getDenomRewardAsset(denomOrSymbol: string): DenomRewardAsset | undefined {
+  const key = denomOrSymbol.trim();
+  return DENOM_REWARD_ASSETS.find((a) => a.denom === key || a.symbol === key);
+}
 
 /** Module param: extra gas charged on MsgExitDenomReward */
 export const EXTRA_GAS_FOR_DENOM_EXIT = 1_000_000;

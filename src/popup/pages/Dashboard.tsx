@@ -59,12 +59,13 @@ import IBCTransferModal from '../components/IBCTransferModal';
 import { useNetworkStore } from '@/store/networkStore';
 import { fetchIBCConnections, IBCChannel } from '@/lib/cosmos/ibc-connections';
 import { VDL_SWAP_TITLE } from '@/lib/swap/vdlSwapConfig';
+import { CTL_DENOM, VDL_DENOM } from '@/lib/bze/denomRewards';
 
 interface DashboardProps {
   onNavigateToStaking?: () => void;
   onNavigateToSettings?: () => void;
   onNavigateToEarn?: () => void;
-  onNavigateToDenomEarn?: () => void;
+  onNavigateToDenomEarn?: (denom?: string) => void;
   onNavigateToSwap?: () => void;
 }
 
@@ -1784,9 +1785,18 @@ const Dashboard: React.FC<DashboardProps> = ({
                       <MenuItem
                         bg="transparent"
                         _hover={{ bg: 'whiteAlpha.100' }}
-                        onClick={onNavigateToDenomEarn}
+                        onClick={() => onNavigateToDenomEarn?.(VDL_DENOM)}
                       >
                         Stake VDL
+                      </MenuItem>
+                    )}
+                    {selectedChainId === 'beezee-1' && (
+                      <MenuItem
+                        bg="transparent"
+                        _hover={{ bg: 'whiteAlpha.100' }}
+                        onClick={() => onNavigateToDenomEarn?.(CTL_DENOM)}
+                      >
+                        Stake CTL
                       </MenuItem>
                     )}
                     {selectedChainId === 'beezee-1' && (
@@ -1981,7 +1991,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     });
                   }
 
-                  // Sort assets: native first, VDL second (if beezee), then by balance
+                  // Sort assets: native first, VDL then CTL (if beezee), then by balance
                   // Get native denom from chain assets (first asset is always native)
                   const nativeDenom =
                     chainAssets.length > 0
@@ -1993,7 +2003,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                           : selectedChainId.startsWith('bitcoin')
                             ? 'sat'
                             : 'wei';
-                  const vdlDenom = 'factory/bze13gzq40che93tgfm9kzmkpjamah5nj0j73pyhqk/uvdl';
 
                   const sortedAssets = [...assetsWithBalances].sort((a, b) => {
                     const aBalance = parseInt(a.amount);
@@ -2005,10 +2014,12 @@ const Dashboard: React.FC<DashboardProps> = ({
                     if (a.denom === nativeDenom && aHasBalance) return -1;
                     if (b.denom === nativeDenom && bHasBalance) return 1;
 
-                    // VDL with balance comes second (only for beezee)
+                    // VDL then CTL with balance (only for beezee)
                     if (selectedChainId === 'beezee-1') {
-                      if (a.denom === vdlDenom && aHasBalance) return -1;
-                      if (b.denom === vdlDenom && bHasBalance) return 1;
+                      if (a.denom === VDL_DENOM && aHasBalance) return -1;
+                      if (b.denom === VDL_DENOM && bHasBalance) return 1;
+                      if (a.denom === CTL_DENOM && aHasBalance) return -1;
+                      if (b.denom === CTL_DENOM && bHasBalance) return 1;
                     }
 
                     // Assets with balance come before zero balance
