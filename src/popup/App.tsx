@@ -11,6 +11,7 @@ import ImportWallet from './pages/ImportWallet';
 import Staking from './pages/Staking';
 import Settings from './pages/Settings';
 import Earn from './pages/Earn';
+import DenomEarn from './pages/DenomEarn';
 import Approval from './pages/Approval';
 import Swap from './pages/Swap';
 
@@ -23,6 +24,7 @@ type View =
   | 'staking'
   | 'settings'
   | 'earn'
+  | 'denom-earn'
   | 'approval'
   | 'swap';
 
@@ -175,6 +177,10 @@ const App: React.FC = () => {
     setView('earn');
   };
 
+  const navigateToDenomEarn = () => {
+    setView('denom-earn');
+  };
+
   const navigateToSwap = () => {
     setView('swap');
   };
@@ -276,12 +282,14 @@ const App: React.FC = () => {
           onNavigateToStaking={navigateToStaking}
           onNavigateToSettings={navigateToSettings}
           onNavigateToEarn={navigateToEarn}
+          onNavigateToDenomEarn={navigateToDenomEarn}
           onNavigateToSwap={navigateToSwap}
         />
       )}
       {view === 'staking' && <Staking onBack={navigateToDashboard} />}
       {view === 'settings' && <Settings onBack={navigateToDashboard} />}
       {view === 'earn' && <Earn onBack={navigateToDashboard} />}
+      {view === 'denom-earn' && <DenomEarn onBack={navigateToDashboard} />}
       {view === 'swap' && <Swap onBack={navigateToDashboard} />}
       {view === 'approval' && approvalId && (
         <Approval approvalId={approvalId} onComplete={handleApprovalComplete} />

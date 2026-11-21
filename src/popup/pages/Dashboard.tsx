@@ -64,6 +64,7 @@ interface DashboardProps {
   onNavigateToStaking?: () => void;
   onNavigateToSettings?: () => void;
   onNavigateToEarn?: () => void;
+  onNavigateToDenomEarn?: () => void;
   onNavigateToSwap?: () => void;
 }
 
@@ -86,6 +87,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   onNavigateToStaking,
   onNavigateToSettings,
   onNavigateToEarn,
+  onNavigateToDenomEarn,
   onNavigateToSwap,
 }) => {
   const {
@@ -1778,6 +1780,15 @@ const Dashboard: React.FC<DashboardProps> = ({
                             ? 'ATOM'
                             : 'OSMO'}
                     </MenuItem>
+                    {selectedChainId === 'beezee-1' && (
+                      <MenuItem
+                        bg="transparent"
+                        _hover={{ bg: 'whiteAlpha.100' }}
+                        onClick={onNavigateToDenomEarn}
+                      >
+                        Stake VDL
+                      </MenuItem>
+                    )}
                     {selectedChainId === 'beezee-1' && (
                       <MenuItem
                         bg="transparent"

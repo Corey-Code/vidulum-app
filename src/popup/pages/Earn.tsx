@@ -392,12 +392,19 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
             size="sm"
             onClick={onBack}
           />
-          <Text fontSize="lg" fontWeight="semibold">
-            Offers
-          </Text>
-          <Badge colorScheme="cyan" fontSize="xs">
-            BeeZee
-          </Badge>
+          <VStack align="start" spacing={0}>
+            <HStack spacing={2}>
+              <Text fontSize="lg" fontWeight="semibold">
+                Offers
+              </Text>
+              <Badge colorScheme="cyan" fontSize="xs">
+                BeeZee
+              </Badge>
+            </HStack>
+            <Text fontSize="xs" color="gray.500">
+              Time-boxed staking pools · not Stake VDL
+            </Text>
+          </VStack>
         </HStack>
         <IconButton
           aria-label="Refresh"
