@@ -108,7 +108,7 @@ describe('Supported network catalog', () => {
     );
   });
 
-  it('formats the catalog review month for Settings copy', () => {
+  it('formats the catalog review month', () => {
     expect(formatCatalogReviewMonth(SUPPORTED_NETWORK_CATALOG_REVIEWED_AT)).toBe('September 2026');
   });
 
