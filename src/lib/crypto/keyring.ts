@@ -361,12 +361,36 @@ export class Keyring {
    * @param accountIndex - Optional specific account index to include (ensures this account is derived)
    */
   async getWalletForChain(prefix: string, accountIndex?: number): Promise<DirectSecp256k1HdWallet> {
+    // Session restore keeps a CosmJS Direct wallet that can still sign for the
+    // base prefix, but does not keep the mnemonic in memory. Reuse it whenever
+    // the requested prefix matches and the account is already loaded — otherwise
+    // Stake VDL / Offers / native stake fail with "Mnemonic not available"
+    // after a refresh even though the UI shows unlocked.
     if (!this.mnemonic) {
+      if (this.wallet && prefix === this.prefix) {
+        if (
+          accountIndex !== undefined &&
+          !this.accounts.some((acc) => acc.accountIndex === accountIndex)
+        ) {
+          throw new Error('Mnemonic not available - wallet may need to be unlocked');
+        }
+        return this.wallet;
+      }
       throw new Error('Mnemonic not available - wallet may need to be unlocked');
     }
 
     // If the prefix matches our current wallet and no specific account requested, return it
     if (prefix === this.prefix && this.wallet && accountIndex === undefined) {
+      return this.wallet;
+    }
+
+    // Same-prefix + known account: no need to re-derive from mnemonic
+    if (
+      prefix === this.prefix &&
+      this.wallet &&
+      accountIndex !== undefined &&
+      this.accounts.some((acc) => acc.accountIndex === accountIndex)
+    ) {
       return this.wallet;
     }
 
