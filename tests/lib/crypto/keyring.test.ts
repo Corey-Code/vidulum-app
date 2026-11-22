@@ -102,4 +102,30 @@ describe('Keyring', () => {
       expect(keyring.getCapability()).toBe('session');
     });
   });
+
+  describe('getWalletForChain (session capability)', () => {
+    it('reuses in-memory wallet for same prefix without mnemonic', async () => {
+      // Mirrors session restore: cosmos signer present, mnemonic cleared
+      const keyring = new Keyring();
+      await keyring.createFromMnemonic(TEST_MNEMONIC, 'bze', [0]);
+      keyring.setMnemonic('');
+      expect(keyring.getCapability()).toBe('session');
+
+      // signAndBroadcast always passes accountIndex — must not throw
+      const wallet = await keyring.getWalletForChain('bze', 0);
+      const accounts = await wallet.getAccounts();
+      expect(accounts.length).toBeGreaterThan(0);
+      expect(accounts[0].address.startsWith('bze')).toBe(true);
+    });
+
+    it('still errors for a different prefix without mnemonic', async () => {
+      const keyring = new Keyring();
+      await keyring.createFromMnemonic(TEST_MNEMONIC, 'bze', [0]);
+      keyring.setMnemonic('');
+
+      await expect(keyring.getWalletForChain('osmo', 0)).rejects.toThrow(
+        /Mnemonic not available/
+      );
+    });
+  });
 });
