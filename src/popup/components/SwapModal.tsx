@@ -138,9 +138,6 @@ interface SwapModalProps {
   chainConfig?: ChainInfo;
   onSuccess?: () => void;
   onSwapSuccess?: (fromDenom: string, toDenom: string) => void;
-  /** Optional tradebin token prefill (e.g. Buy/Sell CTL when Skip has no route). */
-  initialFromDenom?: string;
-  initialToDenom?: string;
 }
 
 interface TokenInfo {
@@ -193,8 +190,6 @@ const SwapModal: React.FC<SwapModalProps> = ({
   chainConfig,
   onSuccess,
   onSwapSuccess,
-  initialFromDenom,
-  initialToDenom,
 }) => {
   const {
     selectedAccount,
@@ -304,20 +299,8 @@ const SwapModal: React.FC<SwapModalProps> = ({
           );
           setAvailableTokens(tokensWithPools);
           setFilteredAvailableTokens(tokensWithPools);
-
-          const preferredFrom =
-            (initialFromDenom && tokensWithPools.find((t) => t.denom === initialFromDenom)) ||
-            tokensWithPools[0];
-          const preferredTo =
-            (initialToDenom &&
-              tokensWithPools.find(
-                (t) => t.denom === initialToDenom && t.denom !== preferredFrom.denom
-              )) ||
-            tokensWithPools.find((t) => t.denom !== preferredFrom.denom) ||
-            null;
-
-          setFromToken(preferredFrom);
-          setToToken(preferredTo);
+          setFromToken(tokensWithPools[0]);
+          setToToken(tokensWithPools.length > 1 ? tokensWithPools[1] : null);
         }
 
         // Fetch BeeZee tradebin taker fee metadata.
@@ -342,7 +325,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
         }
       }
     },
-    [chainId, chainConfig, chainAddress, fetchBalance, initialFromDenom, initialToDenom]
+    [chainId, chainConfig, chainAddress, fetchBalance]
   );
 
   useEffect(() => {

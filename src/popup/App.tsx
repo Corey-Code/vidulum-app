@@ -2,11 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Box, Button, HStack, Text } from '@chakra-ui/react';
 import browser from 'webextension-polyfill';
 import { CTL_DENOM, VDL_DENOM } from '@/lib/bze/denomRewards';
-import {
-  beezeeSwapAsset,
-  type BeezeeSwapAssetId,
-  type VdlSwapMode,
-} from '@/lib/swap/vdlSwapConfig';
 import { useWalletStore } from '@/store/walletStore';
 import { MessageType } from '@/types/messages';
 import VidulumLogoLoader from './components/VidulumLogoLoader';
@@ -64,10 +59,6 @@ const App: React.FC = () => {
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
   const [approvalId, setApprovalId] = useState<string | null>(null);
   const [denomEarnTarget, setDenomEarnTarget] = useState<string | undefined>();
-  const [swapAssetId, setSwapAssetId] = useState<BeezeeSwapAssetId>('vdl');
-  const [dexSwapPrefill, setDexSwapPrefill] = useState<
-    { fromDenom: string; toDenom: string } | undefined
-  >();
   /** Where Staking should return: dashboard (non-BeeZee) or stake hub (BeeZee). */
   const [stakingReturnView, setStakingReturnView] = useState<'dashboard' | 'stake-hub'>(
     'dashboard'
@@ -199,28 +190,12 @@ const App: React.FC = () => {
     setView('earn');
   };
 
-  const navigateToSwap = (assetId: BeezeeSwapAssetId = 'vdl') => {
-    setSwapAssetId(assetId);
+  const navigateToSwap = () => {
     setView('swap');
   };
 
   const navigateToDashboard = () => {
     setView('dashboard');
-  };
-
-  const openDexSwapForAsset = (assetId: BeezeeSwapAssetId, mode: VdlSwapMode) => {
-    const { denom } = beezeeSwapAsset(assetId);
-    const feeDenom = 'ubze';
-    setDexSwapPrefill(
-      mode === 'buy'
-        ? { fromDenom: feeDenom, toDenom: denom }
-        : { fromDenom: denom, toDenom: feeDenom }
-    );
-    setView('dashboard');
-  };
-
-  const clearDexSwapPrefill = () => {
-    setDexSwapPrefill(undefined);
   };
 
   const openDenomEarn = (denom: string) => {
@@ -346,8 +321,6 @@ const App: React.FC = () => {
           onNavigateToSettings={navigateToSettings}
           onNavigateToEarn={navigateToEarn}
           onNavigateToSwap={navigateToSwap}
-          dexSwapPrefill={dexSwapPrefill}
-          onDexSwapPrefillConsumed={clearDexSwapPrefill}
         />
       )}
       {view === 'stake-hub' && (
@@ -359,13 +332,7 @@ const App: React.FC = () => {
       {view === 'denom-earn' && (
         <DenomEarn onBack={navigateToStakeHub} initialDenom={denomEarnTarget} />
       )}
-      {view === 'swap' && (
-        <Swap
-          onBack={navigateToDashboard}
-          assetId={swapAssetId}
-          onUseDexSwap={(mode) => openDexSwapForAsset(swapAssetId, mode)}
-        />
-      )}
+      {view === 'swap' && <Swap onBack={navigateToDashboard} />}
       {view === 'approval' && approvalId && (
         <Approval approvalId={approvalId} onComplete={handleApprovalComplete} />
       )}

@@ -1,24 +1,18 @@
 import React, { useState } from 'react';
 import { Box, Button, Input, Text, VStack } from '@chakra-ui/react';
-import {
-  beezeeSwapAsset,
-  type BeezeeSwapAssetId,
-  type VdlSwapMode,
-} from '@/lib/swap/vdlSwapConfig';
+import type { VdlSwapMode } from '@/lib/swap/vdlSwapConfig';
 import { demoTxHash } from '@/lib/demo/session';
 
 interface Props {
   mode: VdlSwapMode;
-  assetId?: BeezeeSwapAssetId;
 }
 
-const DemoSwap: React.FC<Props> = ({ mode, assetId = 'vdl' }) => {
+const DemoSwap: React.FC<Props> = ({ mode }) => {
   const [amount, setAmount] = useState('1');
   const [done, setDone] = useState<{ hash: string; paid: string; received: string } | null>(null);
 
-  const target = beezeeSwapAsset(assetId).symbol;
-  const pay = mode === 'buy' ? 'BZE' : target;
-  const receive = mode === 'buy' ? target : 'BZE';
+  const pay = mode === 'buy' ? 'BZE' : 'VDL';
+  const receive = mode === 'buy' ? 'VDL' : 'BZE';
   const quoted = (Number(amount) * (mode === 'buy' ? 0.89 : 1.19)).toFixed(4);
 
   const finish = () => {
