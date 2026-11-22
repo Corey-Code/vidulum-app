@@ -19,14 +19,28 @@ import {
   Input,
   useDisclosure,
   Divider,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
 } from '@chakra-ui/react';
 import { ArrowBackIcon, RepeatIcon } from '@chakra-ui/icons';
 import { useWalletStore } from '@/store/walletStore';
 import { useChainStore } from '@/store/chainStore';
 import {
   createJoinStakingMsg,
+  createExitStakingMsg,
   createClaimStakingRewardsMsg,
+  fetchAddressOffersPendingUnlocks,
+  fetchCurrentHourEpoch,
+  formatUnlockRemaining,
+  getExitStakingFee,
+  parseOffersUnlockIndex,
+  remainingUnlockHours,
   toBaseUnits,
+  type PendingUnlockParticipant,
 } from '@/lib/bze/rewards';
 
 interface StakingPool {
@@ -49,20 +63,31 @@ interface StakingPool {
   totalDays?: number;
 }
 
+interface UnlockView {
+  pending: PendingUnlockParticipant;
+  rewardId: string;
+  remainingLabel: string;
+  symbol: string;
+}
+
 interface EarnProps {
   onBack: () => void;
 }
 
 const Earn: React.FC<EarnProps> = ({ onBack }) => {
-  const { selectedAccount, getAddressForChain, signAndBroadcast } = useWalletStore();
+  const { isDemo, getAddressForChain, signAndBroadcast } = useWalletStore();
   const { getBalance, fetchBalance, balances } = useChainStore();
   const [pools, setPools] = useState<StakingPool[]>([]);
+  const [unlocking, setUnlocking] = useState<UnlockView[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPool, setSelectedPool] = useState<StakingPool | null>(null);
+  const [exitPool, setExitPool] = useState<StakingPool | null>(null);
   const [expandedPoolId, setExpandedPoolId] = useState<string | null>(null);
   const [stakeAmount, setStakeAmount] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const { isOpen: isStakeOpen, onOpen: onStakeOpen, onClose: onStakeClose } = useDisclosure();
+  const { isOpen: isExitOpen, onOpen: onExitOpen, onClose: onExitClose } = useDisclosure();
+  const exitCancelRef = React.useRef<HTMLButtonElement>(null);
   const toast = useToast();
 
   const address = getAddressForChain('bze') || '';
@@ -90,6 +115,64 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
     }
   };
 
+  // Known denom mappings for BZE ecosystem
+  const denomSymbolMap: Record<string, string> = {
+    ubze: 'BZE',
+    'factory/bze13gzq40che93tgfm9kzmkpjamah5nj0j73pyhqk/uvdl': 'VDL',
+    'factory/bze1972aqfzdg29ugjln74edx0xvcg4ehvysjptk77/CTL': 'CTL',
+    // USDC on BZE (via IBC)
+    'ibc/6490A7EAB61059BFC1CDDEB05917DD70BDF3A611654162A1A47DB930D40D8AF4': 'USDC',
+    // SHERPA on BZE (via IBC)
+    'ibc/02EE50AB3A4B7540FA001B24CB75E688016F65547CABE885EA184338440080B2': 'SHERPA',
+  };
+
+  const getSymbolFromDenom = (denom: string): string => {
+    if (denomSymbolMap[denom]) {
+      return denomSymbolMap[denom];
+    }
+
+    if (denom === 'ubze') return 'BZE';
+    if (denom.includes('uvdl') || denom.includes('VDL')) return 'VDL';
+    if (denom.includes('/CTL') || denom.endsWith('CTL')) return 'CTL';
+    if (denom.includes('usdc') || denom.includes('USDC')) return 'USDC';
+
+    if (denom.startsWith('ibc/')) {
+      return `IBC/${denom.slice(4, 8)}`;
+    }
+
+    if (denom.startsWith('factory/')) {
+      const parts = denom.split('/');
+      if (parts.length >= 3) {
+        return parts[2].replace('u', '').toUpperCase();
+      }
+    }
+
+    if (denom.startsWith('ulp/')) {
+      return `ULP/${denom.slice(4, 6)}`;
+    }
+
+    return denom.slice(0, 6).toUpperCase();
+  };
+
+  const buildUnlockViews = (
+    pendingList: PendingUnlockParticipant[],
+    currentHourEpoch: number
+  ): UnlockView[] => {
+    return pendingList
+      .map((pending) => {
+        const { unlockEpoch, rewardId } = parseOffersUnlockIndex(pending.index);
+        if (!rewardId) return null;
+        const hours = remainingUnlockHours(unlockEpoch, currentHourEpoch);
+        return {
+          pending,
+          rewardId,
+          remainingLabel: formatUnlockRemaining(hours),
+          symbol: getSymbolFromDenom(pending.denom),
+        };
+      })
+      .filter((v): v is UnlockView => v !== null);
+  };
+
   // Fetch staking pools from BZE REST API
   const fetchPools = async () => {
     setLoading(true);
@@ -98,8 +181,10 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
       const response = await fetch('https://rest.getbze.com/bze/rewards/all_staking_rewards');
       const data = await response.json();
 
-      // Fetch user's participations if address available
+      // Fetch user's participations + pending unlocks if address available
       let userParticipations: Record<string, { amount: string; joined_at: string }> = {};
+      let pendingUnlocks: PendingUnlockParticipant[] = [];
+      let currentHourEpoch = 0;
       if (address) {
         try {
           const userResponse = await fetch(
@@ -117,6 +202,13 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
         } catch (e) {
           // User has no stakes
         }
+
+        const [unlocks, hourEpoch] = await Promise.all([
+          fetchAddressOffersPendingUnlocks(address),
+          fetchCurrentHourEpoch(),
+        ]);
+        pendingUnlocks = unlocks;
+        currentHourEpoch = hourEpoch;
       }
 
       if (data.list) {
@@ -196,32 +288,25 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
           return (b.apr || 0) - (a.apr || 0);
         });
 
-        setPools(activePools);
+        // Demo wallet addresses never match on-chain participants — inject a
+        // position + pending unlock so Offers exit / lock UX is exercisable.
+        if (isDemo || useWalletStore.getState().isDemo) {
+          const demo = demoPools()[0];
+          const withoutDemo = activePools.filter((p) => p.index !== demo.index);
+          setPools([demo, ...withoutDemo]);
+          setUnlocking(demoUnlockViews());
+          setExpandedPoolId((prev) => prev ?? demo.index);
+        } else {
+          setPools(activePools);
+          setUnlocking(buildUnlockViews(pendingUnlocks, currentHourEpoch));
+        }
       }
     } catch (error) {
       console.error('Failed to fetch staking pools:', error);
-      if (useWalletStore.getState().isDemo) {
-        setPools([
-          {
-            index: 'demo',
-            name: 'BZE Demo Pool',
-            stakeDenom: 'ubze',
-            stakeSymbol: 'BZE',
-            rewardDenom: 'ubze',
-            rewardSymbol: 'BZE',
-            dailyReward: '1000000',
-            minStake: '1000000',
-            totalStaked: '500000000000',
-            lockDays: 0,
-            status: 'running',
-            apr: 12,
-            userStake: '0',
-            pendingRewards: '0',
-            daysRemaining: 30,
-            daysElapsed: 1,
-            totalDays: 31,
-          },
-        ]);
+      if (isDemo || useWalletStore.getState().isDemo) {
+        setPools(demoPools());
+        setUnlocking(demoUnlockViews());
+        setExpandedPoolId((prev) => prev ?? 'demo');
       } else {
         toast({
           title: 'Failed to load pools',
@@ -238,44 +323,6 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
   useEffect(() => {
     fetchPools();
   }, [address]);
-
-  // Known denom mappings for BZE ecosystem
-  const denomSymbolMap: Record<string, string> = {
-    ubze: 'BZE',
-    'factory/bze13gzq40che93tgfm9kzmkpjamah5nj0j73pyhqk/uvdl': 'VDL',
-    'factory/bze1972aqfzdg29ugjln74edx0xvcg4ehvysjptk77/CTL': 'CTL',
-    // USDC on BZE (via IBC)
-    'ibc/6490A7EAB61059BFC1CDDEB05917DD70BDF3A611654162A1A47DB930D40D8AF4': 'USDC',
-    // SHERPA on BZE (via IBC)
-    'ibc/02EE50AB3A4B7540FA001B24CB75E688016F65547CABE885EA184338440080B2': 'SHERPA',
-  };
-
-  const getSymbolFromDenom = (denom: string): string => {
-    // Check known mappings first
-    if (denomSymbolMap[denom]) {
-      return denomSymbolMap[denom];
-    }
-
-    if (denom === 'ubze') return 'BZE';
-    if (denom.includes('uvdl') || denom.includes('VDL')) return 'VDL';
-    if (denom.includes('/CTL') || denom.endsWith('CTL')) return 'CTL';
-    if (denom.includes('usdc') || denom.includes('USDC')) return 'USDC';
-
-    // Handle IBC denoms - show shortened hash
-    if (denom.startsWith('ibc/')) {
-      return `IBC/${denom.slice(4, 8)}`;
-    }
-
-    // Handle factory denoms
-    if (denom.startsWith('factory/')) {
-      const parts = denom.split('/');
-      if (parts.length >= 3) {
-        return parts[2].replace('u', '').toUpperCase();
-      }
-    }
-
-    return denom.slice(0, 6).toUpperCase();
-  };
 
   const formatAmount = (amount: string, decimals: number = 6): string => {
     const num = parseInt(amount) / Math.pow(10, decimals);
@@ -376,10 +423,53 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
     }
   };
 
+  const handleExit = async () => {
+    if (!exitPool || !address) return;
+
+    setActionLoading(true);
+    try {
+      const msg = createExitStakingMsg(address, exitPool.index);
+      const fee = getExitStakingFee();
+      const txHash = await signAndBroadcast('beezee-1', [msg], fee, '');
+
+      toast({
+        title: 'Exit submitted',
+        description:
+          exitPool.lockDays > 0
+            ? `Unstake started. Funds unlock after ${exitPool.lockDays} days. TX: ${txHash.slice(0, 10)}...`
+            : `Exited ${exitPool.stakeSymbol} offer. TX: ${txHash.slice(0, 10)}...`,
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+
+      await fetchPools();
+      await fetchBalance('beezee-1', address);
+      onExitClose();
+      setExitPool(null);
+    } catch (error) {
+      console.error('Exit failed:', error);
+      toast({
+        title: 'Exit Failed',
+        description: error instanceof Error ? error.message : 'Transaction failed',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const openStakeModal = (pool: StakingPool) => {
     setSelectedPool(pool);
     setStakeAmount('');
     onStakeOpen();
+  };
+
+  const openExitDialog = (pool: StakingPool) => {
+    setExitPool(pool);
+    onExitOpen();
   };
 
   return (
@@ -425,12 +515,48 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
             <Spinner size="lg" color="cyan.400" />
             <Text color="gray.500">Loading staking pools...</Text>
           </VStack>
-        ) : pools.length === 0 ? (
+        ) : pools.length === 0 && unlocking.length === 0 ? (
           <VStack py={8} spacing={4}>
-            <Text color="gray.500">No staking pools available</Text>
+            <Text color="gray.500">No offers available</Text>
           </VStack>
         ) : (
           <VStack spacing={3} align="stretch">
+            {unlocking.length > 0 && (
+              <Box
+                bg="#141414"
+                borderRadius="xl"
+                borderWidth="1px"
+                borderColor="orange.800"
+                overflow="hidden"
+              >
+                <Box px={3} py={2} bg="#1a1a1a">
+                  <Text fontSize="xs" fontWeight="semibold" color="orange.300">
+                    Pending unlock
+                  </Text>
+                  <Text fontSize="xs" color="gray.500">
+                    Exit starts a lock — funds return when the unlock finishes
+                  </Text>
+                </Box>
+                <VStack spacing={0} align="stretch" divider={<Divider borderColor="#2a2a2a" />}>
+                  {unlocking.map((u) => (
+                    <HStack key={u.pending.index} px={3} py={2} justify="space-between">
+                      <VStack align="start" spacing={0}>
+                        <Text fontSize="sm" fontWeight="medium">
+                          {formatAmount(u.pending.amount)} {u.symbol}
+                        </Text>
+                        <Text fontSize="xs" color="gray.500">
+                          Offer #{parseInt(u.rewardId, 10)}
+                        </Text>
+                      </VStack>
+                      <Badge colorScheme="orange" fontSize="xs">
+                        {u.remainingLabel}
+                      </Badge>
+                    </HStack>
+                  ))}
+                </VStack>
+              </Box>
+            )}
+
             {pools.map((pool) => (
               <PoolCard
                 key={pool.index}
@@ -441,7 +567,9 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
                 }
                 onStake={() => openStakeModal(pool)}
                 onClaim={() => handleClaim(pool)}
+                onExit={() => openExitDialog(pool)}
                 formatAmount={formatAmount}
+                actionLoading={actionLoading}
               />
             ))}
           </VStack>
@@ -503,6 +631,12 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
                 </Text>
                 <Text fontSize="sm">{selectedPool?.lockDays} days</Text>
               </HStack>
+              {!!selectedPool?.lockDays && (
+                <Text fontSize="xs" color="orange.300">
+                  Exit starts a {selectedPool.lockDays}-day unlock. Staked funds return after the
+                  lock — no rewards during unlock.
+                </Text>
+              )}
               <HStack justify="space-between">
                 <Text fontSize="sm" color="gray.400">
                   Daily Rewards
@@ -536,6 +670,63 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <AlertDialog
+        isOpen={isExitOpen}
+        leastDestructiveRef={exitCancelRef}
+        onClose={() => {
+          onExitClose();
+          setExitPool(null);
+        }}
+        isCentered
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent bg="#141414" borderColor="#2a2a2a" borderWidth="1px" mx={4}>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Exit offer?
+            </AlertDialogHeader>
+            <AlertDialogBody>
+              <VStack align="stretch" spacing={3}>
+                <Text>
+                  Unstakes your full position (
+                  {formatAmount(exitPool?.userStake || '0')} {exitPool?.stakeSymbol}). Pending
+                  rewards are claimed with the exit.
+                </Text>
+                {(exitPool?.lockDays || 0) > 0 ? (
+                  <Box bg="#1a1208" borderRadius="md" px={3} py={2} borderWidth="1px" borderColor="orange.800">
+                    <Text fontSize="sm" color="orange.300" fontWeight="medium">
+                      {exitPool?.lockDays}-day unlock
+                    </Text>
+                    <Text fontSize="xs" color="gray.400">
+                      Funds leave the offer now and return to your wallet after the lock. No
+                      rewards accrue during unlock.
+                    </Text>
+                  </Box>
+                ) : (
+                  <Text fontSize="sm" color="gray.400">
+                    This offer has no lock — funds return immediately.
+                  </Text>
+                )}
+              </VStack>
+            </AlertDialogBody>
+            <AlertDialogFooter>
+              <Button
+                ref={exitCancelRef}
+                onClick={() => {
+                  onExitClose();
+                  setExitPool(null);
+                }}
+                variant="ghost"
+              >
+                Cancel
+              </Button>
+              <Button colorScheme="orange" onClick={handleExit} ml={3} isLoading={actionLoading}>
+                Exit
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </Box>
   );
 };
@@ -547,7 +738,9 @@ interface PoolCardProps {
   onToggle: () => void;
   onStake: () => void;
   onClaim: () => void;
+  onExit: () => void;
   formatAmount: (amount: string, decimals?: number) => string;
+  actionLoading: boolean;
 }
 
 const PoolCard: React.FC<PoolCardProps> = ({
@@ -556,7 +749,9 @@ const PoolCard: React.FC<PoolCardProps> = ({
   onToggle,
   onStake,
   onClaim,
+  onExit,
   formatAmount,
+  actionLoading,
 }) => {
   const userStakeAmount = parseInt(pool.userStake || '0');
   const hasStake = userStakeAmount > 0;
@@ -591,6 +786,7 @@ const PoolCard: React.FC<PoolCardProps> = ({
           </HStack>
           <Text fontSize="xs" color="gray.500">
             {pool.daysRemaining} days left
+            {pool.lockDays > 0 ? ` · ${pool.lockDays}d unlock on exit` : ''}
           </Text>
         </VStack>
         <VStack align="end" spacing={0}>
@@ -647,7 +843,7 @@ const PoolCard: React.FC<PoolCardProps> = ({
               e.stopPropagation();
               onStake();
             }}
-            isDisabled={pool.status !== 'running'}
+            isDisabled={pool.status !== 'running' || actionLoading}
           >
             {hasStake ? 'Stake More' : 'Stake'}
           </Button>
@@ -663,8 +859,26 @@ const PoolCard: React.FC<PoolCardProps> = ({
                 e.stopPropagation();
                 onClaim();
               }}
+              isLoading={actionLoading}
             >
               Claim
+            </Button>
+          )}
+          {hasStake && (
+            <Button
+              flex={1}
+              size="sm"
+              variant="outline"
+              borderColor="orange.500"
+              color="orange.300"
+              _hover={{ bg: 'orange.900', borderColor: 'orange.400' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onExit();
+              }}
+              isDisabled={actionLoading}
+            >
+              Exit
             </Button>
           )}
         </HStack>
@@ -684,5 +898,45 @@ const StatBox: React.FC<{ label: string; value: string }> = ({ label, value }) =
     </Text>
   </Box>
 );
+
+function demoPools(): StakingPool[] {
+  return [
+    {
+      index: 'demo',
+      name: 'BZE #demo',
+      stakeDenom: 'ubze',
+      stakeSymbol: 'BZE',
+      rewardDenom: 'factory/bze13gzq40che93tgfm9kzmkpjamah5nj0j73pyhqk/uvdl',
+      rewardSymbol: 'VDL',
+      dailyReward: '10000000',
+      minStake: '1000000',
+      totalStaked: '103135000000',
+      lockDays: 7,
+      status: 'running',
+      apr: 3.54,
+      userStake: '2500000000',
+      pendingRewards: '125000',
+      daysRemaining: 27,
+      daysElapsed: 3,
+      totalDays: 30,
+    },
+  ];
+}
+
+function demoUnlockViews(): UnlockView[] {
+  return [
+    {
+      pending: {
+        index: '99999/000000000000/bze1DEMO',
+        address: 'bze1DEMO',
+        amount: '500000000',
+        denom: 'ubze',
+      },
+      rewardId: '000000000000',
+      remainingLabel: formatUnlockRemaining(72),
+      symbol: 'BZE',
+    },
+  ];
+}
 
 export default Earn;
