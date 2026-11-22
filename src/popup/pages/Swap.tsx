@@ -18,9 +18,11 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import {
   SKIP_GO_API_URL,
-  vdlSwapConfig,
-  vdlSwapCopy,
-  VDL_SWAP_TITLE,
+  beezeeSwapAsset,
+  beezeeSwapConfig,
+  beezeeSwapCopy,
+  skipCanQuoteBeezeeAsset,
+  type BeezeeSwapAssetId,
   type VdlSwapMode,
 } from '@/lib/swap/vdlSwapConfig';
 
@@ -49,15 +51,20 @@ function getSkipSvmChainId(network: SvmNetworkConfig): string {
 
 interface SwapPageProps {
   onBack: () => void;
+  assetId?: BeezeeSwapAssetId;
+  /** Tradebin fallback when Skip cannot quote this BeeZee asset (CTL today). */
+  onUseDexSwap?: (mode: VdlSwapMode) => void;
 }
 
-const SwapPage: React.FC<SwapPageProps> = ({ onBack }) => {
+const SwapPage: React.FC<SwapPageProps> = ({ onBack, assetId = 'vdl', onUseDexSwap }) => {
   const { isDemo, selectedAccount, keyring } = useWalletStore();
   const { getEnabledNetworks } = useNetworkStore();
   const toast = useToast();
   const lastErrorToastRef = useRef<{ message: string; timestamp: number } | null>(null);
   const [mode, setMode] = useState<VdlSwapMode>('buy');
-  const swapConfig = useMemo(() => vdlSwapConfig(mode), [mode]);
+  const asset = useMemo(() => beezeeSwapAsset(assetId), [assetId]);
+  const swapConfig = useMemo(() => beezeeSwapConfig(assetId, mode), [assetId, mode]);
+  const skipQuotesAsset = skipCanQuoteBeezeeAsset(assetId);
 
   /**
    * Build connected addresses map for ALL Cosmos chains in the registry.
@@ -538,7 +545,7 @@ const SwapPage: React.FC<SwapPageProps> = ({ onBack }) => {
             onClick={onBack}
           />
           <Text fontSize="xl" fontWeight="bold">
-            {VDL_SWAP_TITLE}
+            {asset.title}
           </Text>
         </HStack>
         <HStack spacing={2} mb={2}>
@@ -566,60 +573,95 @@ const SwapPage: React.FC<SwapPageProps> = ({ onBack }) => {
           </Button>
         </HStack>
         <Text fontSize="sm" color="gray.400">
-          {vdlSwapCopy(mode)}
+          {beezeeSwapCopy(assetId, mode)}
         </Text>
+        {!skipQuotesAsset && !isDemo && onUseDexSwap && (
+          <Box mt={3}>
+            <Text fontSize="xs" color="yellow.200" mb={2}>
+              Skip indexes {asset.symbol} on BeeZee but currently has no quoteable route (no
+              tradebin venue; Osmosis path unavailable). Use the BeeZee DEX instead.
+            </Text>
+            <Button
+              size="sm"
+              variant="outline"
+              borderColor="yellow.600"
+              color="yellow.200"
+              _hover={{ bg: 'whiteAlpha.100' }}
+              onClick={() => onUseDexSwap(mode)}
+            >
+              Swap {asset.symbol} on BeeZee DEX
+            </Button>
+          </Box>
+        )}
       </Box>
 
       {/* Skip Go Widget */}
       <Box flex="1" overflow="auto" p={2}>
         <Box w="100%" maxW="480px" mx="auto">
           {isDemo ? (
-            <DemoSwap key={mode} mode={mode} />
+            <DemoSwap key={`${assetId}-${mode}`} mode={mode} assetId={assetId} />
+          ) : skipQuotesAsset ? (
+            <Widget
+              key={`${assetId}-${mode}`}
+              apiUrl={SKIP_GO_API_URL}
+              defaultRoute={swapConfig.defaultRoute}
+              routeConfig={{
+                experimentalFeatures: ['hyperlane', 'cctp', 'eureka'],
+                allowMultiTx: true,
+                allowUnsafe: false,
+                // Workaround for a @skip-go/widget DOM nesting warning in RoutePreferenceSelector
+                // (div rendered inside p); keeping goFast false avoids rendering that section.
+                goFast: false,
+              }}
+              batchSignTxs={true}
+              filter={swapConfig.filter}
+              filterOut={swapConfig.filterOut}
+              settings={{
+                slippage: 0.5,
+              }}
+              // --- Theme ---
+              theme={widgetTheme}
+              // --- Disable external WalletConnect integration ---
+              walletConnect={{
+                options: null,
+                walletConnectModal: null,
+              }}
+              // --- Custom endpoints from our failover system ---
+              endpointOptions={endpointOptions}
+              // --- Affiliate fees: 0.75% to Vidulum on every chain ---
+              chainIdsToAffiliates={chainIdsToAffiliates}
+              // --- Injected wallet: pass connected addresses + Cosmos signer ---
+              connectedAddresses={connectedAddresses}
+              hideAssetsUnlessWalletTypeConnected={true}
+              getCosmosSigner={getCosmosSigner}
+              getEvmSigner={getEvmSigner}
+              getSvmSigner={getSvmSigner}
+              // --- Callbacks ---
+              onWalletConnected={onWalletConnected}
+              onWalletDisconnected={onWalletDisconnected}
+              onTransactionBroadcasted={onTransactionBroadcasted}
+              onTransactionComplete={onTransactionComplete}
+              onTransactionFailed={onTransactionFailed}
+              // --- Disable shadow DOM for better extension compatibility ---
+              disableShadowDom={true}
+            />
           ) : (
-          <Widget
-            key={mode}
-            apiUrl={SKIP_GO_API_URL}
-            defaultRoute={swapConfig.defaultRoute}
-            routeConfig={{
-              experimentalFeatures: ['hyperlane', 'cctp', 'eureka'],
-              allowMultiTx: true,
-              allowUnsafe: false,
-              // Workaround for a @skip-go/widget DOM nesting warning in RoutePreferenceSelector
-              // (div rendered inside p); keeping goFast false avoids rendering that section.
-              goFast: false,
-            }}
-            batchSignTxs={true}
-            filter={swapConfig.filter}
-            filterOut={swapConfig.filterOut}
-            settings={{
-              slippage: 0.5,
-            }}
-            // --- Theme ---
-            theme={widgetTheme}
-            // --- Disable external WalletConnect integration ---
-            walletConnect={{
-              options: null,
-              walletConnectModal: null,
-            }}
-            // --- Custom endpoints from our failover system ---
-            endpointOptions={endpointOptions}
-            // --- Affiliate fees: 0.75% to Vidulum on every chain ---
-            chainIdsToAffiliates={chainIdsToAffiliates}
-            // --- Injected wallet: pass connected addresses + Cosmos signer ---
-            connectedAddresses={connectedAddresses}
-            hideAssetsUnlessWalletTypeConnected={true}
-            getCosmosSigner={getCosmosSigner}
-            getEvmSigner={getEvmSigner}
-            getSvmSigner={getSvmSigner}
-            // --- Callbacks ---
-            onWalletConnected={onWalletConnected}
-            onWalletDisconnected={onWalletDisconnected}
-            onTransactionBroadcasted={onTransactionBroadcasted}
-            onTransactionComplete={onTransactionComplete}
-            onTransactionFailed={onTransactionFailed}
-            // --- Disable shadow DOM for better extension compatibility ---
-            disableShadowDom={true}
-          />
+            <Box p={4} bg="#141414" borderRadius="xl">
+              <Text color="gray.300" fontSize="sm" mb={3}>
+                Skip cannot quote {asset.symbol} right now. BeeZee tradebin pools for{' '}
+                {asset.symbol} are available in the in-app DEX.
+              </Text>
+              {onUseDexSwap && (
+                <Button
+                  bg="#00e5ff"
+                  color="#0a0a0a"
+                  _hover={{ bg: '#33eaff' }}
+                  onClick={() => onUseDexSwap(mode)}
+                >
+                  Open BeeZee DEX
+                </Button>
+              )}
+            </Box>
           )}
         </Box>
       </Box>

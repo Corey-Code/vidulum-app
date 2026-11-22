@@ -7,13 +7,13 @@
  */
 
 import { coin } from '@cosmjs/stargate';
-import { VDL_DENOM } from '@/lib/swap/vdlSwapConfig';
+import { CTL_DENOM, VDL_DENOM } from '@/lib/swap/vdlSwapConfig';
 import { fromBaseUnits, toBaseUnits } from '@/lib/bze/rewards';
 
 export const BZE_REWARDS_LCD = 'https://rest.getbze.com';
 
-/** CryptoTrtl factory denom on BeeZee (CTL→CTL DenomReward pool) */
-export const CTL_DENOM = 'factory/bze1972aqfzdg29ugjln74edx0xvcg4ehvysjptk77/CTL';
+/** Re-export for earn surfaces that already import from this module. */
+export { CTL_DENOM };
 
 export type DenomRewardAssetSymbol = 'VDL' | 'CTL';
 
