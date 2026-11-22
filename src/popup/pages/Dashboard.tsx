@@ -58,7 +58,11 @@ import NetworkManagerModal from '../components/NetworkManagerModal';
 import IBCTransferModal from '../components/IBCTransferModal';
 import { useNetworkStore } from '@/store/networkStore';
 import { fetchIBCConnections, IBCChannel } from '@/lib/cosmos/ibc-connections';
-import { VDL_SWAP_TITLE } from '@/lib/swap/vdlSwapConfig';
+import {
+  CTL_SWAP_TITLE,
+  VDL_SWAP_TITLE,
+  type BeezeeSwapAssetId,
+} from '@/lib/swap/vdlSwapConfig';
 import { CTL_DENOM, VDL_DENOM } from '@/lib/bze/denomRewards';
 
 interface DashboardProps {
@@ -66,7 +70,9 @@ interface DashboardProps {
   onNavigateToStakeHub?: () => void;
   onNavigateToSettings?: () => void;
   onNavigateToEarn?: () => void;
-  onNavigateToSwap?: () => void;
+  onNavigateToSwap?: (assetId?: BeezeeSwapAssetId) => void;
+  dexSwapPrefill?: { fromDenom: string; toDenom: string };
+  onDexSwapPrefillConsumed?: () => void;
 }
 
 const CUSTOM_ASSET_NAMES_KEY = 'custom_asset_names';
@@ -90,6 +96,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   onNavigateToSettings,
   onNavigateToEarn,
   onNavigateToSwap,
+  dexSwapPrefill,
+  onDexSwapPrefillConsumed,
 }) => {
   const {
     isDemo,
@@ -185,6 +193,12 @@ const Dashboard: React.FC<DashboardProps> = ({
     onClose: onNetworkManagerClose,
   } = useDisclosure();
   const { isOpen: isIBCOpen, onOpen: onIBCOpen, onClose: onIBCClose } = useDisclosure();
+
+  // Open tradebin SwapModal when Buy/Sell CTL falls back from Skip.
+  useEffect(() => {
+    if (!dexSwapPrefill) return;
+    onSwapOpen();
+  }, [dexSwapPrefill, onSwapOpen]);
 
   // IBC transfer state
   const [ibcConnections, setIbcConnections] = useState<IBCChannel[]>([]);
@@ -845,20 +859,35 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Scrollable Content */}
       <Box flex={1} overflowY="auto" px={5} py={5} pb={14}>
         <VStack spacing={5} align="stretch">
-          {/* Buy / Sell VDL */}
-          <Button
-            flex={1}
-            variant="outline"
-            color="purple.300"
-            borderColor="purple.500"
-            borderWidth="1px"
-            _hover={{ bg: 'purple.900', borderColor: 'purple.400' }}
-            onClick={onNavigateToSwap}
-          >
-            <Text fontSize="lg" margin={2}>
-              {VDL_SWAP_TITLE}
-            </Text>
-          </Button>
+          {/* Buy / Sell VDL + CTL (Skip surface; CTL falls back to tradebin when unquotable) */}
+          <HStack spacing={3} align="stretch">
+            <Button
+              flex={1}
+              variant="outline"
+              color="purple.300"
+              borderColor="purple.500"
+              borderWidth="1px"
+              _hover={{ bg: 'purple.900', borderColor: 'purple.400' }}
+              onClick={() => onNavigateToSwap?.('vdl')}
+            >
+              <Text fontSize="md" margin={2}>
+                {VDL_SWAP_TITLE}
+              </Text>
+            </Button>
+            <Button
+              flex={1}
+              variant="outline"
+              color="green.300"
+              borderColor="green.500"
+              borderWidth="1px"
+              _hover={{ bg: 'green.900', borderColor: 'green.400' }}
+              onClick={() => onNavigateToSwap?.('ctl')}
+            >
+              <Text fontSize="md" margin={2}>
+                {CTL_SWAP_TITLE}
+              </Text>
+            </Button>
+          </HStack>
 
           {/* Account Card */}
           <Box bg="#141414" borderRadius="xl" p={4}>
@@ -2261,10 +2290,15 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Swap Modal */}
       <SwapModal
         isOpen={isSwapOpen}
-        onClose={onSwapClose}
+        onClose={() => {
+          onSwapClose();
+          onDexSwapPrefillConsumed?.();
+        }}
         chainId={selectedChainId}
         chainConfig={selectedChainConfig}
         onSwapSuccess={handleSwapSuccess}
+        initialFromDenom={dexSwapPrefill?.fromDenom}
+        initialToDenom={dexSwapPrefill?.toDenom}
       />
 
       {/* Network Manager Modal */}
