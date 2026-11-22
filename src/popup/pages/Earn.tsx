@@ -404,7 +404,7 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
               </Badge>
             </HStack>
             <Text fontSize="xs" color="gray.500">
-              Time-boxed staking pools · not Stake VDL/CTL
+              Time-boxed staking pools · not Stake
             </Text>
           </VStack>
         </HStack>

@@ -63,9 +63,9 @@ import { CTL_DENOM, VDL_DENOM } from '@/lib/bze/denomRewards';
 
 interface DashboardProps {
   onNavigateToStaking?: () => void;
+  onNavigateToStakeHub?: () => void;
   onNavigateToSettings?: () => void;
   onNavigateToEarn?: () => void;
-  onNavigateToDenomEarn?: (denom?: string) => void;
   onNavigateToSwap?: () => void;
 }
 
@@ -86,9 +86,9 @@ interface TokenConfig {
 
 const Dashboard: React.FC<DashboardProps> = ({
   onNavigateToStaking,
+  onNavigateToStakeHub,
   onNavigateToSettings,
   onNavigateToEarn,
-  onNavigateToDenomEarn,
   onNavigateToSwap,
 }) => {
   const {
@@ -1767,36 +1767,26 @@ const Dashboard: React.FC<DashboardProps> = ({
                         <ExternalLinkIcon boxSize={3} color="gray.500" />
                       </HStack>
                     </MenuItem>
-                    <MenuItem
-                      bg="transparent"
-                      _hover={{ bg: 'whiteAlpha.100' }}
-                      onClick={onNavigateToStaking}
-                    >
-                      Stake{' '}
-                      {selectedChainId === 'beezee-1'
-                        ? 'BZE'
-                        : selectedChainId === 'atomone-1'
+                    {selectedChainId === 'beezee-1' ? (
+                      <MenuItem
+                        bg="transparent"
+                        _hover={{ bg: 'whiteAlpha.100' }}
+                        onClick={onNavigateToStakeHub}
+                      >
+                        Stake
+                      </MenuItem>
+                    ) : (
+                      <MenuItem
+                        bg="transparent"
+                        _hover={{ bg: 'whiteAlpha.100' }}
+                        onClick={onNavigateToStaking}
+                      >
+                        Stake{' '}
+                        {selectedChainId === 'atomone-1'
                           ? 'ATONE'
                           : selectedChainId === 'cosmoshub-4'
                             ? 'ATOM'
                             : 'OSMO'}
-                    </MenuItem>
-                    {selectedChainId === 'beezee-1' && (
-                      <MenuItem
-                        bg="transparent"
-                        _hover={{ bg: 'whiteAlpha.100' }}
-                        onClick={() => onNavigateToDenomEarn?.(VDL_DENOM)}
-                      >
-                        Stake VDL
-                      </MenuItem>
-                    )}
-                    {selectedChainId === 'beezee-1' && (
-                      <MenuItem
-                        bg="transparent"
-                        _hover={{ bg: 'whiteAlpha.100' }}
-                        onClick={() => onNavigateToDenomEarn?.(CTL_DENOM)}
-                      >
-                        Stake CTL
                       </MenuItem>
                     )}
                     {selectedChainId === 'beezee-1' && (
