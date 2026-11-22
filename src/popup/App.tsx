@@ -55,6 +55,7 @@ const App: React.FC = () => {
   const [isReady, setIsReady] = useState(false);
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
   const [approvalId, setApprovalId] = useState<string | null>(null);
+  const [denomEarnTarget, setDenomEarnTarget] = useState<string | undefined>();
   const resetToImport = useRef(false);
   const { phase, initialize, startDemo, exitDemo } = useWalletStore();
   const isDemo = phase.status === 'demo';
@@ -177,7 +178,8 @@ const App: React.FC = () => {
     setView('earn');
   };
 
-  const navigateToDenomEarn = () => {
+  const navigateToDenomEarn = (denom?: string) => {
+    setDenomEarnTarget(denom);
     setView('denom-earn');
   };
 
@@ -289,7 +291,9 @@ const App: React.FC = () => {
       {view === 'staking' && <Staking onBack={navigateToDashboard} />}
       {view === 'settings' && <Settings onBack={navigateToDashboard} />}
       {view === 'earn' && <Earn onBack={navigateToDashboard} />}
-      {view === 'denom-earn' && <DenomEarn onBack={navigateToDashboard} />}
+      {view === 'denom-earn' && (
+        <DenomEarn onBack={navigateToDashboard} initialDenom={denomEarnTarget} />
+      )}
       {view === 'swap' && <Swap onBack={navigateToDashboard} />}
       {view === 'approval' && approvalId && (
         <Approval approvalId={approvalId} onComplete={handleApprovalComplete} />

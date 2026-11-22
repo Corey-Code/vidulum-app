@@ -243,6 +243,7 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
   const denomSymbolMap: Record<string, string> = {
     ubze: 'BZE',
     'factory/bze13gzq40che93tgfm9kzmkpjamah5nj0j73pyhqk/uvdl': 'VDL',
+    'factory/bze1972aqfzdg29ugjln74edx0xvcg4ehvysjptk77/CTL': 'CTL',
     // USDC on BZE (via IBC)
     'ibc/6490A7EAB61059BFC1CDDEB05917DD70BDF3A611654162A1A47DB930D40D8AF4': 'USDC',
     // SHERPA on BZE (via IBC)
@@ -257,6 +258,7 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
 
     if (denom === 'ubze') return 'BZE';
     if (denom.includes('uvdl') || denom.includes('VDL')) return 'VDL';
+    if (denom.includes('/CTL') || denom.endsWith('CTL')) return 'CTL';
     if (denom.includes('usdc') || denom.includes('USDC')) return 'USDC';
 
     // Handle IBC denoms - show shortened hash
@@ -402,7 +404,7 @@ const Earn: React.FC<EarnProps> = ({ onBack }) => {
               </Badge>
             </HStack>
             <Text fontSize="xs" color="gray.500">
-              Time-boxed staking pools · not Stake VDL
+              Time-boxed staking pools · not Stake VDL/CTL
             </Text>
           </VStack>
         </HStack>

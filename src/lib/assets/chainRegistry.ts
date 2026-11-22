@@ -78,6 +78,7 @@ function parseBeeZeeLPToken(denom: string): { symbol: string; name: string } | n
     vdl: 'VDL',
     ubze: 'BZE',
     uvdl: 'VDL',
+    CTL: 'CTL',
   };
 
   const symbol1 = denomToSymbol[assets[0]] || assets[0].toUpperCase();
@@ -411,6 +412,8 @@ const fallbackAssets: Record<string, RegistryAsset[]> = {
       name: 'CryptoTrtl',
       denom: 'factory/bze1972aqfzdg29ugjln74edx0xvcg4ehvysjptk77/CTL',
       decimals: 6,
+      logoUrl:
+        'https://raw.githubusercontent.com/cosmos/chain-registry/master/beezee/images/ctl.png',
     },
     // IBC tokens
     {

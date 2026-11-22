@@ -10,6 +10,7 @@ import {
   setDemoSession,
   spendDemo,
 } from '@/lib/demo/session';
+import { CTL_DENOM } from '@/lib/bze/denomRewards';
 import { VDL_DENOM } from '@/lib/swap/vdlSwapConfig';
 
 describe('demo session', () => {
@@ -42,6 +43,7 @@ describe('demo session', () => {
     const rows = demoBalances('beezee-1');
     expect(rows.find((row) => row.denom === 'ubze')?.amount).toBe('2500000000');
     expect(rows.find((row) => row.denom === VDL_DENOM)?.amount).toBe('1800000000');
+    expect(rows.find((row) => row.denom === CTL_DENOM)?.amount).toBe('950000000');
   });
 
   it('spends and restores a balance without storage', () => {

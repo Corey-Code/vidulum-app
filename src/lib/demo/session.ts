@@ -1,4 +1,5 @@
 import { networkRegistry } from '@/lib/networks';
+import { CTL_DENOM } from '@/lib/bze/denomRewards';
 import { VDL_DENOM } from '@/lib/swap/vdlSwapConfig';
 import type { Balance } from '@/types/wallet';
 import type { Delegation, UnbondingDelegation, Validator } from '@/lib/cosmos/staking';
@@ -53,6 +54,7 @@ export function demoChainAddress(networkId: string, accountIndex = 0): string {
 function baseAmount(networkId: string, denom: string): bigint {
   if (networkId === 'beezee-1' && denom === 'ubze') return 2_500_000_000n;
   if (networkId === 'beezee-1' && denom === VDL_DENOM) return 1_800_000_000n;
+  if (networkId === 'beezee-1' && denom === CTL_DENOM) return 950_000_000n;
   if (denom === 'sat') return 1_500_000n;
   if (denom === 'wei') return 420_000_000_000_000_000n;
   if (denom === 'lamports') return 2_500_000_000n;
@@ -74,6 +76,7 @@ export function demoBalances(networkId: string): Balance[] {
     rows = [{ denom, amount: baseAmount(networkId, denom).toString() }];
     if (networkId === 'beezee-1') {
       rows.push({ denom: VDL_DENOM, amount: baseAmount(networkId, VDL_DENOM).toString() });
+      rows.push({ denom: CTL_DENOM, amount: baseAmount(networkId, CTL_DENOM).toString() });
     }
   }
 

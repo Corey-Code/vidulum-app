@@ -25,11 +25,14 @@ import {
   AlertDialogHeader,
   AlertDialogContent,
   AlertDialogOverlay,
+  ButtonGroup,
 } from '@chakra-ui/react';
 import { ArrowBackIcon, RepeatIcon } from '@chakra-ui/icons';
 import { useWalletStore } from '@/store/walletStore';
 import { useChainStore } from '@/store/chainStore';
 import {
+  CTL_DENOM,
+  DENOM_REWARD_ASSETS,
   VDL_DENOM,
   createClaimDenomRewardsMsg,
   createExitDenomRewardMsg,
@@ -38,19 +41,23 @@ import {
   fetchDenomReward,
   fetchDenomRewardParticipant,
   fetchDenomRewardSchedules,
+  getDenomRewardAsset,
   getDenomRewardExitFee,
   sumPendingForDenom,
   toBaseUnits,
   type DenomReward,
+  type DenomRewardAsset,
   type DenomRewardSchedule,
   type PendingPrizeCoin,
 } from '@/lib/bze/denomRewards';
 
 interface DenomEarnProps {
   onBack: () => void;
+  /** Factory denom or symbol (VDL / CTL). Defaults to VDL. */
+  initialDenom?: string;
 }
 
-interface VdlPoolView {
+interface PoolView {
   pool: DenomReward;
   schedules: DenomRewardSchedule[];
   dailyReward: string;
@@ -62,10 +69,15 @@ interface VdlPoolView {
   pending: PendingPrizeCoin[];
 }
 
-const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
+function resolveAsset(initialDenom?: string): DenomRewardAsset {
+  return getDenomRewardAsset(initialDenom || VDL_DENOM) || DENOM_REWARD_ASSETS[0];
+}
+
+const DenomEarn: React.FC<DenomEarnProps> = ({ onBack, initialDenom }) => {
   const { isDemo, getAddressForChain, signAndBroadcast } = useWalletStore();
   const { fetchBalance, getBalance } = useChainStore();
-  const [view, setView] = useState<VdlPoolView | null>(null);
+  const [asset, setAsset] = useState<DenomRewardAsset>(() => resolveAsset(initialDenom));
+  const [view, setView] = useState<PoolView | null>(null);
   const [loading, setLoading] = useState(true);
   const [stakeAmount, setStakeAmount] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
@@ -76,22 +88,28 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
 
   const address = getAddressForChain('bze') || '';
   const chainBalances = getBalance('beezee-1', address) || [];
-  const vdlBalance = chainBalances.find((b) => b.denom === VDL_DENOM)?.amount || '0';
+  const walletBalance = chainBalances.find((b) => b.denom === asset.denom)?.amount || '0';
+  const symbol = asset.symbol;
+  const accent = asset.colorScheme;
+
+  useEffect(() => {
+    setAsset(resolveAsset(initialDenom));
+  }, [initialDenom]);
 
   const loadPool = useCallback(async () => {
     setLoading(true);
     try {
       const [pool, schedules, participantView] = await Promise.all([
-        fetchDenomReward(VDL_DENOM),
-        fetchDenomRewardSchedules(VDL_DENOM),
+        fetchDenomReward(asset.denom),
+        fetchDenomRewardSchedules(asset.denom),
         address
-          ? fetchDenomRewardParticipant(address, VDL_DENOM)
+          ? fetchDenomRewardParticipant(address, asset.denom)
           : Promise.resolve({ participant: null, pending: [] as PendingPrizeCoin[] }),
       ]);
 
       if (!pool) {
         if (isDemo) {
-          setView(demoPoolView());
+          setView(demoPoolView(asset));
         } else {
           setView(null);
         }
@@ -102,7 +120,7 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
         (s) => (Number(s.duration) || 0) - (Number(s.payouts) || 0) > 0
       );
       const primary =
-        activeSchedules.find((s) => s.prize_denom === VDL_DENOM) ||
+        activeSchedules.find((s) => s.prize_denom === asset.denom) ||
         activeSchedules[0] ||
         schedules[0];
       const dailyReward = activeSchedules.reduce(
@@ -113,26 +131,27 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
         ? Math.max(0, (Number(primary.duration) || 0) - (Number(primary.payouts) || 0))
         : 0;
       const pending = participantView.pending || [];
+      const prizeDenom = primary?.prize_denom || asset.denom;
 
       setView({
         pool,
         schedules,
         dailyReward: String(dailyReward),
-        prizeDenom: primary?.prize_denom || VDL_DENOM,
+        prizeDenom,
         apr: estimateDenomRewardApr(schedules, pool.staked_amount),
         daysRemaining,
         userStake: participantView.participant?.amount || '0',
-        pendingRewards: sumPendingForDenom(pending, primary?.prize_denom || VDL_DENOM),
+        pendingRewards: sumPendingForDenom(pending, prizeDenom),
         pending,
       });
     } catch (error) {
       console.error('Failed to load DenomReward:', error);
       if (isDemo) {
-        setView(demoPoolView());
+        setView(demoPoolView(asset));
       } else {
         setView(null);
         toast({
-          title: 'Failed to load VDL earn pool',
+          title: `Failed to load ${symbol} earn pool`,
           description: error instanceof Error ? error.message : 'Could not fetch DenomReward',
           status: 'error',
           duration: 3000,
@@ -141,13 +160,13 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
     } finally {
       setLoading(false);
     }
-  }, [address, isDemo, toast]);
+  }, [address, asset, isDemo, symbol, toast]);
 
   useEffect(() => {
     loadPool();
   }, [loadPool]);
 
-  const formatAmount = (amount: string, decimals: number = 6): string => {
+  const formatAmount = (amount: string, decimals: number = asset.decimals): string => {
     const num = parseInt(amount, 10) / Math.pow(10, decimals);
     if (Number.isNaN(num)) return '0';
     if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(3)}M`;
@@ -156,8 +175,8 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
   };
 
   const handleMaxStake = () => {
-    const availableNum = parseInt(vdlBalance, 10) / 1e6;
-    setStakeAmount(Math.max(0, availableNum).toFixed(6));
+    const availableNum = parseInt(walletBalance, 10) / Math.pow(10, asset.decimals);
+    setStakeAmount(Math.max(0, availableNum).toFixed(asset.decimals));
   };
 
   const handleJoin = async () => {
@@ -168,18 +187,18 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
       if (isNaN(stakeAmountNum) || stakeAmountNum <= 0) {
         throw new Error('Please enter a valid stake amount');
       }
-      const minStakeNum = parseInt(view.pool.min_stake, 10) / 1e6;
+      const minStakeNum = parseInt(view.pool.min_stake, 10) / Math.pow(10, asset.decimals);
       if (stakeAmountNum < minStakeNum) {
-        throw new Error(`Minimum stake is ${minStakeNum} VDL`);
+        throw new Error(`Minimum stake is ${minStakeNum} ${symbol}`);
       }
 
-      const baseAmount = toBaseUnits(stakeAmount, 6);
-      const msg = createJoinDenomRewardMsg(address, VDL_DENOM, baseAmount);
+      const baseAmount = toBaseUnits(stakeAmount, asset.decimals);
+      const msg = createJoinDenomRewardMsg(address, asset.denom, baseAmount);
       const txHash = await signAndBroadcast('beezee-1', [msg], undefined, '');
 
       toast({
-        title: 'Staked VDL',
-        description: `Joined DenomReward with ${stakeAmount} VDL. TX: ${txHash.slice(0, 10)}...`,
+        title: `Staked ${symbol}`,
+        description: `Joined DenomReward with ${stakeAmount} ${symbol}. TX: ${txHash.slice(0, 10)}...`,
         status: 'success',
         duration: 5000,
         isClosable: true,
@@ -206,7 +225,7 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
     if (!address) return;
     setActionLoading(true);
     try {
-      const msg = createClaimDenomRewardsMsg(address, VDL_DENOM);
+      const msg = createClaimDenomRewardsMsg(address, asset.denom);
       const txHash = await signAndBroadcast('beezee-1', [msg], undefined, '');
       toast({
         title: 'Rewards claimed',
@@ -235,13 +254,12 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
     if (!address) return;
     setActionLoading(true);
     try {
-      const msg = createExitDenomRewardMsg(address, VDL_DENOM);
-      // Include extraGasForDenomExit in fee; simulation may also succeed
+      const msg = createExitDenomRewardMsg(address, asset.denom);
       const fee = getDenomRewardExitFee();
       const txHash = await signAndBroadcast('beezee-1', [msg], fee, '');
       toast({
         title: 'Exited stake',
-        description: `Left VDL DenomReward. Lock was ${view?.pool.lock ?? 7}d. TX: ${txHash.slice(0, 10)}...`,
+        description: `Left ${symbol} DenomReward. Lock was ${view?.pool.lock ?? 7}d. TX: ${txHash.slice(0, 10)}...`,
         status: 'success',
         duration: 5000,
         isClosable: true,
@@ -265,6 +283,12 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
 
   const hasStake = parseInt(view?.userStake || '0', 10) > 0;
   const hasRewards = parseInt(view?.pendingRewards || '0', 10) > 0;
+  const accentToken = accent === 'green' ? 'green.300' : 'purple.300';
+  const accentBorder = accent === 'green' ? 'green.700' : 'purple.700';
+  const accentHoverBg = accent === 'green' ? 'green.900' : 'purple.900';
+  const accentHoverBorder = accent === 'green' ? 'green.400' : 'purple.400';
+  const accentBorderBtn = accent === 'green' ? 'green.500' : 'purple.500';
+  const spinnerColor = accent === 'green' ? 'green.400' : 'purple.400';
 
   return (
     <Box h="full" bg="#0a0a0a" overflow="hidden" display="flex" flexDirection="column">
@@ -280,10 +304,10 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
           <VStack align="start" spacing={0}>
             <HStack spacing={2}>
               <Text fontSize="lg" fontWeight="semibold">
-                Stake VDL
+                Stake {symbol}
               </Text>
-              <Badge colorScheme="purple" fontSize="xs">
-                Earn VDL
+              <Badge colorScheme={accent} fontSize="xs">
+                Earn {symbol}
               </Badge>
             </HStack>
             <Text fontSize="xs" color="gray.500">
@@ -301,15 +325,36 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
         />
       </HStack>
 
+      <Box px={4} pt={3}>
+        <ButtonGroup size="sm" isAttached variant="outline" w="full">
+          {DENOM_REWARD_ASSETS.map((option) => {
+            const selected = option.denom === asset.denom;
+            return (
+              <Button
+                key={option.denom}
+                flex={1}
+                onClick={() => setAsset(option)}
+                bg={selected ? '#1a1a1a' : 'transparent'}
+                borderColor={selected ? (option.colorScheme === 'green' ? 'green.500' : 'purple.500') : '#2a2a2a'}
+                color={selected ? (option.colorScheme === 'green' ? 'green.300' : 'purple.300') : 'gray.400'}
+                _hover={{ bg: 'whiteAlpha.100' }}
+              >
+                {option.symbol}
+              </Button>
+            );
+          })}
+        </ButtonGroup>
+      </Box>
+
       <Box flex={1} overflow="auto" p={4}>
         {loading ? (
           <VStack py={8} spacing={4}>
-            <Spinner size="lg" color="purple.400" />
-            <Text color="gray.500">Loading VDL earn pool...</Text>
+            <Spinner size="lg" color={spinnerColor} />
+            <Text color="gray.500">Loading {symbol} earn pool...</Text>
           </VStack>
         ) : !view ? (
           <VStack py={8} spacing={4}>
-            <Text color="gray.500">No VDL DenomReward pool found</Text>
+            <Text color="gray.500">No {symbol} DenomReward pool found</Text>
           </VStack>
         ) : (
           <VStack spacing={4} align="stretch">
@@ -317,20 +362,20 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
               bg="#141414"
               borderRadius="xl"
               borderWidth="1px"
-              borderColor={hasStake ? 'purple.700' : '#2a2a2a'}
+              borderColor={hasStake ? accentBorder : '#2a2a2a'}
               overflow="hidden"
             >
               <HStack px={4} py={3} justify="space-between" bg="#1a1a1a">
                 <VStack align="start" spacing={0}>
                   <HStack spacing={2}>
                     <Text fontSize="md" fontWeight="semibold">
-                      VDL
+                      {symbol}
                     </Text>
                     <Text fontSize="sm" color="gray.500">
                       →
                     </Text>
-                    <Text fontSize="md" fontWeight="semibold" color="purple.300">
-                      VDL
+                    <Text fontSize="md" fontWeight="semibold" color={accentToken}>
+                      {symbol}
                     </Text>
                   </HStack>
                   <Text fontSize="xs" color="gray.500">
@@ -350,11 +395,11 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
               {hasStake && (
                 <HStack px={4} py={3} spacing={2} bg="#0d0d0d">
                   <Box flex={1} bg="#1a1a1a" p={2} borderRadius="md">
-                    <Text fontSize="9px" color="purple.300">
+                    <Text fontSize="9px" color={accentToken}>
                       YOUR STAKE
                     </Text>
                     <Text fontSize="sm" fontWeight="bold">
-                      {formatAmount(view.userStake)} VDL
+                      {formatAmount(view.userStake)} {symbol}
                     </Text>
                   </Box>
                   <Box flex={1} bg="#1a1a1a" p={2} borderRadius="md">
@@ -362,7 +407,7 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
                       CLAIMABLE
                     </Text>
                     <Text fontSize="sm" fontWeight="bold">
-                      {formatAmount(view.pendingRewards)} VDL
+                      {formatAmount(view.pendingRewards)} {symbol}
                     </Text>
                   </Box>
                 </HStack>
@@ -380,15 +425,15 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
                   flex={1}
                   size="sm"
                   variant="outline"
-                  borderColor="purple.500"
-                  color="purple.300"
-                  _hover={{ bg: 'purple.900', borderColor: 'purple.400' }}
+                  borderColor={accentBorderBtn}
+                  color={accentToken}
+                  _hover={{ bg: accentHoverBg, borderColor: accentHoverBorder }}
                   onClick={() => {
                     setStakeAmount('');
                     onStakeOpen();
                   }}
                 >
-                  {hasStake ? 'Stake More' : 'Stake VDL'}
+                  {hasStake ? 'Stake More' : `Stake ${symbol}`}
                 </Button>
                 {hasRewards && (
                   <Button
@@ -421,8 +466,8 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
             </Box>
 
             <Text fontSize="xs" color="gray.600" px={1}>
-              DenomReward is BeeZee&apos;s long-lived per-denom pool (one for VDL). Time-boxed
-              campaigns live under Offers.
+              DenomReward is BeeZee&apos;s long-lived per-denom pool (one each for VDL and CTL).
+              Time-boxed campaigns live under Offers.
             </Text>
           </VStack>
         )}
@@ -432,9 +477,9 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
         <ModalOverlay bg="blackAlpha.800" />
         <ModalContent bg="#141414" borderColor="#2a2a2a" borderWidth="1px" mx={4}>
           <ModalHeader>
-            Stake VDL
+            Stake {symbol}
             <Text fontSize="sm" fontWeight="normal" color="gray.500">
-              Earn VDL via DenomReward
+              Earn {symbol} via DenomReward
             </Text>
           </ModalHeader>
           <ModalCloseButton />
@@ -448,7 +493,7 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
                   <Button
                     size="xs"
                     variant="ghost"
-                    color="purple.300"
+                    color={accentToken}
                     onClick={handleMaxStake}
                     _hover={{ bg: 'whiteAlpha.100' }}
                   >
@@ -465,10 +510,10 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
                 />
                 <HStack justify="space-between" mt={1}>
                   <Text fontSize="xs" color="gray.500">
-                    Minimum: {formatAmount(view?.pool.min_stake || '0')} VDL
+                    Minimum: {formatAmount(view?.pool.min_stake || '0')} {symbol}
                   </Text>
-                  <Text fontSize="xs" color="purple.300">
-                    Available: {formatAmount(vdlBalance)} VDL
+                  <Text fontSize="xs" color={accentToken}>
+                    Available: {formatAmount(walletBalance)} {symbol}
                   </Text>
                 </HStack>
               </Box>
@@ -485,7 +530,9 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
                 <Text fontSize="sm" color="gray.400">
                   Daily Rewards
                 </Text>
-                <Text fontSize="sm">{formatAmount(view?.dailyReward || '0')} VDL</Text>
+                <Text fontSize="sm">
+                  {formatAmount(view?.dailyReward || '0')} {symbol}
+                </Text>
               </HStack>
               <HStack justify="space-between">
                 <Text fontSize="sm" color="gray.400">
@@ -502,7 +549,7 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
               Cancel
             </Button>
             <Button
-              colorScheme="purple"
+              colorScheme={accent}
               onClick={handleJoin}
               isLoading={actionLoading}
               isDisabled={!stakeAmount}
@@ -522,12 +569,12 @@ const DenomEarn: React.FC<DenomEarnProps> = ({ onBack }) => {
         <AlertDialogOverlay>
           <AlertDialogContent bg="#141414" borderColor="#2a2a2a" borderWidth="1px" mx={4}>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Exit VDL stake?
+              Exit {symbol} stake?
             </AlertDialogHeader>
             <AlertDialogBody>
-              Unstakes your full DenomReward position ({formatAmount(view?.userStake || '0')} VDL).
-              A {view?.pool.lock ?? 7}-day lock applies from when you joined. Claim pending rewards
-              first if you want them now.
+              Unstakes your full DenomReward position ({formatAmount(view?.userStake || '0')}{' '}
+              {symbol}). A {view?.pool.lock ?? 7}-day lock applies from when you joined. Claim
+              pending rewards first if you want them now.
             </AlertDialogBody>
             <AlertDialogFooter>
               <Button ref={exitCancelRef} onClick={onExitClose} variant="ghost">
@@ -560,30 +607,31 @@ const StatBox: React.FC<{ label: string; value: string }> = ({ label, value }) =
   </Box>
 );
 
-function demoPoolView(): VdlPoolView {
+function demoPoolView(asset: DenomRewardAsset): PoolView {
+  const isCtl = asset.denom === CTL_DENOM;
   const pool: DenomReward = {
-    staking_denom: VDL_DENOM,
+    staking_denom: asset.denom,
     lock: 7,
     min_stake: '0',
-    staked_amount: '4500000000000',
+    staked_amount: isCtl ? '5900000000000' : '4500000000000',
   };
   const schedules: DenomRewardSchedule[] = [
     {
       schedule_id: 'demo',
-      staking_denom: VDL_DENOM,
-      prize_denom: VDL_DENOM,
-      daily_amount: '575000000',
-      duration: 3650,
-      payouts: 2,
+      staking_denom: asset.denom,
+      prize_denom: asset.denom,
+      daily_amount: isCtl ? '15000000000' : '575000000',
+      duration: isCtl ? 36500 : 3650,
+      payouts: isCtl ? 21 : 2,
     },
   ];
   return {
     pool,
     schedules,
-    dailyReward: '575000000',
-    prizeDenom: VDL_DENOM,
+    dailyReward: schedules[0].daily_amount,
+    prizeDenom: asset.denom,
     apr: estimateDenomRewardApr(schedules, pool.staked_amount),
-    daysRemaining: 3648,
+    daysRemaining: Math.max(0, schedules[0].duration - schedules[0].payouts),
     userStake: '0',
     pendingRewards: '0',
     pending: [],
