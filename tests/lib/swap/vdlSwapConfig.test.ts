@@ -1,13 +1,7 @@
 import {
   SKIP_GO_API_URL,
-  beezeeSwapAsset,
-  beezeeSwapConfig,
-  beezeeSwapCopy,
-  skipCanQuoteBeezeeAsset,
   vdlSwapConfig,
   vdlSwapCopy,
-  CTL_DENOM,
-  CTL_SWAP_TITLE,
   VDL_CHAIN_ID,
   VDL_DENOM,
   VDL_SWAP_TITLE,
@@ -89,60 +83,5 @@ describe('vdlSwapConfig', () => {
     expect(SKIP_GO_API_URL).toBe('https://api.skip.build');
     expect(SKIP_GO_API_URL.endsWith('/v2')).toBe(false);
     expect(SKIP_GO_API_URL.includes('api.vidulum.app')).toBe(false);
-  });
-});
-
-describe('beezeeSwapConfig CTL', () => {
-  it('uses the BeeZee CTL factory denom', () => {
-    expect(CTL_DENOM).toBe('factory/bze1972aqfzdg29ugjln74edx0xvcg4ehvysjptk77/CTL');
-    expect(beezeeSwapAsset('ctl')).toEqual({
-      id: 'ctl',
-      symbol: 'CTL',
-      denom: CTL_DENOM,
-      title: CTL_SWAP_TITLE,
-    });
-    expect(CTL_SWAP_TITLE).toBe('Buy / Sell CTL');
-  });
-
-  it('buys CTL on BeeZee and leaves the pay-with side open', () => {
-    const config = beezeeSwapConfig('ctl', 'buy');
-
-    expect(config.defaultRoute).toEqual({
-      destChainId: VDL_CHAIN_ID,
-      destAssetDenom: CTL_DENOM,
-      destLocked: true,
-    });
-    expect(config.filter.destination).toEqual({
-      [VDL_CHAIN_ID]: [CTL_DENOM],
-    });
-    expect(config.filterOut.source).toEqual({
-      [VDL_CHAIN_ID]: [CTL_DENOM],
-    });
-  });
-
-  it('sells BeeZee CTL and leaves the receive side open', () => {
-    const config = beezeeSwapConfig('ctl', 'sell');
-
-    expect(config.defaultRoute).toEqual({
-      srcChainId: VDL_CHAIN_ID,
-      srcAssetDenom: CTL_DENOM,
-      srcLocked: true,
-    });
-    expect(config.filter.source).toEqual({
-      [VDL_CHAIN_ID]: [CTL_DENOM],
-    });
-    expect(config.filterOut.destination).toEqual({
-      [VDL_CHAIN_ID]: [CTL_DENOM],
-    });
-  });
-
-  it('returns CTL page copy', () => {
-    expect(beezeeSwapCopy('ctl', 'buy')).toBe('Pay with any asset. Receive CTL.');
-    expect(beezeeSwapCopy('ctl', 'sell')).toBe('Pay with CTL. Receive any asset.');
-  });
-
-  it('marks CTL as not Skip-quotable while VDL remains quotable', () => {
-    expect(skipCanQuoteBeezeeAsset('vdl')).toBe(true);
-    expect(skipCanQuoteBeezeeAsset('ctl')).toBe(false);
   });
 });
