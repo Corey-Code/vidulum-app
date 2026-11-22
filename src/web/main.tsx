@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { ChakraProvider, extendTheme, Flex, HStack, Link, Icon, Text, Box } from '@chakra-ui/react';
+import { ChakraProvider, extendTheme, Flex, HStack, Link, Icon } from '@chakra-ui/react';
 import App from '@/popup/App';
 import { initDeveloperModeLogging } from '@/lib/debug/developerMode';
 
@@ -96,24 +96,6 @@ const WebAppFrame: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     >
       {children}
     </Flex>
-    <Box
-      maxW="900px"
-      mt={6}
-      px={4}
-      pb={4}
-      color="gray.300"
-      textAlign="center"
-      display={{ base: 'none', md: 'block' }}
-    >
-      <Text fontSize="sm" fontWeight="semibold" mb={1}>
-        Vidulum Wallet
-      </Text>
-      <Text fontSize="xs" color="gray.400">
-        Vidulum is a cross-chain wallet for Cosmos, Bitcoin-like, EVM, and Solana networks. Use
-        Vidulum for IBC transfers, multi-chain swaps, and asset management across supported
-        networks. Leftover official uquad Injective and dYdX hops last checked in September 2026.
-      </Text>
-    </Box>
   </Flex>
 );
 
