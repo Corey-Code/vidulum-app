@@ -67,6 +67,7 @@ interface DashboardProps {
   onNavigateToSettings?: () => void;
   onNavigateToEarn?: () => void;
   onNavigateToSwap?: () => void;
+  onNavigateToGovernance?: () => void;
 }
 
 const CUSTOM_ASSET_NAMES_KEY = 'custom_asset_names';
@@ -90,6 +91,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   onNavigateToSettings,
   onNavigateToEarn,
   onNavigateToSwap,
+  onNavigateToGovernance,
 }) => {
   const {
     isDemo,
@@ -1752,21 +1754,31 @@ const Dashboard: React.FC<DashboardProps> = ({
                 {/* Cosmos-specific menu items */}
                 {isCosmosSelected && (
                   <>
-                    <MenuItem
-                      bg="transparent"
-                      _hover={{ bg: 'whiteAlpha.100' }}
-                      as="a"
-                      href={
-                        getAdvertisedCosmosGovernanceUrl(selectedChainId) ??
-                        'https://www.mintscan.io/osmosis/proposals'
-                      }
-                      target="_blank"
-                    >
-                      <HStack justify="space-between" w="full">
-                        <Text>Governance</Text>
-                        <ExternalLinkIcon boxSize={3} color="gray.500" />
-                      </HStack>
-                    </MenuItem>
+                    {selectedChainId === 'beezee-1' ? (
+                      <MenuItem
+                        bg="transparent"
+                        _hover={{ bg: 'whiteAlpha.100' }}
+                        onClick={onNavigateToGovernance}
+                      >
+                        Governance
+                      </MenuItem>
+                    ) : (
+                      <MenuItem
+                        bg="transparent"
+                        _hover={{ bg: 'whiteAlpha.100' }}
+                        as="a"
+                        href={
+                          getAdvertisedCosmosGovernanceUrl(selectedChainId) ??
+                          'https://www.mintscan.io/osmosis/proposals'
+                        }
+                        target="_blank"
+                      >
+                        <HStack justify="space-between" w="full">
+                          <Text>Governance</Text>
+                          <ExternalLinkIcon boxSize={3} color="gray.500" />
+                        </HStack>
+                      </MenuItem>
+                    )}
                     {selectedChainId === 'beezee-1' ? (
                       <MenuItem
                         bg="transparent"
@@ -1908,6 +1920,18 @@ const Dashboard: React.FC<DashboardProps> = ({
                     }
                   >
                     Swap
+                  </Button>
+                )}
+                {selectedChainId === 'beezee-1' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    borderColor="#3a3a3a"
+                    borderRadius="xl"
+                    flex={0.5}
+                    onClick={onNavigateToGovernance}
+                  >
+                    Governance
                   </Button>
                 )}
               </HStack>

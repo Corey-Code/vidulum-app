@@ -1378,7 +1378,8 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     fee?: { amount: Array<{ denom: string; amount: string }>; gas: string },
     memo: string = ''
   ) => {
-    if (get().isDemo) {
+    // Prefer phase / session flag so demo never hits a null keyring
+    if (get().isDemo || get().phase.status === 'demo' || isDemoSession()) {
       applyDemoMessages(chainId, messages);
       return demoTxHash();
     }
@@ -1462,7 +1463,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     fee?: { amount: Array<{ denom: string; amount: string }>; gas: string },
     memo: string = ''
   ) => {
-    if (get().isDemo) {
+    if (get().isDemo || get().phase.status === 'demo' || isDemoSession()) {
       applyDemoMessages(chainId, messages);
       return demoTxHash();
     }

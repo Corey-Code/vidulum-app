@@ -16,6 +16,7 @@ import DenomEarn from './pages/DenomEarn';
 import StakeHub, { type StakeHubTarget } from './pages/StakeHub';
 import Approval from './pages/Approval';
 import Swap from './pages/Swap';
+import Governance from './pages/Governance';
 
 type View =
   | 'loading'
@@ -29,7 +30,8 @@ type View =
   | 'earn'
   | 'denom-earn'
   | 'approval'
-  | 'swap';
+  | 'swap'
+  | 'governance';
 
 // Check for approval ID in URL query params
 function getApprovalIdFromUrl(): string | null {
@@ -194,6 +196,10 @@ const App: React.FC = () => {
     setView('swap');
   };
 
+  const navigateToGovernance = () => {
+    setView('governance');
+  };
+
   const navigateToDashboard = () => {
     setView('dashboard');
   };
@@ -321,6 +327,7 @@ const App: React.FC = () => {
           onNavigateToSettings={navigateToSettings}
           onNavigateToEarn={navigateToEarn}
           onNavigateToSwap={navigateToSwap}
+          onNavigateToGovernance={navigateToGovernance}
         />
       )}
       {view === 'stake-hub' && (
@@ -333,6 +340,7 @@ const App: React.FC = () => {
         <DenomEarn onBack={navigateToStakeHub} initialDenom={denomEarnTarget} />
       )}
       {view === 'swap' && <Swap onBack={navigateToDashboard} />}
+      {view === 'governance' && <Governance onBack={navigateToDashboard} />}
       {view === 'approval' && approvalId && (
         <Approval approvalId={approvalId} onComplete={handleApprovalComplete} />
       )}
