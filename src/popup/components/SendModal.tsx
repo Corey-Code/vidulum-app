@@ -86,14 +86,17 @@ const SendModal: React.FC<SendModalProps> = ({
 
   const isBitcoin = networkType === 'bitcoin';
   const isEvm = networkType === 'evm';
-  const addressPrefix = chainConfig?.bech32Config.bech32PrefixAccAddr || 'bze';
-
-  // Get network config from registry for UTXO/EVM chains
+  const isTm2 = networkType === 'tm2';
   const networkConfig = networkRegistry.get(chainId);
+  const addressPrefix =
+    chainConfig?.bech32Config.bech32PrefixAccAddr ||
+    (networkConfig?.type === 'tm2' ? networkConfig.bech32Prefix : undefined) ||
+    'bze';
 
   // Get network-specific address placeholder
   const getAddressPlaceholder = (): string => {
     if (isEvm) return '0x...';
+    if (isTm2) return `${addressPrefix}1...`;
     if (!isBitcoin) return `${addressPrefix}1...`; // Cosmos
 
     // UTXO chains - check address type from network config
@@ -127,8 +130,10 @@ const SendModal: React.FC<SendModalProps> = ({
   };
 
   const addressPlaceholder = getAddressPlaceholder();
-  const nativeSymbol = networkConfig?.symbol || (isBitcoin ? 'BTC' : isEvm ? 'ETH' : 'BZE');
-  const nativeDecimals = networkConfig?.decimals || (isBitcoin ? 8 : isEvm ? 18 : 6);
+  const nativeSymbol =
+    networkConfig?.symbol || (isBitcoin ? 'BTC' : isEvm ? 'ETH' : isTm2 ? 'GNOT' : 'BZE');
+  const nativeDecimals =
+    networkConfig?.decimals || (isBitcoin ? 8 : isEvm ? 18 : 6);
 
   // Get the correct address for this chain
   const chainAddress = isBitcoin
@@ -232,8 +237,8 @@ const SendModal: React.FC<SendModalProps> = ({
 
   // Simulate fee when form fields change (Cosmos only)
   useEffect(() => {
-    // Skip for Bitcoin and EVM
-    if (isBitcoin || isEvm) return;
+    // Skip for Bitcoin, EVM, and tm2 (Gno.land send not enabled)
+    if (isBitcoin || isEvm || isTm2) return;
 
     const simulateFee = async () => {
       if (!chainConfig?.rest || !chainAddress || !recipient || !amount || !selectedDenom) {
@@ -300,6 +305,8 @@ const SendModal: React.FC<SendModalProps> = ({
     return () => clearTimeout(debounceTimer);
   }, [
     isBitcoin,
+    isEvm,
+    isTm2,
     chainConfig?.rest,
     chainAddress,
     recipient,
@@ -353,6 +360,11 @@ const SendModal: React.FC<SendModalProps> = ({
       const nativeBalance = balance?.find((b) => b.denom === nativeDenom || b.denom === 'wei');
       return [{ denom: nativeDenom, amount: nativeBalance?.amount || '0' }];
     }
+    if (isTm2) {
+      const nativeDenom = registryAssets.length > 0 ? registryAssets[0].denom : 'ugnot';
+      const nativeBalance = balance?.find((b) => b.denom === nativeDenom);
+      return [{ denom: nativeDenom, amount: nativeBalance?.amount || '0' }];
+    }
     // Cosmos: filter to tokens with balance > 0
     return balance?.filter((b) => parseInt(b.amount) > 0) || [];
   })();
@@ -385,8 +397,8 @@ const SendModal: React.FC<SendModalProps> = ({
   // Auto-select native token for Bitcoin/EVM, or first token with balance for Cosmos
   useEffect(() => {
     if (!selectedDenom || selectedDenom === 'sat' || selectedDenom === 'wei') {
-      if (isBitcoin || isEvm) {
-        // Use first registry asset denom for UTXO/EVM chains
+      if (isBitcoin || isEvm || isTm2) {
+        // Use first registry asset denom for UTXO/EVM/tm2 chains
         if (registryAssets.length > 0) {
           setSelectedDenom(registryAssets[0].denom);
         } else if (tokensWithBalance.length > 0) {
@@ -396,7 +408,7 @@ const SendModal: React.FC<SendModalProps> = ({
         setSelectedDenom(tokensWithBalance[0].denom);
       }
     }
-  }, [tokensWithBalance, selectedDenom, isBitcoin, isEvm, registryAssets]);
+  }, [tokensWithBalance, selectedDenom, isBitcoin, isEvm, isTm2, registryAssets]);
 
   const validateAddress = (address: string): boolean => {
     if (isDemoSession() && address.trim().length > 0) return true;
@@ -687,6 +699,17 @@ const SendModal: React.FC<SendModalProps> = ({
         toast({
           title: `${nativeSymbol} Sending`,
           description: `EVM transaction signing is coming soon. Your address is ready to receive ${nativeSymbol}.`,
+          status: 'info',
+          duration: 5000,
+        });
+        onClose();
+        return;
+      }
+
+      if (isTm2) {
+        toast({
+          title: 'Send not available',
+          description: `Gno.land sending is not enabled yet. Your g1 address can receive ${nativeSymbol}.`,
           status: 'info',
           duration: 5000,
         });

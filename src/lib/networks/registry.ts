@@ -12,11 +12,13 @@ import {
   BitcoinNetworkConfig,
   EvmNetworkConfig,
   SvmNetworkConfig,
+  Tm2NetworkConfig,
 } from './types';
 import { COSMOS_NETWORKS } from './cosmos';
 import { BITCOIN_NETWORKS } from './bitcoin';
 import { EVM_NETWORKS } from './evm';
 import { SVM_NETWORKS } from './solana';
+import { TM2_NETWORKS } from './tm2';
 
 // Import registry chains (auto-generated from chain registries)
 import { COSMOS_REGISTRY_CHAINS } from './cosmos-registry';
@@ -76,6 +78,11 @@ class NetworkRegistry {
     return network?.type === 'svm' ? network : undefined;
   }
 
+  getTm2(id: string): Tm2NetworkConfig | undefined {
+    const network = this.get(id);
+    return network?.type === 'tm2' ? network : undefined;
+  }
+
   isEnabled(id: string): boolean {
     return this.get(id)?.enabled ?? false;
   }
@@ -93,6 +100,7 @@ COSMOS_NETWORKS.forEach((network) => networkRegistry.register(network));
 BITCOIN_NETWORKS.forEach((network) => networkRegistry.register(network));
 EVM_NETWORKS.forEach((network) => networkRegistry.register(network));
 SVM_NETWORKS.forEach((network) => networkRegistry.register(network));
+TM2_NETWORKS.forEach((network) => networkRegistry.register(network));
 
 // Register chains from auto-generated registries (skip duplicates)
 // These provide additional chains from cosmos/chain-registry and ethereum-lists/chains
@@ -187,6 +195,13 @@ export function isSvmNetwork(network: NetworkConfig): network is SvmNetworkConfi
 }
 
 /**
+ * Check if a network is Tendermint2 (e.g. Gno.land)
+ */
+export function isTm2Network(network: NetworkConfig): network is Tm2NetworkConfig {
+  return network.type === 'tm2';
+}
+
+/**
  * Get all networks for UI display
  * Note: Filtering by user preferences should be done at the component level
  * using isNetworkEnabled() from the network store
@@ -196,17 +211,21 @@ export function getUINetworks(): Array<{
   name: string;
   symbol: string;
   type: NetworkType;
-  prefix?: string; // For Cosmos chains
+  prefix?: string; // For Cosmos / tm2 bech32 chains
 }> {
   // Priority networks that should appear first (in order)
-  const priorityNetworks = ['beezee-1', 'atomone-1', 'cosmoshub-4', 'osmosis-1'];
+  const priorityNetworks = ['beezee-1', 'atomone-1', 'cosmoshub-4', 'osmosis-1', 'gnoland-1'];
 
   const networks = networkRegistry.getAll().map((network) => ({
     id: network.id,
     name: network.name,
     symbol: network.symbol,
     type: network.type,
-    prefix: isCosmosNetwork(network) ? network.bech32Prefix : undefined,
+    prefix: isCosmosNetwork(network)
+      ? network.bech32Prefix
+      : isTm2Network(network)
+        ? network.bech32Prefix
+        : undefined,
   }));
 
   // Sort: priority networks first (in specified order), then alphabetically by name

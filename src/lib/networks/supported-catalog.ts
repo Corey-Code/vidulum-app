@@ -9,7 +9,7 @@
 
 export { DEPRECATED_SVM_ENDPOINT_HOSTS } from './svm-endpoints';
 
-export type SupportedNetworkFamily = 'cosmos' | 'utxo' | 'evm' | 'svm';
+export type SupportedNetworkFamily = 'cosmos' | 'utxo' | 'evm' | 'svm' | 'tm2';
 
 export interface SupportedNetworkEntry {
   id: string;
@@ -44,6 +44,8 @@ export const SUPPORTED_NETWORK_CATALOG: readonly SupportedNetworkEntry[] = [
   { id: 'arb1-mainnet', name: 'Arbitrum One', symbol: 'ETH', family: 'evm' },
 
   { id: 'solana-mainnet', name: 'Solana', symbol: 'SOL', family: 'svm' },
+
+  { id: 'gnoland-1', name: 'Gno.land', symbol: 'GNOT', family: 'tm2' },
 ];
 
 export function getSupportedNetworkFamilyLabel(family: SupportedNetworkFamily): string {
@@ -56,6 +58,8 @@ export function getSupportedNetworkFamilyLabel(family: SupportedNetworkFamily): 
       return 'Ethereum-like (EVM)';
     case 'svm':
       return 'Solana (SVM)';
+    case 'tm2':
+      return 'Tendermint2 (Gno.land)';
     default: {
       const _exhaustive: never = family;
       return _exhaustive;
@@ -73,6 +77,8 @@ export function getSupportedNetworkFamilySummary(family: SupportedNetworkFamily)
       return 'Ethereum and compatible networks load balances through current public RPCs (PublicNode, DRPC, and official chain endpoints). Retired leftover hosts such as snowscan.xyz were removed. Earlier leftover 1rpc.io/sepolia, leftover 1rpc.io/eth, moonriver.unitedbloc.com, Sepolia.org RPCs, zkevm.polygonscan.com, Cloudflare Ethereum, Ankr public RPC, and BlastAPI hops stay denylisted.';
     case 'svm':
       return 'Solana mainnet balances load through current public RPCs (official Solana and PublicNode). Explorer links use SolanaFM after leftover explorer.solana.com started returning a Vercel Security Checkpoint 429. Retired or key-gated hosts such as Ankr public RPC and Solana dRPC were removed.';
+    case 'tm2':
+      return 'Gno.land mainnet shows g1 addresses (BIP44 coin type 118) and loads ugnot/GNOT balances via Tendermint ABCI bank/balances on rpc.gno.land. Send is not enabled yet (tm2 amino signing is separate from CosmJS). Explorer links use GnoScan.';
     default: {
       const _exhaustive: never = family;
       return _exhaustive;
@@ -84,7 +90,7 @@ export function getSupportedNetworksByFamily(): Record<
   SupportedNetworkFamily,
   SupportedNetworkEntry[]
 > {
-  const families: SupportedNetworkFamily[] = ['cosmos', 'utxo', 'evm', 'svm'];
+  const families: SupportedNetworkFamily[] = ['cosmos', 'utxo', 'evm', 'svm', 'tm2'];
   return families.reduce(
     (grouped, family) => {
       grouped[family] = SUPPORTED_NETWORK_CATALOG.filter((entry) => entry.family === family);
@@ -95,6 +101,7 @@ export function getSupportedNetworksByFamily(): Record<
       utxo: [],
       evm: [],
       svm: [],
+      tm2: [],
     } as Record<SupportedNetworkFamily, SupportedNetworkEntry[]>
   );
 }

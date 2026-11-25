@@ -12,6 +12,7 @@ export type {
   BitcoinNetworkConfig,
   EvmNetworkConfig,
   SvmNetworkConfig,
+  Tm2NetworkConfig,
   NetworkConfig,
   EndpointHealth,
 } from './types';
@@ -33,6 +34,13 @@ export {
   getSvmNetworkById,
   getEnabledSvmNetworks,
 } from './solana';
+
+export {
+  TM2_NETWORKS,
+  GNOLAND_MAINNET,
+  getTm2NetworkById,
+  getEnabledTm2Networks,
+} from './tm2';
 
 export {
   SUPPORTED_NETWORK_CATALOG,
@@ -111,6 +119,7 @@ export {
   isBitcoinNetwork,
   isEvmNetwork,
   isSvmNetwork,
+  isTm2Network,
   getUINetworks,
 } from './registry';
 

@@ -102,6 +102,6 @@ export function isCosmosChain(networkId: string): boolean {
  */
 export function getNetworkType(
   networkId: string
-): 'cosmos' | 'bitcoin' | 'evm' | 'svm' | undefined {
+): 'cosmos' | 'bitcoin' | 'evm' | 'svm' | 'tm2' | undefined {
   return networkRegistry.get(networkId)?.type;
 }

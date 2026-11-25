@@ -47,6 +47,10 @@ export function demoChainAddress(networkId: string, accountIndex = 0): string {
   if (network?.type === 'bitcoin') return `bc1DEMO-NOT-A-REAL-BITCOIN-${n}-DEMO`;
   if (network?.type === 'evm') return `0xDEMO-NOT-A-REAL-ADDRESS-${n}-DEMO`;
   if (network?.type === 'svm') return `DEMO-SOL-NOT-A-REAL-ADDRESS-${n}-DEMO`;
+  if (network?.type === 'tm2') {
+    const prefix = networkRegistry.getTm2(networkId)?.bech32Prefix ?? 'g';
+    return demoAddressForPrefix(prefix, accountIndex);
+  }
   const prefix = networkRegistry.getCosmos(networkId)?.bech32Prefix ?? 'bze';
   return demoAddressForPrefix(prefix, accountIndex);
 }
@@ -58,6 +62,7 @@ function baseAmount(networkId: string, denom: string): bigint {
   if (denom === 'sat') return 1_500_000n;
   if (denom === 'wei') return 420_000_000_000_000_000n;
   if (denom === 'lamports') return 2_500_000_000n;
+  if (denom === 'ugnot') return 7_500_000n;
   return 12_500_000n;
 }
 
@@ -71,6 +76,9 @@ export function demoBalances(networkId: string): Balance[] {
     rows = [{ denom: 'wei', amount: baseAmount(networkId, 'wei').toString() }];
   } else if (network?.type === 'svm') {
     rows = [{ denom: 'lamports', amount: baseAmount(networkId, 'lamports').toString() }];
+  } else if (network?.type === 'tm2') {
+    const denom = networkRegistry.getTm2(networkId)?.feeDenom ?? 'ugnot';
+    rows = [{ denom, amount: baseAmount(networkId, denom).toString() }];
   } else {
     const denom = networkRegistry.getCosmos(networkId)?.feeDenom ?? 'ustake';
     rows = [{ denom, amount: baseAmount(networkId, denom).toString() }];

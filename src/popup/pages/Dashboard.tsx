@@ -207,6 +207,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const isBitcoinSelected = selectedNetworkType === 'bitcoin';
   const isEvmSelected = selectedNetworkType === 'evm';
   const isSvmSelected = selectedNetworkType === 'svm';
+  const isTm2Selected = selectedNetworkType === 'tm2';
   const btcNetwork = isBitcoinSelected ? networkRegistry.getBitcoin(selectedChainId) : undefined;
   const currentUtxoStyle = utxoAddressStyle[selectedChainId] ?? 'vidulum';
   const showUtxoStyleToggle = Boolean(
@@ -578,8 +579,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   const getChainAddress = () => {
     if (!selectedAccount) return '';
 
-    // For Cosmos chains, convert address prefix
-    if (isCosmosSelected && selectedChain.prefix) {
+    // For Cosmos / tm2 (Gno.land) chains, convert address prefix
+    if ((isCosmosSelected || isTm2Selected) && selectedChain.prefix) {
       return getAddressForChain(selectedChain.prefix) || '';
     }
 
@@ -608,7 +609,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const getAccountChainAddress = (account: { address: string; accountIndex?: number }) => {
     if (isDemo) {
       const index = account.accountIndex ?? 0;
-      if (isBitcoinSelected || isEvmSelected || isSvmSelected) {
+      if (isBitcoinSelected || isEvmSelected || isSvmSelected || isTm2Selected) {
         return demoChainAddress(selectedChainId, index);
       }
       return demoAddressForPrefix(selectedChain.prefix || 'bze', index);
@@ -635,8 +636,8 @@ const Dashboard: React.FC<DashboardProps> = ({
       return cachedAddr || 'Deriving...';
     }
 
-    // For Cosmos chains, convert address prefix
-    if (isCosmosSelected && selectedChain.prefix) {
+    // For Cosmos / tm2 chains, convert address prefix
+    if ((isCosmosSelected || isTm2Selected) && selectedChain.prefix) {
       try {
         return Keyring.convertAddress(account.address, selectedChain.prefix);
       } catch {
@@ -714,6 +715,12 @@ const Dashboard: React.FC<DashboardProps> = ({
       if (svmNetwork) {
         selectChain(svmNetwork.id);
       }
+    } else if (tabIndex === 5) {
+      // TM2 tab - select first enabled Tendermint2 network (Gno.land)
+      const tm2Network = enabledUIChains.find((n) => n.type === 'tm2');
+      if (tm2Network) {
+        selectChain(tm2Network.id);
+      }
     }
     // All tab (0) - keep current selection
   };
@@ -761,6 +768,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     isBitcoinSelected,
     isEvmSelected,
     isSvmSelected,
+    isTm2Selected,
     bitcoinAddress,
     evmAddress,
     svmAddress,
@@ -1611,6 +1619,16 @@ const Dashboard: React.FC<DashboardProps> = ({
                   >
                     SVM
                   </Tab>
+                  <Tab
+                    fontSize="xs"
+                    px={2}
+                    py={1}
+                    borderRadius="full"
+                    color="gray.500"
+                    _selected={{ bg: 'teal.600', color: 'white' }}
+                  >
+                    Gno
+                  </Tab>
                 </TabList>
               </Tabs>
             </HStack>
@@ -1665,6 +1683,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                       if (networkTab === 2) return network.type === 'bitcoin'; // UTXO only
                       if (networkTab === 3) return network.type === 'evm'; // EVM only
                       if (networkTab === 4) return network.type === 'svm'; // SVM only
+                      if (networkTab === 5) return network.type === 'tm2'; // Gno.land / tm2
                       return true;
                     })
                     .map((network) => {
@@ -1672,20 +1691,25 @@ const Dashboard: React.FC<DashboardProps> = ({
                       const isBitcoin = network.type === 'bitcoin';
                       const isEvm = network.type === 'evm';
                       const isSvm = network.type === 'svm';
+                      const isTm2 = network.type === 'tm2';
                       const borderActiveColor = isBitcoin
                         ? 'orange.500'
                         : isEvm
                           ? 'blue.500'
                           : isSvm
                             ? 'green.500'
-                            : 'cyan.500';
+                            : isTm2
+                              ? 'teal.500'
+                              : 'cyan.500';
                       const borderHoverColor = isBitcoin
                         ? 'orange.400'
                         : isEvm
                           ? 'blue.400'
                           : isSvm
                             ? 'green.400'
-                            : 'cyan.400';
+                            : isTm2
+                              ? 'teal.400'
+                              : 'cyan.400';
                       return (
                         <Button
                           key={network.id}
@@ -1894,16 +1918,18 @@ const Dashboard: React.FC<DashboardProps> = ({
             </Menu>
             <VStack spacing={2} align="stretch">
               <HStack spacing={2}>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  borderColor="#3a3a3a"
-                  borderRadius="xl"
-                  flex={0.5}
-                  onClick={onSendOpen}
-                >
-                  Send
-                </Button>
+                {!isTm2Selected && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    borderColor="#3a3a3a"
+                    borderRadius="xl"
+                    flex={0.5}
+                    onClick={onSendOpen}
+                  >
+                    Send
+                  </Button>
+                )}
                 {/* Swap available on BeeZee and Osmosis */}
                 {isCosmosSelected && (
                   <Button
