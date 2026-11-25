@@ -24,7 +24,7 @@ interface NetworkState {
   setNetworkEnabled: (networkId: string, enabled: boolean) => Promise<void>;
   getEnabledNetworks: () => NetworkConfig[];
   getAllNetworks: () => NetworkConfig[];
-  getNetworksByType: (type: 'cosmos' | 'bitcoin' | 'evm' | 'svm') => NetworkConfig[];
+  getNetworksByType: (type: 'cosmos' | 'bitcoin' | 'evm' | 'svm' | 'tm2') => NetworkConfig[];
 
   // Asset management
   isAssetEnabled: (networkId: string, denom: string) => boolean;
@@ -122,7 +122,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
     return networkRegistry.getAll();
   },
 
-  getNetworksByType: (type: 'cosmos' | 'bitcoin' | 'evm' | 'svm') => {
+  getNetworksByType: (type: 'cosmos' | 'bitcoin' | 'evm' | 'svm' | 'tm2') => {
     return networkRegistry.getByType(type);
   },
 

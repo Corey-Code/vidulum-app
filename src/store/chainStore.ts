@@ -5,6 +5,7 @@ import { cosmosClient } from '@/lib/cosmos/client';
 import { getChainWebSocket, disconnectAllWebSockets } from '@/lib/cosmos/websocket';
 import { getBitcoinClient } from '@/lib/bitcoin/client';
 import { getEvmClient } from '@/lib/evm/client';
+import { getTm2Client } from '@/lib/tm2';
 import { networkRegistry } from '@/lib/networks';
 import { demoBalances, isDemoSession } from '@/lib/demo/session';
 
@@ -118,6 +119,20 @@ export const useChainStore = create<ChainState>((set, get) => ({
         ];
       } catch (error) {
         console.error(`Failed to fetch EVM balance:`, error);
+        balances = [];
+      }
+    } else if (networkType === 'tm2') {
+      try {
+        setLoadingStatus({ isLoading: true, message: 'Fetching Gno.land balance...' });
+        const client = getTm2Client(networkId);
+        const coins = await client.getBalances(address);
+        const feeDenom = networkRegistry.getTm2(networkId)?.feeDenom ?? 'ugnot';
+        balances =
+          coins.length > 0
+            ? coins.map((c) => ({ denom: c.denom, amount: c.amount }))
+            : [{ denom: feeDenom, amount: '0' }];
+      } catch (error) {
+        console.error(`Failed to fetch tm2 balance:`, error);
         balances = [];
       }
     } else {

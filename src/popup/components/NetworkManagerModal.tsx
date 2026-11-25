@@ -55,7 +55,11 @@ const NetworkItem: React.FC<NetworkItemProps> = ({ network, isEnabled, onToggle 
   const { isAssetEnabled, setAssetEnabled, setEnabledAssets } = useNetworkStore();
 
   // Determine if this network type supports assets
-  const hasAssets = network.type === 'cosmos' || network.type === 'evm' || network.type === 'svm';
+  const hasAssets =
+    network.type === 'cosmos' ||
+    network.type === 'evm' ||
+    network.type === 'svm' ||
+    network.type === 'tm2';
 
   // Load assets when expanded based on network type
   useEffect(() => {
@@ -140,7 +144,9 @@ const NetworkItem: React.FC<NetworkItemProps> = ({ network, isEnabled, onToggle 
                     ? 'orange'
                     : network.type === 'svm'
                       ? 'green'
-                      : 'blue'
+                      : network.type === 'tm2'
+                        ? 'teal'
+                        : 'blue'
               }
               fontSize="2xs"
             >
@@ -276,6 +282,7 @@ const NetworkManagerModal: React.FC<NetworkManagerModalProps> = ({
   const bitcoinNetworks = getNetworksByType('bitcoin');
   const evmNetworks = getNetworksByType('evm');
   const svmNetworks = getNetworksByType('svm');
+  const tm2Networks = getNetworksByType('tm2');
 
   const handleToggle = async (networkId: string, enabled: boolean) => {
     await setNetworkEnabled(networkId, enabled);
@@ -333,6 +340,14 @@ const NetworkManagerModal: React.FC<NetworkManagerModalProps> = ({
                 _selected={{ bg: 'green.600', color: 'white' }}
               >
                 SVM ({getEnabledCount(svmNetworks)}/{svmNetworks.length})
+              </Tab>
+              <Tab
+                fontSize="xs"
+                px={3}
+                borderRadius="full"
+                _selected={{ bg: 'teal.600', color: 'white' }}
+              >
+                Gno ({getEnabledCount(tm2Networks)}/{tm2Networks.length})
               </Tab>
             </TabList>
 
@@ -406,6 +421,26 @@ const NetworkManagerModal: React.FC<NetworkManagerModalProps> = ({
                     </Text>
                   ) : (
                     svmNetworks.map((network) => (
+                      <NetworkItem
+                        key={network.id}
+                        network={network}
+                        isEnabled={isNetworkEnabled(network.id)}
+                        onToggle={(enabled) => handleToggle(network.id, enabled)}
+                      />
+                    ))
+                  )}
+                </VStack>
+              </TabPanel>
+
+              {/* Tendermint2 / Gno.land Networks */}
+              <TabPanel p={0}>
+                <VStack spacing={2} align="stretch">
+                  {tm2Networks.length === 0 ? (
+                    <Text color="gray.500" textAlign="center" py={4}>
+                      No Gno.land networks available
+                    </Text>
+                  ) : (
+                    tm2Networks.map((network) => (
                       <NetworkItem
                         key={network.id}
                         network={network}

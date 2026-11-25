@@ -7,7 +7,13 @@
  * - EVM chains: static native asset definitions
  */
 
-import { networkRegistry, isBitcoinNetwork, isEvmNetwork, isSvmNetwork } from '@/lib/networks';
+import {
+  networkRegistry,
+  isBitcoinNetwork,
+  isEvmNetwork,
+  isSvmNetwork,
+  isTm2Network,
+} from '@/lib/networks';
 import { COSMOS_REGISTRY_ASSETS } from './cosmos-registry';
 import { COSMOS_REGISTRY_CHAINS } from '@/lib/networks/cosmos-registry';
 
@@ -382,6 +388,19 @@ const svmAssets: Record<string, RegistryAsset[]> = {
   ],
 };
 
+// Tendermint2 (Gno.land) assets
+const tm2Assets: Record<string, RegistryAsset[]> = {
+  'gnoland-1': [
+    {
+      symbol: 'GNOT',
+      name: 'Gno.land',
+      denom: 'ugnot',
+      decimals: 6,
+      logoUrl: 'https://avatars.githubusercontent.com/u/118141905?s=200&v=4',
+    },
+  ],
+};
+
 // Fallback assets in case chain registry fetch fails
 const fallbackAssets: Record<string, RegistryAsset[]> = {
   'beezee-1': [
@@ -504,6 +523,8 @@ const fallbackAssets: Record<string, RegistryAsset[]> = {
   ...evmAssets,
   // Include SVM in fallbacks
   ...svmAssets,
+  // Include tm2 (Gno.land) in fallbacks
+  ...tm2Assets,
 };
 
 /**
@@ -540,6 +561,14 @@ export async function fetchChainAssets(networkId: string): Promise<RegistryAsset
   // Handle SVM networks - return static assets
   if (network && isSvmNetwork(network)) {
     const assets = svmAssets[networkId] || [];
+    assetCache.set(networkId, assets);
+    cacheExpiry.set(networkId, Date.now() + CACHE_DURATION);
+    return assets;
+  }
+
+  // Handle tm2 (Gno.land) networks - return static assets
+  if (network && isTm2Network(network)) {
+    const assets = tm2Assets[networkId] || [];
     assetCache.set(networkId, assets);
     cacheExpiry.set(networkId, Date.now() + CACHE_DURATION);
     return assets;

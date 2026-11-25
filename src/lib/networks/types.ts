@@ -7,7 +7,7 @@
 import type { EndpointHealthPhase } from '@/types/network-phase';
 
 // Network types supported by the wallet
-export type NetworkType = 'cosmos' | 'bitcoin' | 'evm' | 'svm';
+export type NetworkType = 'cosmos' | 'bitcoin' | 'evm' | 'svm' | 'tm2';
 
 export type { EndpointHealthPhase };
 
@@ -88,9 +88,20 @@ export interface SvmNetworkConfig extends BaseNetworkConfig {
   isMainnet?: boolean; // Explicitly mark if this is a mainnet (for non-Solana SVM chains)
 }
 
+// Tendermint2 (tm2) network configuration — Gno.land and other tm2 chains.
+// Not Cosmos SDK: no LCD; balances/queries go through Tendermint ABCI over RPC.
+export interface Tm2NetworkConfig extends BaseNetworkConfig {
+  type: 'tm2';
+  rpcUrls: string[]; // Array of Tendermint RPC endpoints (failover order)
+  bech32Prefix: string;
+  feeDenom: string;
+  isMainnet?: boolean;
+}
+
 // Union type for all network configs
 export type NetworkConfig =
   | CosmosNetworkConfig
   | BitcoinNetworkConfig
   | EvmNetworkConfig
-  | SvmNetworkConfig;
+  | SvmNetworkConfig
+  | Tm2NetworkConfig;

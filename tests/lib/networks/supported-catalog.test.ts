@@ -38,14 +38,18 @@ describe('Supported network catalog', () => {
     expect(byFamily.utxo.some((entry) => entry.id === 'bitcoin-mainnet')).toBe(true);
     expect(byFamily.evm.some((entry) => entry.id === 'eth-mainnet')).toBe(true);
     expect(byFamily.svm.some((entry) => entry.id === 'solana-mainnet')).toBe(true);
+    expect(byFamily.tm2.some((entry) => entry.id === 'gnoland-1')).toBe(true);
   });
 
   it('uses user-facing family labels', () => {
-    const families: SupportedNetworkFamily[] = ['cosmos', 'utxo', 'evm', 'svm'];
+    const families: SupportedNetworkFamily[] = ['cosmos', 'utxo', 'evm', 'svm', 'tm2'];
     families.forEach((family) => {
       expect(getSupportedNetworkFamilyLabel(family).length).toBeGreaterThan(0);
       expect(getSupportedNetworkFamilySummary(family).length).toBeGreaterThan(0);
     });
+    expect(getSupportedNetworkFamilySummary('tm2')).toMatch(/Gno\.land/);
+    expect(getSupportedNetworkFamilySummary('tm2')).toMatch(/rpc\.gno\.land/);
+    expect(getSupportedNetworkFamilyLabel('tm2')).toMatch(/Tendermint2/);
     expect(getSupportedNetworkFamilySummary('utxo')).toMatch(
       /Bitcoin and Litecoin can load balances today/
     );

@@ -12,12 +12,16 @@ import {
   isBitcoinNetwork,
   isEvmNetwork,
   isSvmNetwork,
+  isTm2Network,
   getUINetworks,
   BITCOIN_MAINNET,
   SOLANA_MAINNET,
   SOLANA_DEVNET,
+  GNOLAND_MAINNET,
   getSvmNetworkById,
   getEnabledSvmNetworks,
+  getTm2NetworkById,
+  getEnabledTm2Networks,
 } from '@/lib/networks';
 
 describe('Network Registry', () => {
@@ -44,6 +48,12 @@ describe('Network Registry', () => {
       const svm = networkRegistry.getByType('svm');
       expect(svm.length).toBeGreaterThan(0);
       expect(svm.some((n) => n.id === 'solana-mainnet')).toBe(true);
+    });
+
+    it('should have registered tm2 (Gno.land) networks', () => {
+      const tm2 = networkRegistry.getByType('tm2');
+      expect(tm2.length).toBeGreaterThan(0);
+      expect(tm2.some((n) => n.id === 'gnoland-1')).toBe(true);
     });
 
     it('should get network by ID', () => {
@@ -87,11 +97,23 @@ describe('Network Registry', () => {
       expect(svm?.cluster).toBe('mainnet-beta');
     });
 
+    it('should get tm2 network with correct type', () => {
+      const tm2 = networkRegistry.getTm2('gnoland-1');
+      expect(tm2).toBeDefined();
+      expect(tm2?.type).toBe('tm2');
+      expect(tm2?.rpcUrls).toBeInstanceOf(Array);
+      expect(tm2?.bech32Prefix).toBe('g');
+      expect(tm2?.feeDenom).toBe('ugnot');
+      expect(tm2?.coinType).toBe(118);
+    });
+
     it('should return null for wrong network type getter', () => {
       expect(networkRegistry.getCosmos('bitcoin-mainnet')).toBeUndefined();
       expect(networkRegistry.getBitcoin('beezee-1')).toBeUndefined();
       expect(networkRegistry.getEvm('beezee-1')).toBeUndefined();
       expect(networkRegistry.getSvm('beezee-1')).toBeUndefined();
+      expect(networkRegistry.getTm2('beezee-1')).toBeUndefined();
+      expect(networkRegistry.getCosmos('gnoland-1')).toBeUndefined();
     });
 
     it('should check if network is enabled', () => {
@@ -322,6 +344,16 @@ describe('Network Registry', () => {
       expect(isBitcoinNetwork(solana)).toBe(false);
       expect(isEvmNetwork(solana)).toBe(false);
       expect(isSvmNetwork(solana)).toBe(true);
+      expect(isTm2Network(solana)).toBe(false);
+    });
+
+    it('should identify tm2 (Gno.land) network', () => {
+      const gno = networkRegistry.get('gnoland-1')!;
+      expect(isCosmosNetwork(gno)).toBe(false);
+      expect(isBitcoinNetwork(gno)).toBe(false);
+      expect(isEvmNetwork(gno)).toBe(false);
+      expect(isSvmNetwork(gno)).toBe(false);
+      expect(isTm2Network(gno)).toBe(true);
     });
   });
 
@@ -341,10 +373,10 @@ describe('Network Registry', () => {
       });
     });
 
-    it('should include prefix only for Cosmos chains', () => {
+    it('should include prefix for Cosmos and tm2 chains only', () => {
       const uiNetworks = getUINetworks();
       uiNetworks.forEach((network) => {
-        if (network.type === 'cosmos') {
+        if (network.type === 'cosmos' || network.type === 'tm2') {
           expect(network.prefix).toBeDefined();
         } else {
           expect(network.prefix).toBeUndefined();
@@ -429,6 +461,35 @@ describe('Network Registry', () => {
         expect(url).toBeDefined();
         expect(url).toContain(txHash);
       });
+    });
+  });
+
+  describe('Tendermint2 / Gno.land Networks', () => {
+    it('should have valid Gno.land mainnet config', () => {
+      expect(GNOLAND_MAINNET.id).toBe('gnoland-1');
+      expect(GNOLAND_MAINNET.type).toBe('tm2');
+      expect(GNOLAND_MAINNET.symbol).toBe('GNOT');
+      expect(GNOLAND_MAINNET.decimals).toBe(6);
+      expect(GNOLAND_MAINNET.bech32Prefix).toBe('g');
+      expect(GNOLAND_MAINNET.feeDenom).toBe('ugnot');
+      expect(GNOLAND_MAINNET.coinType).toBe(118);
+      expect(GNOLAND_MAINNET.rpcUrls[0]).toMatch(/rpc\.gno\.land/);
+      expect(GNOLAND_MAINNET.enabled).toBe(true);
+    });
+
+    it('should resolve helpers', () => {
+      expect(getTm2NetworkById('gnoland-1')?.name).toBe('Gno.land');
+      expect(getTm2NetworkById('unknown')).toBeUndefined();
+      expect(getEnabledTm2Networks().some((n) => n.id === 'gnoland-1')).toBe(true);
+    });
+
+    it('should generate GnoScan explorer URLs', () => {
+      const address = 'g1ct00m8t88chjcfaysafhsk9fdz43qyr9d2tccd';
+      const accountUrl = getExplorerAccountUrl('gnoland-1', address);
+      expect(accountUrl).toBe(`https://gnoscan.io/account/${address}`);
+      const txUrl = getExplorerTxUrl('gnoland-1', 'ABC123');
+      expect(txUrl).toContain('gnoscan.io');
+      expect(txUrl).toContain('ABC123');
     });
   });
 });
