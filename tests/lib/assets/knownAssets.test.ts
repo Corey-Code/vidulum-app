@@ -6,6 +6,7 @@
 
 import {
   ETH_MAINNET_ERC20_TOKENS,
+  GNOSIS_ERC20_TOKENS,
   SOLANA_MAINNET_SPL_TOKENS,
   getKnownErc20Tokens,
   getKnownSplTokens,
@@ -15,6 +16,10 @@ import {
   getErc20ContractAddress,
   getSplMintAddress,
 } from '@/lib/assets/knownAssets';
+
+/** Gnosis (GNO) — CMC UCID 1659 */
+const GNO_ETH_CONTRACT = '0x6810e776880c02933d47db1b9fc05908e5386b96';
+const GNO_GNOSIS_CONTRACT = '0x9C58BAcC331c9aa871AFD802DB6379a98e80CEdb';
 
 describe('Known Assets', () => {
   describe('ETH_MAINNET_ERC20_TOKENS', () => {
@@ -43,6 +48,36 @@ describe('Known Assets', () => {
       const symbols = ETH_MAINNET_ERC20_TOKENS.map((t) => t.symbol);
       expect(symbols).toContain('USDT');
       expect(symbols).toContain('USDC');
+    });
+
+    it('should include Gnosis (GNO) with Ethereum mainnet contract', () => {
+      const gno = ETH_MAINNET_ERC20_TOKENS.find((t) => t.symbol === 'GNO');
+      expect(gno).toBeDefined();
+      expect(gno?.name).toBe('Gnosis');
+      expect(gno?.decimals).toBe(18);
+      expect(gno?.contractAddress).toBe(GNO_ETH_CONTRACT);
+      expect(gno?.denom).toBe(`erc20:${GNO_ETH_CONTRACT}`);
+      expect(gno?.chainId).toBe(1);
+      expect(gno?.logoUrl).toContain('1659');
+    });
+  });
+
+  describe('GNOSIS_ERC20_TOKENS', () => {
+    it('should include Gnosis (GNO) with Gnosis Chain contract', () => {
+      const gno = GNOSIS_ERC20_TOKENS.find((t) => t.symbol === 'GNO');
+      expect(gno).toBeDefined();
+      expect(gno?.name).toBe('Gnosis');
+      expect(gno?.decimals).toBe(18);
+      expect(gno?.contractAddress).toBe(GNO_GNOSIS_CONTRACT);
+      expect(gno?.denom).toBe(`erc20:${GNO_GNOSIS_CONTRACT}`);
+      expect(gno?.chainId).toBe(100);
+      expect(gno?.logoUrl).toContain('1659');
+    });
+
+    it('should be returned by getKnownErc20Tokens for chainId 100', () => {
+      const tokens = getKnownErc20Tokens(100);
+      expect(tokens).toEqual(GNOSIS_ERC20_TOKENS);
+      expect(tokens.some((t) => t.symbol === 'GNO')).toBe(true);
     });
   });
 

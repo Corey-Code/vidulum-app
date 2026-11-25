@@ -164,6 +164,15 @@ export const ETH_MAINNET_ERC20_TOKENS: KnownToken[] = [
     contractAddress: '0xD533a949740bb3306d119CC777fa900bA034cd52',
     chainId: 1,
   },
+  {
+    denom: 'erc20:0x6810e776880c02933d47db1b9fc05908e5386b96',
+    symbol: 'GNO',
+    name: 'Gnosis',
+    decimals: 18,
+    contractAddress: '0x6810e776880c02933d47db1b9fc05908e5386b96',
+    chainId: 1,
+    logoUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1659.png',
+  },
 ];
 
 // ============================================================================
@@ -455,6 +464,7 @@ export const GNOSIS_ERC20_TOKENS: KnownToken[] = [
     decimals: 18,
     contractAddress: '0x9C58BAcC331c9aa871AFD802DB6379a98e80CEdb',
     chainId: 100,
+    logoUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1659.png',
   },
   {
     denom: 'erc20:0xE2e73A1c69ecF83F464EFCE6A5be353a37cA09b2',
